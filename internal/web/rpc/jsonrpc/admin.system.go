@@ -20,7 +20,7 @@ import (
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
 	"github.com/komari-monitor/komari/internal/rpc"
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/random"
 	"gorm.io/gorm"
 )
 
@@ -124,7 +124,7 @@ func adminExec(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcE
 	if len(onlineClients) == 0 && len(queuedClients) == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "No clients connected", nil)
 	}
-	taskId := utils.GenerateRandomString(16)
+	taskId := random.GenerateRandomString(16)
 	taskClients := append(append([]string{}, onlineClients...), queuedClients...)
 	taskClients = append(taskClients, offlineClients...)
 	if err := tasks.CreateTask(taskId, taskClients, params.Command); err != nil {

@@ -10,7 +10,7 @@ import (
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
 	"github.com/komari-monitor/komari/internal/web/api"
 	logger "github.com/komari-monitor/komari/pkg/log"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/random"
 )
 
 func dispatchTerminalRequest(uuid, id string) bool {
@@ -86,7 +86,7 @@ func RequestTerminal(c *gin.Context) {
 	}
 
 	// 新建一个终端连接
-	id = utils.GenerateRandomString(32)
+	id = random.GenerateRandomString(32)
 	session := &TerminalSession{
 		UserUUID:    userID,
 		UUID:        uuid,

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/version"
 )
 
 // CheckKomariVersion validates a manifest komari constraint against the
@@ -30,13 +30,13 @@ func CheckKomariVersion(constraint string) error {
 	if err != nil {
 		return fmt.Errorf("invalid komari version constraint %q: %w", constraint, err)
 	}
-	have, err := parseSemver(utils.CurrentVersion)
+	have, err := parseSemver(version.CurrentVersion)
 	if err != nil {
 		// A malformed server version must not block plugin loading.
 		return nil
 	}
 	if !satisfies(compareSemver(have, want), op) {
-		return fmt.Errorf("plugin requires komari %s, running %s", constraint, utils.CurrentVersion)
+		return fmt.Errorf("plugin requires komari %s, running %s", constraint, version.CurrentVersion)
 	}
 	return nil
 }

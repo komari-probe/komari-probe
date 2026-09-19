@@ -8,7 +8,6 @@ import (
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/utils"
 	"gorm.io/gorm"
 )
 
@@ -173,7 +172,7 @@ func ReloadPingSchedule() error {
 	if err != nil {
 		return err
 	}
-	return utils.ReloadPingSchedule(pingTasks)
+	return pingManager.reload(pingTasks)
 }
 
 // AddDefaultOnClientUUID 在新客户端注册后，把该 UUID 追加到所有 default_on=true 的任务的 clients 中（去重）。

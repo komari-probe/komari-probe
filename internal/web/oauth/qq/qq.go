@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/web/oauth/factory"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/random"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -23,7 +23,7 @@ func (q *QQ) GetConfiguration() factory.Configuration {
 }
 
 func (q *QQ) GetAuthorizationURL(redirectURI string) (string, string) {
-	state := utils.GenerateRandomString(16)
+	state := random.GenerateRandomString(16)
 
 	// 构建请求QQ聚合登录平台的URL
 	requestURL := fmt.Sprintf(

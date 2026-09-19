@@ -12,7 +12,7 @@ import (
 	messageevent "github.com/komari-monitor/komari/internal/database/models/messageEvent"
 	"github.com/komari-monitor/komari/internal/geoip"
 	"github.com/komari-monitor/komari/internal/messageSender"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/random"
 )
 
 // GetAllSessions 获取所有会话
@@ -28,7 +28,7 @@ func GetAllSessions() (sessions []models.Session, err error) {
 // CreateSession 创建新会话
 func CreateSession(uuid string, expires int, userAgent, ip, login_method string) (string, error) {
 	db := dbcore.GetDBInstance()
-	session := utils.GenerateRandomString(32)
+	session := random.GenerateRandomString(32)
 
 	sessionRecord := models.Session{
 		UUID:         uuid,

@@ -13,7 +13,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/tasks"
 	"github.com/komari-monitor/komari/internal/rpc"
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/version"
 )
 
 // public.go
@@ -81,8 +81,8 @@ func publicGetPublicSettings(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *
 
 func publicGetVersion(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	return map[string]any{
-		"version": utils.CurrentVersion,
-		"hash":    utils.VersionHash,
+		"version": version.CurrentVersion,
+		"hash":    version.VersionHash,
 	}, nil
 }
 

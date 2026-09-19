@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/version"
 )
 
 // Bootstrap initializes the data directory, primary database, and settings.
@@ -23,7 +23,7 @@ func (a *App) Bootstrap() error {
 		return fmt.Errorf("failed to create plugin storage directory: %w", err)
 	}
 
-	dbcore.SetVersionID(utils.CurrentVersion + "-" + utils.VersionHash)
+	dbcore.SetVersionID(version.CurrentVersion + "-" + version.VersionHash)
 	if err := dbcore.Initialize(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}

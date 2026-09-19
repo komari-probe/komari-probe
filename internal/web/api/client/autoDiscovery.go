@@ -5,7 +5,7 @@ import (
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/clients"
 	"github.com/komari-monitor/komari/internal/web/api"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/random"
 )
 
 func RegisterClient(c *gin.Context) {
@@ -28,7 +28,7 @@ func RegisterClient(c *gin.Context) {
 	}
 	name := c.Query("name")
 	if name == "" {
-		name = utils.GenerateRandomString(8)
+		name = random.GenerateRandomString(8)
 	}
 	name = "Auto-" + name
 	uuid, token, err := clients.CreateClientWithName(name)

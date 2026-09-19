@@ -1,4 +1,4 @@
-package utils
+package tasks
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
 )
 
-// PingTaskManager 管理定时器和任务
-type PingTaskManager struct {
+// pingTaskManager 管理定时器和任务
+type pingTaskManager struct {
 	mu    sync.Mutex
 	tasks map[int][]models.PingTask
 }
 
-var manager = &PingTaskManager{
+var pingManager = &pingTaskManager{
 	tasks: make(map[int][]models.PingTask),
 }
 
-// Reload 重载时间表
-func (m *PingTaskManager) Reload(pingTasks []models.PingTask) error {
+// reload 重载时间表
+func (m *pingTaskManager) reload(pingTasks []models.PingTask) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -73,9 +73,4 @@ func executePingTask(ctx context.Context, task models.PingTask) {
 // targetPingClientUUIDs 根据任务配置计算本次调度需要下发的在线服务器列表。
 func targetPingClientUUIDs(task models.PingTask) []string {
 	return task.Clients
-}
-
-// ReloadPingSchedule 加载或重载时间表
-func ReloadPingSchedule(pingTasks []models.PingTask) error {
-	return manager.Reload(pingTasks)
 }

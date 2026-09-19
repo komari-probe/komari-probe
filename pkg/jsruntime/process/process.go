@@ -17,7 +17,7 @@ import (
 	"github.com/komari-monitor/komari/pkg/jsruntime/fs"
 	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
 	"github.com/komari-monitor/komari/pkg/jsruntime/internal/metrics"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/version"
 )
 
 type nodeNextTick struct {
@@ -62,7 +62,7 @@ func (m *Module) Load(vm *goja.Runtime, module *goja.Object) {
 	_ = process.Set("platform", metrics.Platform())
 	_ = process.Set("arch", metrics.Arch())
 	_ = process.Set("version", "v"+strings.TrimPrefix(runtime.Version(), "go"))
-	_ = process.Set("versions", map[string]string{"node": "0.0.0-goja", "go": runtime.Version(), "komari": utils.CurrentVersion, "hash": utils.VersionHash})
+	_ = process.Set("versions", map[string]string{"node": "0.0.0-goja", "go": runtime.Version(), "komari": version.CurrentVersion, "hash": version.VersionHash})
 	_ = process.Set("release", map[string]string{"name": "node", "sourceUrl": "", "headersUrl": ""})
 	_ = process.Set("title", "komari-jsruntime")
 	_ = process.Set("exitCode", 0)

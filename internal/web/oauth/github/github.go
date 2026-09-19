@@ -9,7 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/web/oauth/factory"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/mask"
+	"github.com/komari-monitor/komari/pkg/random"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -25,7 +26,7 @@ func (g *Github) GetConfiguration() factory.Configuration {
 }
 
 func (g *Github) GetAuthorizationURL(_ string) (string, string) {
-	state := utils.GenerateRandomString(16)
+	state := random.GenerateRandomString(16)
 
 	// 构建GitHub OAuth授权URL
 	authURL := fmt.Sprintf(
@@ -71,7 +72,7 @@ func (g *Github) OnCallback(ctx *gin.Context, state string, query map[string]str
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return factory.OidcCallback{}, fmt.Errorf("failed to get access token: %s", utils.DataMasking(err.Error(), []string{g.Addition.ClientSecret, g.Addition.ClientId}))
+		return factory.OidcCallback{}, fmt.Errorf("failed to get access token: %s", mask.DataMasking(err.Error(), []string{g.Addition.ClientSecret, g.Addition.ClientId}))
 	}
 	defer resp.Body.Close()
 
@@ -82,7 +83,7 @@ func (g *Github) OnCallback(ctx *gin.Context, state string, query map[string]str
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return factory.OidcCallback{}, fmt.Errorf("failed to parse access token response: %s", utils.DataMasking(err.Error(), []string{g.Addition.ClientSecret, g.Addition.ClientId}))
+		return factory.OidcCallback{}, fmt.Errorf("failed to parse access token response: %s", mask.DataMasking(err.Error(), []string{g.Addition.ClientSecret, g.Addition.ClientId}))
 	}
 
 	// 获取用户信息

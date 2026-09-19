@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/database/tasks"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/random"
 
 	"github.com/google/uuid"
 )
@@ -124,7 +124,7 @@ func SaveClientInfo(update map[string]interface{}) error {
 // CreateClient 创建新客户端
 func CreateClient() (clientUUID, token string, err error) {
 	db := dbcore.GetDBInstance()
-	token = utils.GenerateToken()
+	token = random.GenerateToken()
 	clientUUID = uuid.New().String()
 
 	client := models.Client{
@@ -150,7 +150,7 @@ func CreateClientWithName(name string) (clientUUID, token string, err error) {
 		return CreateClient()
 	}
 	db := dbcore.GetDBInstance()
-	token = utils.GenerateToken()
+	token = random.GenerateToken()
 	clientUUID = uuid.New().String()
 	client := models.Client{
 		UUID:      clientUUID,

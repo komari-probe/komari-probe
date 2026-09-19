@@ -9,7 +9,6 @@ import (
 	"github.com/komari-monitor/komari/internal/database/accounts"
 	"github.com/komari-monitor/komari/internal/database/auditlog"
 	"github.com/komari-monitor/komari/internal/web/api"
-	"github.com/komari-monitor/komari/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +27,7 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 		Value:    value,
 		Path:     "/",
 		MaxAge:   maxAge,
-		Secure:   utils.GetScheme(c) == "https",
+		Secure:   api.GetScheme(c) == "https",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})

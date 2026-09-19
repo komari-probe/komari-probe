@@ -5,17 +5,17 @@ import (
 
 	"github.com/komari-monitor/komari/cmd"
 	logger "github.com/komari-monitor/komari/pkg/log"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/version"
 )
 
 func main() {
-	if utils.VersionHash == "unknown" {
+	if version.VersionHash == "unknown" {
 		logger.Setup(slog.LevelDebug)
 	} else {
 		logger.Setup(slog.LevelInfo)
 	}
 
-	logger.Infof("server", "Komari Monitor %s (hash: %s)", utils.CurrentVersion, utils.VersionHash)
+	logger.Infof("server", "Komari Monitor %s (hash: %s)", version.CurrentVersion, version.VersionHash)
 
 	cmd.Execute()
 }

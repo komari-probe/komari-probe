@@ -8,8 +8,8 @@ import (
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/accounts"
 	"github.com/komari-monitor/komari/internal/database/auditlog"
+	"github.com/komari-monitor/komari/internal/web/api"
 	"github.com/komari-monitor/komari/internal/web/oauth"
-	"github.com/komari-monitor/komari/utils"
 )
 
 // /api/oauth
@@ -20,7 +20,7 @@ func OAuth(c *gin.Context) {
 		return
 	}
 
-	authURL, state := oauth.CurrentProvider().GetAuthorizationURL(utils.GetCallbackURL(c))
+	authURL, state := oauth.CurrentProvider().GetAuthorizationURL(api.GetCallbackURL(c))
 
 	c.SetCookie("oauth_state", state, 3600, "/", "", false, true)
 
@@ -59,7 +59,7 @@ func OAuthCallback(c *gin.Context) {
 			queries[key] = values[0]
 		}
 	}
-	oidcUser, err := oauth.CurrentProvider().OnCallback(c, state, queries, utils.GetCallbackURL(c))
+	oidcUser, err := oauth.CurrentProvider().OnCallback(c, state, queries, api.GetCallbackURL(c))
 	if err != nil {
 		c.JSON(500, gin.H{"status": "error", "error": "Failed to get user info: " + err.Error()})
 		return

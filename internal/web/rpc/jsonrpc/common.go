@@ -17,7 +17,7 @@ import (
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
 	"github.com/komari-monitor/komari/internal/rpc"
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/komari-monitor/komari/pkg/version"
 
 	cache "github.com/patrickmn/go-cache"
 )
@@ -473,8 +473,8 @@ func getVersion(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcErro
 		Version string `json:"version"`
 		Hash    string `json:"hash"`
 	}{
-		Version: utils.CurrentVersion,
-		Hash:    utils.VersionHash,
+		Version: version.CurrentVersion,
+		Hash:    version.VersionHash,
 	}, nil
 }
 
