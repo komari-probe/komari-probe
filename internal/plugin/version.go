@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/komari-monitor/komari/pkg/version"
+	"github.com/komari-monitor/komari/internal/version"
 )
 
 // CheckKomariVersion validates a manifest komari constraint against the

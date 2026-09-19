@@ -14,7 +14,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/komari-monitor/komari/internal/sqlitetune"
+	"github.com/komari-monitor/komari/pkg/sqlitetune"
 )
 
 // Store is the main metric storage handle.

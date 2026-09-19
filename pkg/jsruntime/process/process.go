@@ -17,7 +17,6 @@ import (
 	"github.com/komari-monitor/komari/pkg/jsruntime/fs"
 	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
 	"github.com/komari-monitor/komari/pkg/jsruntime/internal/metrics"
-	"github.com/komari-monitor/komari/pkg/version"
 )
 
 type nodeNextTick struct {
@@ -26,11 +25,13 @@ type nodeNextTick struct {
 }
 
 type Module struct {
-	runtime     *bridge.Runtime
-	fs          *fs.Module
-	allowExec   bool
-	startedAt   time.Time
-	reportError func(*goja.Runtime, []goja.Value)
+	runtime         *bridge.Runtime
+	fs              *fs.Module
+	allowExec       bool
+	startedAt       time.Time
+	hostVersion     string
+	hostVersionHash string
+	reportError     func(*goja.Runtime, []goja.Value)
 
 	nextTickMu        sync.Mutex
 	nextTicks         []nodeNextTick
@@ -40,8 +41,23 @@ type Module struct {
 	nextTickSchedule  goja.Callable
 }
 
-func New(runtime *bridge.Runtime, filesystem *fs.Module, allowExec bool, startedAt time.Time, reportError func(*goja.Runtime, []goja.Value)) *Module {
-	return &Module{runtime: runtime, fs: filesystem, allowExec: allowExec, startedAt: startedAt, reportError: reportError}
+// New constructs the process module. hostVersion and hostVersionHash are
+// reported via process.versions and are the embedding application's own
+// version identity, not part of the JS runtime itself; an empty hostVersion
+// falls back to "unknown".
+func New(runtime *bridge.Runtime, filesystem *fs.Module, allowExec bool, startedAt time.Time, hostVersion, hostVersionHash string, reportError func(*goja.Runtime, []goja.Value)) *Module {
+	if hostVersion == "" {
+		hostVersion = "unknown"
+	}
+	return &Module{
+		runtime:         runtime,
+		fs:              filesystem,
+		allowExec:       allowExec,
+		startedAt:       startedAt,
+		hostVersion:     hostVersion,
+		hostVersionHash: hostVersionHash,
+		reportError:     reportError,
+	}
 }
 
 func (m *Module) Load(vm *goja.Runtime, module *goja.Object) {
@@ -62,7 +78,7 @@ func (m *Module) Load(vm *goja.Runtime, module *goja.Object) {
 	_ = process.Set("platform", metrics.Platform())
 	_ = process.Set("arch", metrics.Arch())
 	_ = process.Set("version", "v"+strings.TrimPrefix(runtime.Version(), "go"))
-	_ = process.Set("versions", map[string]string{"node": "0.0.0-goja", "go": runtime.Version(), "komari": version.CurrentVersion, "hash": version.VersionHash})
+	_ = process.Set("versions", map[string]string{"node": "0.0.0-goja", "go": runtime.Version(), "komari": m.hostVersion, "hash": m.hostVersionHash})
 	_ = process.Set("release", map[string]string{"name": "node", "sourceUrl": "", "headersUrl": ""})
 	_ = process.Set("title", "komari-jsruntime")
 	_ = process.Set("exitCode", 0)

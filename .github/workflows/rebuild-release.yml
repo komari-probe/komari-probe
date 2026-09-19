@@ -102,7 +102,7 @@ jobs:
         run: |
           BINARY_NAME=komari-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
           VERSION_HASH="$(git rev-parse HEAD)"
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/pkg/version.CurrentVersion=${RELEASE_TAG} -X github.com/komari-monitor/komari/pkg/version.VersionHash=${VERSION_HASH}" -o "$BINARY_NAME"
+          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/internal/version.CurrentVersion=${RELEASE_TAG} -X github.com/komari-monitor/komari/internal/version.VersionHash=${VERSION_HASH}" -o "$BINARY_NAME"
 
       - name: Upload binary to release
         env:

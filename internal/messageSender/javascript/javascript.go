@@ -7,6 +7,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/messageSender/factory"
+	"github.com/komari-monitor/komari/internal/version"
 	"github.com/komari-monitor/komari/pkg/jsruntime"
 )
 
@@ -24,7 +25,10 @@ func (j *JavaScriptSender) GetConfiguration() factory.Configuration {
 }
 
 func (j *JavaScriptSender) Init() error {
-	runtime, err := jsruntime.New(j.Addition.Script, jsruntime.Options{})
+	runtime, err := jsruntime.New(j.Addition.Script, jsruntime.Options{
+		HostVersion:     version.CurrentVersion,
+		HostVersionHash: version.VersionHash,
+	})
 	if err != nil {
 		return err
 	}

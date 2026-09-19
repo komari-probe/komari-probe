@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/sqlitetune"
+	"github.com/komari-monitor/komari/pkg/sqlitetune"
 )
 
 func TestMainSQLiteConnectorAppliesBoundedSettings(t *testing.T) {

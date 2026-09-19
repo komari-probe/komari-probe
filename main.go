@@ -4,8 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/komari-monitor/komari/cmd"
+	"github.com/komari-monitor/komari/internal/version"
 	logger "github.com/komari-monitor/komari/pkg/log"
-	"github.com/komari-monitor/komari/pkg/version"
 )
 
 func main() {

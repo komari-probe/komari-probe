@@ -12,8 +12,8 @@ import (
 	"github.com/komari-monitor/komari/internal/database/records"
 	"github.com/komari-monitor/komari/internal/database/tasks"
 	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/version"
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
-	"github.com/komari-monitor/komari/pkg/version"
 )
 
 // public.go

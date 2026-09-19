@@ -99,6 +99,12 @@ type Options struct {
 	// by exec, execFile, and their synchronous variants. Values less than one
 	// use Node.js' 1 MiB default.
 	MaxChildOutputBytes int
+	// HostVersion and HostVersionHash identify the embedding application to
+	// scripts via process.versions (NodeJS only). They are the host's own
+	// version identity, not part of the JS runtime; an empty HostVersion is
+	// reported as "unknown".
+	HostVersion     string
+	HostVersionHash string
 }
 
 // Runtime owns one isolated JavaScript VM and its event loop. Public
@@ -232,7 +238,7 @@ func New(script string, options Options) (*Runtime, error) {
 	}
 	if options.NodeJS {
 		runtime.pathModule = pathmodule.New(filesystem.Cwd)
-		runtime.processModule = processmodule.New(host, filesystem, options.AllowExec, startedAt, func(vm *goja.Runtime, values []goja.Value) {
+		runtime.processModule = processmodule.New(host, filesystem, options.AllowExec, startedAt, options.HostVersion, options.HostVersionHash, func(vm *goja.Runtime, values []goja.Value) {
 			runtime.consoleMod.WriteError(vm, values, false)
 		})
 		runtime.childProcessModule = childprocess.New(host, filesystem, options.AllowExec, maxChildOutputBytes)

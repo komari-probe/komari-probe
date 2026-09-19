@@ -16,8 +16,8 @@ import (
 	"github.com/komari-monitor/komari/internal/database/tasks"
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
 	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/version"
 	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
-	"github.com/komari-monitor/komari/pkg/version"
 
 	cache "github.com/patrickmn/go-cache"
 )

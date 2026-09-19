@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/pkg/version"
+	"github.com/komari-monitor/komari/internal/version"
 )
 
 // Bootstrap initializes the data directory, primary database, and settings.

@@ -35,6 +35,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/rpc"
 	"github.com/komari-monitor/komari/internal/scheduler"
+	"github.com/komari-monitor/komari/internal/version"
 	"github.com/komari-monitor/komari/internal/web/connection"
 	"github.com/komari-monitor/komari/pkg/jsruntime"
 )
@@ -287,6 +288,8 @@ func (m *Manager) load(short string) error {
 		MaxChildOutputBytes: info.Permissions.MaxChildOutputBytes,
 		Timeout:             time.Duration(info.Permissions.TimeoutSeconds) * time.Second,
 		Console:             logs,
+		HostVersion:         version.CurrentVersion,
+		HostVersionHash:     version.VersionHash,
 		ConfigureHost: func(host *jsruntime.Host, registry *require.Registry) {
 			inst.mu.Lock()
 			inst.host = host
