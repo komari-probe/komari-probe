@@ -31,6 +31,16 @@ func CheckPassword(username, passwd string) (uuid string, success bool) {
 	return user.UUID, true
 }
 
+// GetFirstUser 获取库中第一个用户账号（本项目目前仅支持单一管理员账号）
+func GetFirstUser() (user models.User, err error) {
+	db := dbcore.GetDBInstance()
+	err = db.Model(&models.User{}).First(&user).Error
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
+
 // ForceResetPassword 强制重置用户密码
 func ForceResetPassword(username, passwd string) (err error) {
 	db := dbcore.GetDBInstance()

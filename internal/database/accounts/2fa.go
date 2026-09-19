@@ -6,6 +6,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/pquerna/otp/totp"
+	"gorm.io/gorm"
 )
 
 var (
@@ -55,4 +56,13 @@ func Verify2Fa(uuid, code string) (bool, error) {
 func Disable2Fa(uuid string) error {
 	db := dbcore.GetDBInstance()
 	return db.Model(&models.User{}).Where("uuid = ?", uuid).Update("two_factor", "").Error
+}
+
+// ForceDisableAllTwoFactor 强制关闭所有用户的 2FA
+func ForceDisableAllTwoFactor() error {
+	db := dbcore.GetDBInstance()
+	return db.Transaction(func(tx *gorm.DB) error {
+		return tx.Model(&models.User{}).Where("two_factor != ?", "").
+			Update("two_factor", "").Error
+	})
 }

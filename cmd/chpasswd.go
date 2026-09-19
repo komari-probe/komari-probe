@@ -5,8 +5,6 @@ import (
 
 	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/komari-monitor/komari/internal/database/accounts"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/spf13/cobra"
 )
 
@@ -29,8 +27,11 @@ var ChpasswdCmd = &cobra.Command{
 			cmd.Println("Database file does not exist.")
 			return
 		}
-		user := &models.User{}
-		dbcore.GetDBInstance().Model(&models.User{}).First(user)
+		user, err := accounts.GetFirstUser()
+		if err != nil {
+			cmd.Println("Error:", err)
+			return
+		}
 		cmd.Println("Changing password for user:", user.Username)
 		if err := accounts.ForceResetPassword(user.Username, NewPassword); err != nil {
 			cmd.Println("Error:", err)
