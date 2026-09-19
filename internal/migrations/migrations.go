@@ -3,13 +3,13 @@ package migrations
 import (
 	"encoding/json"
 	"fmt"
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/komari-monitor/komari/pkg/log"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/database/models"
 	appconfig "github.com/komari-monitor/komari/internal/config"
+	"github.com/komari-monitor/komari/internal/database/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

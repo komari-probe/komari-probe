@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/web/connection"
+	"github.com/komari-monitor/komari/internal/web/connection"
 )
 
 // wsManifest is a plugin manifest that declares the hooks permission (the

@@ -18,9 +18,9 @@ import (
 	"github.com/dop251/goja_nodejs/buffer"
 	"github.com/dop251/goja_nodejs/require"
 	"github.com/gin-gonic/gin"
+	"github.com/komari-monitor/komari/internal/rpc"
 	"github.com/komari-monitor/komari/pkg/jsruntime"
 	"github.com/komari-monitor/komari/pkg/jsruntime/httpbody"
-	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 // registerServerModule registers the "server" native module for one plugin

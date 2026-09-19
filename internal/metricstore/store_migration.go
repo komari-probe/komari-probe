@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/komari-monitor/komari/pkg/log"
 
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/pkg/metric"

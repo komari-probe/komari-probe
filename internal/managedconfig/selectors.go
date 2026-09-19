@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/internal/database/dbcore"
+	"github.com/komari-monitor/komari/internal/database/models"
 )
 
 const (

@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	logger "github.com/komari-monitor/komari/utils/log"
-	"github.com/komari-monitor/komari/web/api"
-	frontendpublic "github.com/komari-monitor/komari/web/public"
-	"github.com/komari-monitor/komari/web/security"
+	"github.com/komari-monitor/komari/internal/web/api"
+	frontendpublic "github.com/komari-monitor/komari/internal/web/public"
+	"github.com/komari-monitor/komari/internal/web/security"
+	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
 type guideController interface {

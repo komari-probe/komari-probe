@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/komari-monitor/komari/cmd/flags"
-	"github.com/komari-monitor/komari/database/dbcore"
+	"github.com/komari-monitor/komari/internal/database/dbcore"
 )
 
 func TestMain(m *testing.M) {

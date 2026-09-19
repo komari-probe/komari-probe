@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/internal/database/models"
+	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
 	"github.com/komari-monitor/komari/pkg/metric"
-	v2 "github.com/komari-monitor/komari/protocol/v2"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
 

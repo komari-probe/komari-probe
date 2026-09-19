@@ -12,7 +12,7 @@ __debug*
 # local development data
 komari.db
 /data
-/utils/geoip/data
+/internal/geoip/data
 .vscode/
 /backup
 
@@ -37,4 +37,4 @@ komari
 /dist/
 .codex
 
-/web/filemanager/data
+/internal/web/filemanager/data

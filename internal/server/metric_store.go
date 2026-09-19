@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/komari-monitor/komari/database/auditlog"
-	"github.com/komari-monitor/komari/internal/metricstore"
 	"github.com/komari-monitor/komari/internal/config"
-	logger "github.com/komari-monitor/komari/utils/log"
+	"github.com/komari-monitor/komari/internal/database/auditlog"
+	"github.com/komari-monitor/komari/internal/metricstore"
+	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
 const (

@@ -3,13 +3,13 @@ package server
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/database/dbcore"
+	"github.com/komari-monitor/komari/internal/database/dbcore"
+	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/database/models"
 	"github.com/komari-monitor/komari/internal/migrations"
-	installweb "github.com/komari-monitor/komari/web/install"
-	migrationweb "github.com/komari-monitor/komari/web/migration"
-	recoveryweb "github.com/komari-monitor/komari/web/recovery"
+	installweb "github.com/komari-monitor/komari/internal/web/install"
+	migrationweb "github.com/komari-monitor/komari/internal/web/migration"
+	recoveryweb "github.com/komari-monitor/komari/internal/web/recovery"
 )
 
 // InstallRequired reports whether the instance still needs the first-run guide.

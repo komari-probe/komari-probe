@@ -7,7 +7,7 @@ import (
 
 	"github.com/dop251/goja"
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/komari-monitor/komari/internal/rpc"
 )
 
 // principalContextKey stays in sync with web/api/principal.go:

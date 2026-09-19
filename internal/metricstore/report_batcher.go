@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/komari-monitor/komari/pkg/log"
 
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/internal/database/models"
+	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
 	"github.com/komari-monitor/komari/pkg/metric"
-	v2 "github.com/komari-monitor/komari/protocol/v2"
 )
 
 type reportTrafficState struct {

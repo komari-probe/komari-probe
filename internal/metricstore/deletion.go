@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/komari-monitor/komari/pkg/log"
 
 	"github.com/komari-monitor/komari/pkg/metric"
 )

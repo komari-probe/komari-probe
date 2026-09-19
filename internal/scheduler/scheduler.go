@@ -3,7 +3,7 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/komari-monitor/komari/pkg/log"
 	"strconv"
 	"strings"
 	"sync"

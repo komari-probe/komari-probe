@@ -32,11 +32,11 @@ import (
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/require"
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/rpc"
 	"github.com/komari-monitor/komari/internal/scheduler"
+	"github.com/komari-monitor/komari/internal/web/connection"
 	"github.com/komari-monitor/komari/pkg/jsruntime"
-	"github.com/komari-monitor/komari/pkg/rpc"
-	"github.com/komari-monitor/komari/web/connection"
 )
 
 // DataDir is the on-disk root for installed plugins, mirroring the theme

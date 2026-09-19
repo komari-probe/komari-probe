@@ -5,7 +5,7 @@ import (
 	"os"
 
 	appserver "github.com/komari-monitor/komari/internal/server"
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/komari-monitor/komari/pkg/log"
 
 	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/spf13/cobra"

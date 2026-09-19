@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/internal/database/models"
 )
 
 // InstallZip validates a plugin ZIP and extracts it into DataDir/<short>.

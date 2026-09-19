@@ -5,7 +5,7 @@ import (
 
 	"github.com/dop251/goja"
 	"github.com/gorilla/websocket"
-	"github.com/komari-monitor/komari/web/connection"
+	"github.com/komari-monitor/komari/internal/web/connection"
 )
 
 // WebSocket hook kinds. wsConnect runs right after the upgrade and may deny
@@ -15,10 +15,10 @@ import (
 // GET. Like the HTTP kinds, the input is lowercased, so any casing works
 // from JS.
 const (
-	hookWSConnect  hookKind = "wsconnect"
-	hookWSMessage  hookKind = "wsmessage"
-	hookWSSend     hookKind = "wssend"
-	hookWSClose    hookKind = "wsclose"
+	hookWSConnect hookKind = "wsconnect"
+	hookWSMessage hookKind = "wsmessage"
+	hookWSSend    hookKind = "wssend"
+	hookWSClose   hookKind = "wsclose"
 )
 
 // wsFrameHookTimeout bounds one frame-level callback. The agent read pumps

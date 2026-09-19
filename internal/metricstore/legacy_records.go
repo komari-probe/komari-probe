@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/pkg/metric"
 )
 
