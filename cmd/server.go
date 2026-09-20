@@ -3,7 +3,7 @@ package cmd
 import (
 	appserver "github.com/komari-monitor/komari/internal/server"
 
-	"github.com/komari-monitor/komari/cmd/flags"
+	"github.com/komari-monitor/komari/internal/flags"
 	"github.com/spf13/cobra"
 )
 

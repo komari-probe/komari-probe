@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/flags"
 	"github.com/komari-monitor/komari/internal/migrations"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"github.com/komari-monitor/komari/pkg/sqlitetune"

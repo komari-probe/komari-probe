@@ -3,8 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/komari-monitor/komari/internal/database/accounts"
+	"github.com/komari-monitor/komari/internal/flags"
 	"github.com/spf13/cobra"
 )
 

@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/flags"
 	"github.com/komari-monitor/komari/internal/geoip"
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
 )

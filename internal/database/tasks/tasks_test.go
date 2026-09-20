@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/cmd/flags"
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/flags"
 )
 
 func TestClearTaskResultsByTimeBeforeUsesUTCTimeValue(t *testing.T) {
