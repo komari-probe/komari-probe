@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -109,7 +110,7 @@ func (s *Store) SaveChunk(uploadID string, index int64, source io.Reader) error 
 	}
 
 	chunkPath := filepath.Join(session.Directory, chunkFilename(index))
-	if err := os.Remove(chunkPath); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(chunkPath); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("replace chunk: %w", err)
 	}
 	if err := os.Rename(temporaryPath, chunkPath); err != nil {
@@ -138,7 +139,7 @@ func (s *Store) Merge(uploadID string) (Session, error) {
 		chunkPath := filepath.Join(session.Directory, chunkFilename(index))
 		info, err := os.Stat(chunkPath)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				return Session{}, fmt.Errorf("chunk %d is missing", index)
 			}
 			return Session{}, fmt.Errorf("read chunk %d: %w", index, err)
@@ -189,7 +190,7 @@ func (s *Store) load(uploadID string) (Session, error) {
 	directory := filepath.Join(s.Root, uploadID)
 	data, err := os.ReadFile(filepath.Join(directory, "upload.json"))
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return Session{}, ErrNotFound
 		}
 		return Session{}, fmt.Errorf("read upload metadata: %w", err)

@@ -52,50 +52,27 @@ func structureUpgradeRequiredForConfig(ctx context.Context, cfg *MetricStoreConf
 // RestructureConfiguredStore performs the explicit data copy, table swap and
 // one physical reclaim pass used by the upgrade guide.
 func RestructureConfiguredStore(ctx context.Context, report func(RestructureProgress)) (RestructureResult, error) {
-	cfg, err := config.GetManyAs[MetricStoreConfig]()
-	if err != nil {
-		return RestructureResult{}, err
-	}
-	metricCfg, err := buildMetricConfig(cfg, false)
-	if err != nil {
-		return RestructureResult{}, err
-	}
-	store, err := tsdb.Open(ctx, metricCfg)
-	if err != nil {
-		return RestructureResult{}, err
-	}
-	defer store.Close()
-
-	before, err := store.LegacyStorageSize(ctx)
-	if err != nil {
-		return RestructureResult{}, fmt.Errorf("measure legacy metric storage: %w", err)
-	}
-	result, err := store.Restructure(ctx, func(progress tsdb.RestructureProgress) {
-		if report == nil {
-			return
-		}
-		report(RestructureProgress{Phase: progress.Phase, CurrentMetric: progress.Current, RowsDone: progress.RowsDone, RowsTotal: progress.RowsTotal, MetricsDone: progress.MetricsDone, MetricsTotal: progress.MetricsTotal})
-	})
-	if err != nil {
-		return RestructureResult{}, err
-	}
-	if report != nil {
-		report(RestructureProgress{Phase: "reclaiming", RowsDone: result.RowsCopied, RowsTotal: result.RowsCopied, MetricsDone: result.Metrics, MetricsTotal: result.Metrics})
-	}
-	if err := store.ReclaimSpace(ctx); err != nil {
-		return RestructureResult{}, fmt.Errorf("reclaim metric storage: %w", err)
-	}
-	after, err := store.StorageSize(ctx)
-	if err != nil {
-		return RestructureResult{}, fmt.Errorf("measure rebuilt metric storage: %w", err)
-	}
-	return RestructureResult{BeforeBytes: before, AfterBytes: after, RowsCopied: result.RowsCopied, Metrics: result.Metrics}, nil
+	return rebuildConfiguredStore(ctx, report, (*tsdb.Store).Restructure)
 }
 
 // DiscardConfiguredStoreHistory completes the same schema upgrade as
 // RestructureConfiguredStore but drops every historical sample instead of
 // copying it. Metric definitions remain available for new ingest.
 func DiscardConfiguredStoreHistory(ctx context.Context, report func(RestructureProgress)) (RestructureResult, error) {
+	return rebuildConfiguredStore(ctx, report, (*tsdb.Store).DiscardHistory)
+}
+
+// rebuildConfiguredStore opens the configured store, measures its legacy size,
+// runs coreOp (either Restructure or DiscardHistory, which share the same
+// signature and progress-reporting shape), reclaims physical space, and
+// measures the result. Shared by RestructureConfiguredStore and
+// DiscardConfiguredStoreHistory, which differ only in which core operation
+// they run.
+func rebuildConfiguredStore(
+	ctx context.Context,
+	report func(RestructureProgress),
+	coreOp func(*tsdb.Store, context.Context, func(tsdb.RestructureProgress)) (tsdb.RestructureResult, error),
+) (RestructureResult, error) {
 	cfg, err := config.GetManyAs[MetricStoreConfig]()
 	if err != nil {
 		return RestructureResult{}, err
@@ -114,7 +91,7 @@ func DiscardConfiguredStoreHistory(ctx context.Context, report func(RestructureP
 	if err != nil {
 		return RestructureResult{}, fmt.Errorf("measure legacy metric storage: %w", err)
 	}
-	result, err := store.DiscardHistory(ctx, func(progress tsdb.RestructureProgress) {
+	result, err := coreOp(store, ctx, func(progress tsdb.RestructureProgress) {
 		if report == nil {
 			return
 		}

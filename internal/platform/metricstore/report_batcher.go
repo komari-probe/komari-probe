@@ -205,8 +205,8 @@ func (w *reportBatchWorker) run() {
 	for {
 		select {
 		case request := <-w.requests:
-			pending = append(pending, drainReportQueue(w.queue, reportBatchQueueSize)...)
-			pendingPings = append(pendingPings, drainPingQueue(w.pingQueue, reportBatchQueueSize)...)
+			pending = append(pending, drainQueue(w.queue, reportBatchQueueSize)...)
+			pendingPings = append(pendingPings, drainQueue(w.pingQueue, reportBatchQueueSize)...)
 			err := errors.Join(
 				writePendingReports(request.ctx, &pending),
 				writePendingPingRecords(request.ctx, &pendingPings),
@@ -221,11 +221,11 @@ func (w *reportBatchWorker) run() {
 			}
 			request.done <- err
 		case <-ticker.C:
-			pendingPings = append(pendingPings, drainPingQueue(w.pingQueue, reportBatchQueueSize)...)
+			pendingPings = append(pendingPings, drainQueue(w.pingQueue, reportBatchQueueSize)...)
 			if err := writePendingPingRecords(context.Background(), &pendingPings); err != nil {
 				logger.Errorf("metricstore", "failed to flush ping batch: %v", err)
 			}
-			pending = append(pending, drainReportQueue(w.queue, reportBatchQueueSize)...)
+			pending = append(pending, drainQueue(w.queue, reportBatchQueueSize)...)
 			if err := writePendingReports(context.Background(), &pending); err != nil {
 				logger.Errorf("metricstore", "failed to flush metric report batch: %v", err)
 			}
@@ -250,7 +250,8 @@ func (w *reportBatchWorker) enqueuePing(ctx context.Context, record models.PingR
 	}
 }
 
-func drainReportQueue(queue <-chan v2.Report, limit int) []v2.Report {
+// drainQueue non-blockingly drains up to limit items already buffered in queue.
+func drainQueue[T any](queue <-chan T, limit int) []T {
 	if limit <= 0 {
 		return nil
 	}
@@ -261,39 +262,16 @@ func drainReportQueue(queue <-chan v2.Report, limit int) []v2.Report {
 	if capacity == 0 {
 		return nil
 	}
-	reports := make([]v2.Report, 0, capacity)
-	for len(reports) < limit {
+	items := make([]T, 0, capacity)
+	for len(items) < limit {
 		select {
-		case report := <-queue:
-			reports = append(reports, report)
+		case item := <-queue:
+			items = append(items, item)
 		default:
-			return reports
+			return items
 		}
 	}
-	return reports
-}
-
-func drainPingQueue(queue <-chan models.PingRecord, limit int) []models.PingRecord {
-	if limit <= 0 {
-		return nil
-	}
-	capacity := len(queue)
-	if capacity > limit {
-		capacity = limit
-	}
-	if capacity == 0 {
-		return nil
-	}
-	records := make([]models.PingRecord, 0, capacity)
-	for len(records) < limit {
-		select {
-		case record := <-queue:
-			records = append(records, record)
-		default:
-			return records
-		}
-	}
-	return records
+	return items
 }
 
 func writePendingReports(ctx context.Context, pending *[]v2.Report) error {

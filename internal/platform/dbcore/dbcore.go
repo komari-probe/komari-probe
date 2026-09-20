@@ -244,7 +244,9 @@ func backupOnVersionUpgrade() {
 	// 先做一次 WAL checkpoint，确保 komari.db 主文件包含最新数据，
 	// 避免备份出的库缺少仍留在 -wal 中的写入。
 	if instance != nil {
-		instance.Exec("PRAGMA wal_checkpoint(TRUNCATE);")
+		if err := instance.Exec("PRAGMA wal_checkpoint(TRUNCATE);").Error; err != nil {
+			logger.Errorf("dbcore", "[upgrade-backup] failed to checkpoint WAL before backup: %v", err)
+		}
 	}
 
 	backupDir := filepath.Join(".", "data", "backup")

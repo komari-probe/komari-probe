@@ -36,55 +36,32 @@ func InitGeoIp() {
 	}
 	switch conf[settings.GeoIpProviderKey].(string) {
 	case "mmdb":
-		NewCurrentProvider, err := provider.NewMaxMindGeoIPService()
-		if err != nil {
-			logger.Error("geoip", "failed to initialize MaxMind GeoIP service", "error", err)
-		}
-		if NewCurrentProvider != nil {
-			CurrentProvider = NewCurrentProvider
-		} else {
-			CurrentProvider = &provider.EmptyProvider{}
-			logger.Error("geoip", "failed to initialize MaxMind GeoIP service; using EmptyProvider")
-		}
+		setGeoIPProvider("MaxMind", func() (provider.GeoIPService, error) { return provider.NewMaxMindGeoIPService() })
 	case "ip-api":
-		NewCurrentProvider, err := provider.NewIPAPIService()
-		if err != nil {
-			logger.Error("geoip", "failed to initialize ip-api service", "error", err)
-		}
-		if NewCurrentProvider != nil {
-			CurrentProvider = NewCurrentProvider
-			logger.Info("geoip", "using GeoIP provider", "provider", "ip-api.com")
-		} else {
-			CurrentProvider = &provider.EmptyProvider{}
-			logger.Warn("geoip", "failed to initialize ip-api service; using EmptyProvider")
-		}
+		setGeoIPProvider("ip-api.com", func() (provider.GeoIPService, error) { return provider.NewIPAPIService() })
 	case "geojs":
-		NewCurrentProvider, err := provider.NewGeoJSService()
-		if err != nil {
-			logger.Error("geoip", "failed to initialize GeoJS service", "error", err)
-		}
-		if NewCurrentProvider != nil {
-			CurrentProvider = NewCurrentProvider
-			logger.Info("geoip", "using GeoIP provider", "provider", "geojs.io")
-		} else {
-			CurrentProvider = &provider.EmptyProvider{}
-			logger.Warn("geoip", "failed to initialize GeoJS service; using EmptyProvider")
-		}
+		setGeoIPProvider("geojs.io", func() (provider.GeoIPService, error) { return provider.NewGeoJSService() })
 	case "ipinfo":
-		NewCurrentProvider, err := provider.NewIPInfoService()
-		if err != nil {
-			logger.Error("geoip", "failed to initialize IPInfo service", "error", err)
-		}
-		if NewCurrentProvider != nil {
-			CurrentProvider = NewCurrentProvider
-			logger.Info("geoip", "using GeoIP provider", "provider", "ipinfo.io")
-		} else {
-			CurrentProvider = &provider.EmptyProvider{}
-			logger.Warn("geoip", "failed to initialize IPInfo service; using EmptyProvider")
-		}
+		setGeoIPProvider("ipinfo.io", func() (provider.GeoIPService, error) { return provider.NewIPInfoService() })
 	default:
 		CurrentProvider = &provider.EmptyProvider{}
 	}
+}
+
+// setGeoIPProvider constructs a provider by name and installs it as
+// CurrentProvider, falling back to EmptyProvider (and logging) on failure.
+func setGeoIPProvider(name string, construct func() (provider.GeoIPService, error)) {
+	newProvider, err := construct()
+	if err != nil {
+		logger.Error("geoip", "failed to initialize "+name+" service", "error", err)
+	}
+	if newProvider != nil {
+		CurrentProvider = newProvider
+		logger.Info("geoip", "using GeoIP provider", "provider", name)
+		return
+	}
+	CurrentProvider = &provider.EmptyProvider{}
+	logger.Warn("geoip", "failed to initialize "+name+" service; using EmptyProvider")
 }
 
 // Shutdown 关闭当前 GeoIP provider 持有的资源（如 mmdb 文件句柄）。供关闭流程调用。

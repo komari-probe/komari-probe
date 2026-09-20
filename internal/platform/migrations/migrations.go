@@ -247,7 +247,7 @@ func migrateLegacyMessageSenderConfig(db *gorm.DB) error {
 	}
 
 	if oldData.NotificationMethod == "telegram" && oldData.TelegramBotToken != "" {
-		telegramConfig := map[string]interface{}{
+		telegramConfig := map[string]any{
 			"bot_token": oldData.TelegramBotToken,
 			"chat_id":   oldData.TelegramChatID,
 			"endpoint":  oldData.TelegramEndpoint,
@@ -261,7 +261,7 @@ func migrateLegacyMessageSenderConfig(db *gorm.DB) error {
 	}
 
 	if oldData.NotificationMethod == "email" && oldData.EmailHost != "" {
-		emailConfig := map[string]interface{}{
+		emailConfig := map[string]any{
 			"host":     oldData.EmailHost,
 			"port":     oldData.EmailPort,
 			"username": oldData.EmailUsername,
@@ -297,7 +297,7 @@ func migrateLegacyMessageSenderConfig(db *gorm.DB) error {
 	return nil
 }
 
-func saveLegacyMessageSenderConfig(db *gorm.DB, name string, config map[string]interface{}) error {
+func saveLegacyMessageSenderConfig(db *gorm.DB, name string, config map[string]any) error {
 	configJSON, err := json.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("marshal legacy %s message sender config: %w", name, err)

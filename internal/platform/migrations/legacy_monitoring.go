@@ -576,30 +576,23 @@ func estimateLegacyHourlyP95Points(db *gorm.DB, summary LegacyMonitoringSummary,
 		if err != nil {
 			return 0, fmt.Errorf("estimate load series: %w", err)
 		}
-		total += minLegacyBuckets(summary.LoadRows, series*hours) * 15
+		total += min(summary.LoadRows, series*hours) * 15
 	}
 	if db.Migrator().HasTable("gpu_records") {
 		series, err := countSeries("SELECT client, device_index, device_name FROM gpu_records GROUP BY client, device_index, device_name")
 		if err != nil {
 			return 0, fmt.Errorf("estimate GPU series: %w", err)
 		}
-		total += minLegacyBuckets(summary.GPURows, series*hours) * 4
+		total += min(summary.GPURows, series*hours) * 4
 	}
 	if db.Migrator().HasTable("ping_records") {
 		series, err := countSeries("SELECT client, task_id FROM ping_records GROUP BY client, task_id")
 		if err != nil {
 			return 0, fmt.Errorf("estimate ping series: %w", err)
 		}
-		total += minLegacyBuckets(summary.LatencyRows, series*hours) * 2
+		total += min(summary.LatencyRows, series*hours) * 2
 	}
 	return total, nil
-}
-
-func minLegacyBuckets(sourceRows, estimatedBuckets int64) int64 {
-	if sourceRows < estimatedBuckets {
-		return sourceRows
-	}
-	return estimatedBuckets
 }
 
 func recordToPoints(rec models.Record) []tsdb.Point {

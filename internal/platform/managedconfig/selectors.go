@@ -120,23 +120,21 @@ func ResolveForOutput(values map[string]any, items []models.ManagedThemeConfigur
 }
 
 func NodeIDs(value any) []string {
-	raw, ok := value.(string)
-	if !ok {
-		return nil
-	}
-	var ids []string
-	if json.Unmarshal([]byte(raw), &ids) != nil {
-		return nil
-	}
-	return ids
+	return decodeIDs[string](value)
 }
 
 func PingTaskIDs(value any) []uint {
+	return decodeIDs[uint](value)
+}
+
+// decodeIDs decodes a JSON array of IDs stored as a string value. Any other
+// shape (wrong dynamic type, invalid JSON) yields nil instead of an error.
+func decodeIDs[T any](value any) []T {
 	raw, ok := value.(string)
 	if !ok {
 		return nil
 	}
-	var ids []uint
+	var ids []T
 	if json.Unmarshal([]byte(raw), &ids) != nil {
 		return nil
 	}

@@ -31,8 +31,8 @@ func ReportVerify(report v2.Report) error {
 	}
 
 	checkFloat64 := func(name string, val float64) error {
-		if val > math.MaxFloat64-1 || val < -math.MaxFloat64+1 {
-			return fmt.Errorf("%s value exceeds float64 range: %g", name, val)
+		if math.IsNaN(val) || math.IsInf(val, 0) {
+			return fmt.Errorf("%s must be a finite number: %g", name, val)
 		}
 		return nil
 	}

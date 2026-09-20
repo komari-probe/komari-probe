@@ -113,7 +113,7 @@ type GPURecord struct {
 // StringArray 存储为 JSON 的字符串切片类型
 type StringArray []string
 
-func (sa *StringArray) Scan(value interface{}) error {
+func (sa *StringArray) Scan(value any) error {
 	var bytes []byte
 	switch v := value.(type) {
 	case nil:

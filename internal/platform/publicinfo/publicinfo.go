@@ -17,7 +17,7 @@ import (
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
-func GetPublicInfo() (map[string]interface{}, error) {
+func GetPublicInfo() (map[string]any, error) {
 	cstPtr, err := config.GetManyAs[settings.Settings]()
 	if err != nil {
 		return nil, err
@@ -66,8 +66,8 @@ func GetPublicInfo() (map[string]interface{}, error) {
 	if err != nil {
 		tc.Data = "{}"
 	}
-	tc_data := gin.H{}
-	err = json.Unmarshal([]byte(tc.Data), &tc_data)
+	tcData := gin.H{}
+	err = json.Unmarshal([]byte(tc.Data), &tcData)
 	if err != nil {
 		logger.Infof("database", "%v", err)
 	}
@@ -77,12 +77,12 @@ func GetPublicInfo() (map[string]interface{}, error) {
 			if item.Key == "" {
 				continue
 			}
-			if _, exists := tc_data[item.Key]; !exists {
-				tc_data[item.Key] = managedconfig.DefaultValue(item)
+			if _, exists := tcData[item.Key]; !exists {
+				tcData[item.Key] = managedconfig.DefaultValue(item)
 			}
 		}
 	}
-	if err := managedconfig.ResolveForOutput(tc_data, items); err != nil {
+	if err := managedconfig.ResolveForOutput(tcData, items); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +101,7 @@ func GetPublicInfo() (map[string]interface{}, error) {
 		"private_site":              cst.PrivateSite,
 		"visitor_audit_enabled":     cst.VisitorAuditEnabled,
 		"theme":                     cst.Theme,
-		"theme_settings":            tc_data,
+		"theme_settings":            tcData,
 	}, nil
 }
 

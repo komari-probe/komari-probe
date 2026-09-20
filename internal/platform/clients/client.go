@@ -22,7 +22,7 @@ func DeleteClient(clientUuid string) error {
 	return nil
 }
 
-func SaveClientInfo(update map[string]interface{}) error {
+func SaveClientInfo(update map[string]any) error {
 	db := dbcore.GetDBInstance()
 	clientUUID, ok := update["uuid"].(string)
 	if !ok || clientUUID == "" {
@@ -36,7 +36,7 @@ func SaveClientInfo(update map[string]interface{}) error {
 
 	update["updated_at"] = time.Now().UTC()
 
-	toFloat64 := func(value interface{}) (float64, bool) {
+	toFloat64 := func(value any) (float64, bool) {
 		switch typed := value.(type) {
 		case float64:
 			return typed, true
@@ -89,7 +89,7 @@ func SaveClientInfo(update map[string]interface{}) error {
 		return nil
 	}
 
-	verify := func(update map[string]interface{}) error {
+	verify := func(update map[string]any) error {
 		if err := checkOptionalInt("Cpu.Cores", "cpu_cores", math.MaxInt-1); err != nil {
 			return err
 		}
@@ -162,18 +162,6 @@ func CreateClientWithName(name string) (clientUUID, token string, err error) {
 	return clientUUID, token, nil
 }
 
-/*
-// GetAllClients 获取所有客户端配置
-
-	func getAllClients() (clients []models.Client, err error) {
-		db := dbcore.GetDBInstance()
-		err = db.Find(&clients).Error
-		if err != nil {
-			return nil, err
-		}
-		return clients, nil
-	}
-*/
 func GetClientByUUID(uuid string) (client models.Client, err error) {
 	db := dbcore.GetDBInstance()
 	err = db.Where("uuid = ?", uuid).First(&client).Error
@@ -202,7 +190,7 @@ func GetAllClientBasicInfo() (clients []models.Client, err error) {
 	return clients, nil
 }
 
-func SaveClient(updates map[string]interface{}) error {
+func SaveClient(updates map[string]any) error {
 	db := dbcore.GetDBInstance()
 	clientUUID, ok := updates["uuid"].(string)
 	if !ok || clientUUID == "" {
