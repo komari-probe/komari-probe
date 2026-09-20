@@ -1,56 +1,36 @@
 package mask
 
-import (
-	"strings"
-)
+import "strings"
 
+// maskText 是敏感片段被替换后的占位符文本。
+const maskText = "********"
+
+// DataMasking 将 str 中出现的每一个 private 敏感串替换为占位符。
+// private 里的值是调用方已知的精确字符串（如 OAuth client secret/id），
+// 因此这里做精确子串匹配即可，不需要模糊匹配。
+// 连续被遮蔽的片段长度超过 5 时保留首尾字符方便定位，否则整段替换。
 func DataMasking(str string, private []string) string {
 	if str == "" || len(private) == 0 {
 		return str
 	}
-	mask := "********"
 
-	// 相似度阈值，可根据需要调节（0~1，越大越严格）
-	const threshold = 0.8
+	words := uniqueNonEmpty(private)
+	if len(words) == 0 {
+		return str
+	}
 
 	runes := []rune(str)
 	n := len(runes)
 	toMask := make([]bool, n)
 
-	// 预处理 private 中的词，去掉空、重复
-	uniq := make(map[string]struct{})
-	var words []string
-	for _, w := range private {
-		w = strings.TrimSpace(w)
-		if w == "" {
-			continue
-		}
-		if _, ok := uniq[w]; ok {
-			continue
-		}
-		uniq[w] = struct{}{}
-		words = append(words, w)
-	}
-	if len(words) == 0 {
-		return str
-	}
-
-	// 逐词进行滑动窗口匹配 + 模糊匹配（Levenshtein 相似度）
 	for _, w := range words {
 		wRunes := []rune(w)
 		wl := len(wRunes)
 		if wl == 0 || wl > n {
 			continue
 		}
-
-		// 滑动窗口大小采用敏感词长度
 		for i := 0; i <= n-wl; i++ {
-			if allMasked(toMask[i : i+wl]) { // 已全被标记则跳过
-				continue
-			}
-			sub := string(runes[i : i+wl])
-			sim := similarity(sub, w)
-			if sim >= threshold {
+			if string(runes[i:i+wl]) == w {
 				for k := 0; k < wl; k++ {
 					toMask[i+k] = true
 				}
@@ -58,88 +38,44 @@ func DataMasking(str string, private []string) string {
 		}
 	}
 
-	// 构造输出：连续的掩码段只输出一次；如果原始被遮蔽长度>5，展示首尾字符
 	var b strings.Builder
 	i := 0
 	for i < n {
-		if toMask[i] {
-			start := i
-			for i < n && toMask[i] {
-				i++
-			}
-			end := i // 不包含
-			segLen := end - start
-			if segLen > 5 {
-				b.WriteRune(runes[start])
-				b.WriteString(mask)
-				b.WriteRune(runes[end-1])
-			} else {
-				b.WriteString(mask)
-			}
-		} else {
+		if !toMask[i] {
 			b.WriteRune(runes[i])
 			i++
+			continue
+		}
+		start := i
+		for i < n && toMask[i] {
+			i++
+		}
+		end := i // 不包含
+		if end-start > 5 {
+			b.WriteRune(runes[start])
+			b.WriteString(maskText)
+			b.WriteRune(runes[end-1])
+		} else {
+			b.WriteString(maskText)
 		}
 	}
 	return b.String()
 }
 
-// allMasked 判断一个区间是否全部已经被标记
-func allMasked(bools []bool) bool {
-	for _, v := range bools {
-		if !v {
-			return false
+// uniqueNonEmpty 去掉 values 中的空白项和重复项，并裁剪首尾空白。
+func uniqueNonEmpty(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, v := range values {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
 		}
-	}
-	return true
-}
-
-// similarity 返回两个字符串的相似度 (0~1)，基于 Levenshtein 距离
-func similarity(a, b string) float64 {
-	if a == b {
-		return 1
-	}
-	ar := []rune(a)
-	br := []rune(b)
-	dist := levenshtein(ar, br)
-	maxLen := len(ar)
-	if len(br) > maxLen {
-		maxLen = len(br)
-	}
-	if maxLen == 0 {
-		return 1
-	}
-	return 1 - float64(dist)/float64(maxLen)
-}
-
-// levenshtein 计算两个 rune slice 的编辑距离
-func levenshtein(a, b []rune) int {
-	la, lb := len(a), len(b)
-	if la == 0 {
-		return lb
-	}
-	if lb == 0 {
-		return la
-	}
-	// 使用滚动数组降低空间复杂度
-	prev := make([]int, lb+1)
-	curr := make([]int, lb+1)
-	for j := 0; j <= lb; j++ {
-		prev[j] = j
-	}
-	for i := 1; i <= la; i++ {
-		curr[0] = i
-		for j := 1; j <= lb; j++ {
-			cost := 0
-			if a[i-1] != b[j-1] {
-				cost = 1
-			}
-			del := prev[j] + 1
-			ins := curr[j-1] + 1
-			sub := prev[j-1] + cost
-			curr[j] = min(del, ins, sub)
+		if _, ok := seen[v]; ok {
+			continue
 		}
-		prev, curr = curr, prev
+		seen[v] = struct{}{}
+		result = append(result, v)
 	}
-	return prev[lb]
+	return result
 }
