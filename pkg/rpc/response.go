@@ -1,5 +1,7 @@
 package rpc
 
+const RPC_VERSION = "2.0"
+
 // JsonRpcResponse JSON-RPC 2.0 响应
 // 成功时包含 result，失败时包含 error；二者互斥。
 // 在 Notification 情况下服务器不会发送任何响应。
