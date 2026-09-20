@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Func 是 corn 调度器执行的任务函数。
+// Func 是 cron 调度器执行的任务函数。
 // 调度器会为每次执行传入可取消的 context，便于任务在重载或关闭时尽快退出。
 type Func func(ctx context.Context)
 
@@ -106,14 +106,14 @@ func (m *Manager) AddFunc(name string, spec string, fn func()) error {
 
 func (m *Manager) AddContextFunc(name string, spec string, runImmediately bool, fn Func) error {
 	if name == "" {
-		return fmt.Errorf("corn job name is empty")
+		return fmt.Errorf("cron job name is empty")
 	}
 	s, err := Parse(spec)
 	if err != nil {
-		return fmt.Errorf("corn job %q spec is invalid: %w", name, err)
+		return fmt.Errorf("cron job %q spec is invalid: %w", name, err)
 	}
 	if fn == nil {
-		return fmt.Errorf("corn job %q func is nil", name)
+		return fmt.Errorf("cron job %q func is nil", name)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -172,7 +172,7 @@ func (m *Manager) run(ctx context.Context, name string, s schedule, runImmediate
 
 	nextTick := s.Next(time.Now())
 	if nextTick.IsZero() {
-		logger.Warnf("scheduler", "corn job %s has no next run time", name)
+		logger.Warnf("scheduler", "cron job %s has no next run time", name)
 		return
 	}
 	timer := time.NewTimer(time.Until(nextTick))
@@ -203,7 +203,7 @@ func resetTimer(timer *time.Timer, duration time.Duration) {
 func safeRun(ctx context.Context, name string, fn Func) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Errorf("scheduler", "corn job %s panic: %v", name, r)
+			logger.Errorf("scheduler", "cron job %s panic: %v", name, r)
 		}
 	}()
 
@@ -215,7 +215,7 @@ func safeRun(ctx context.Context, name string, fn Func) {
 	}
 }
 
-// Parse 解析 corn 表达式。
+// Parse 解析 cron 表达式。
 // 支持：
 //   - 5 字段：minute hour day-of-month month day-of-week
 //   - 6 字段：second minute hour day-of-month month day-of-week

@@ -167,13 +167,13 @@ func aggregateValue(points []Point, agg Aggregation) (float64, error) {
 	case AggMin:
 		v := points[0].Value
 		for _, p := range points[1:] {
-			v = math.Min(v, p.Value)
+			v = min(v, p.Value)
 		}
 		return v, nil
 	case AggMax:
 		v := points[0].Value
 		for _, p := range points[1:] {
-			v = math.Max(v, p.Value)
+			v = max(v, p.Value)
 		}
 		return v, nil
 	case AggSum:

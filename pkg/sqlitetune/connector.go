@@ -49,12 +49,12 @@ func Open(dsn string, options Options) (*sql.DB, error) {
 		return nil, err
 	}
 
-	driver := &sqlite3.SQLiteDriver{
+	sqliteDriver := &sqlite3.SQLiteDriver{
 		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
 			return applyDriverConn(conn, options)
 		},
 	}
-	return sql.OpenDB(&connector{driver: driver, dsn: dsn}), nil
+	return sql.OpenDB(&connector{driver: sqliteDriver, dsn: dsn}), nil
 }
 
 // Apply configures one physical connection from a caller-owned pool. Future

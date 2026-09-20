@@ -495,7 +495,7 @@ func IsChangedT[T any](e ConfigEvent, key string) (bool, T) {
 	}
 
 	// Try reflection-based conversion (covers numeric conversions, etc.).
-	targetType := reflect.TypeOf((*T)(nil)).Elem()
+	targetType := reflect.TypeFor[T]()
 	v := reflect.ValueOf(val)
 	if v.IsValid() {
 		if v.Type().AssignableTo(targetType) {

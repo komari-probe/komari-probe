@@ -130,7 +130,7 @@ func (sc *SafeConn) WriteMessage(messageType int, data []byte) error {
 
 // WriteJSON encodes v then sends it as one text frame through the wsSend
 // hook chain.
-func (sc *SafeConn) WriteJSON(v interface{}) error {
+func (sc *SafeConn) WriteJSON(v any) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(v); err != nil {
 		return err
@@ -154,7 +154,7 @@ func (sc *SafeConn) ReadMessage() (int, []byte, error) {
 	return sc.readFrame()
 }
 
-func (sc *SafeConn) ReadJSON(v interface{}) error {
+func (sc *SafeConn) ReadJSON(v any) error {
 	_, data, err := sc.readFrame()
 	if err != nil {
 		return err

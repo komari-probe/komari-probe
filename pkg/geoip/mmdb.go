@@ -1,9 +1,11 @@
 package geoip // 与 geoip.go 保持相同的包名，表示它们是同一个包的组成部分
 
 import (
+	"errors"
 	"fmt"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -58,7 +60,7 @@ func NewMaxMindGeoIPService() (*MaxMindGeoIPService, error) {
 	}
 
 	// 检查数据库文件是否存在，如果不存在则尝试下载
-	if _, err := os.Stat(dbFilePath); os.IsNotExist(err) {
+	if _, err := os.Stat(dbFilePath); errors.Is(err, fs.ErrNotExist) {
 		if err := service.UpdateDatabase(); err != nil {
 			return nil, fmt.Errorf("failed to download initial MaxMind database: %w", err)
 		}
@@ -128,7 +130,18 @@ func (s *MaxMindGeoIPService) GetGeoInfo(ip net.IP) (*GeoInfo, error) {
 // UpdateDatabase 实现了 GeoIPService 接口的 UpdateDatabase 方法。
 // 它会下载最新的 GeoLite2-Country.mmdb 文件并重新加载数据库。
 func (s *MaxMindGeoIPService) UpdateDatabase() error {
+	if err := s.downloadDatabase(); err != nil {
+		return err
+	}
+	// initialize 自己获取锁，必须在 downloadDatabase 释放锁之后调用，以避免死锁。
+	return s.initialize()
+}
+
+// downloadDatabase 下载最新的 MaxMind 数据库文件并写入本地磁盘。
+// 用 defer 释放锁，确保下载或写盘失败时不会让锁永久保持锁定状态。
+func (s *MaxMindGeoIPService) downloadDatabase() error {
 	s.mu.Lock() // 获取写锁，确保更新过程的互斥性
+	defer s.mu.Unlock()
 
 	resp, err := http.Get(GeoIpUrl) // GeoIpUrl 是预定义的 MaxMind 数据库下载地址
 	if err != nil {
@@ -155,9 +168,7 @@ func (s *MaxMindGeoIPService) UpdateDatabase() error {
 	if err != nil {
 		return fmt.Errorf("failed to write MaxMind database file: %w", err)
 	}
-	s.mu.Unlock() // initialize 方法需要在解锁后调用，以避免死锁
-	// 重新加载数据库以使用新下载的文件
-	return s.initialize()
+	return nil
 }
 
 // Close 实现了 GeoIPService 接口的 Close 方法。

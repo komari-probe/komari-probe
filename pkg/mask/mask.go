@@ -137,19 +137,9 @@ func levenshtein(a, b []rune) int {
 			del := prev[j] + 1
 			ins := curr[j-1] + 1
 			sub := prev[j-1] + cost
-			curr[j] = minInt(del, ins, sub)
+			curr[j] = min(del, ins, sub)
 		}
 		prev, curr = curr, prev
 	}
 	return prev[lb]
-}
-
-func minInt(vals ...int) int {
-	m := vals[0]
-	for _, v := range vals[1:] {
-		if v < m {
-			m = v
-		}
-	}
-	return m
 }
