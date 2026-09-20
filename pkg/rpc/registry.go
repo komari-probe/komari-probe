@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -76,4 +77,30 @@ func ListMethods() []string {
 		res = append(res, k)
 	}
 	return res
+}
+
+// listMethods 返回方法列表；includeInternal=false 时剔除 rpc.*
+func listMethods(includeInternal bool) []string {
+	all := ListMethods()
+	out := make([]string, 0, len(all))
+	for _, m := range all {
+		if !includeInternal && strings.HasPrefix(m, "rpc.") {
+			continue
+		}
+		out = append(out, m)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// lookupHandler returns the registered handler for method, or a MethodNotFound
+// error.
+func lookupHandler(method string) (Handler, *JsonRpcError) {
+	muHandlers.RLock()
+	h, ok := handlers[method]
+	muHandlers.RUnlock()
+	if !ok {
+		return nil, &JsonRpcError{Code: MethodNotFound, Message: "method not found", Data: method}
+	}
+	return h, nil
 }

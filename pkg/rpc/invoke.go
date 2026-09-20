@@ -2,18 +2,6 @@ package rpc
 
 import "context"
 
-// lookupHandler returns the registered handler for method, or a MethodNotFound
-// error.
-func lookupHandler(method string) (Handler, *JsonRpcError) {
-	muHandlers.RLock()
-	h, ok := handlers[method]
-	muHandlers.RUnlock()
-	if !ok {
-		return nil, &JsonRpcError{Code: MethodNotFound, Message: "method not found", Data: method}
-	}
-	return h, nil
-}
-
 // Invoke 便捷调用：构造请求并执行已注册方法，返回 result 或 *JsonRpcError。
 // 不生成 JsonRpcResponse。
 //

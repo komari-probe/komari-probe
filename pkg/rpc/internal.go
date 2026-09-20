@@ -5,7 +5,6 @@ package rpc
 
 import (
 	"context"
-	"sort"
 	"strings"
 )
 
@@ -20,20 +19,6 @@ func registerInternal(method string, h Handler) {
 		handlers[method] = h
 	}
 	muHandlers.Unlock()
-}
-
-// listMethods 返回方法列表；includeInternal=false 时剔除 rpc.*
-func listMethods(includeInternal bool) []string {
-	all := ListMethods()
-	out := make([]string, 0, len(all))
-	for _, m := range all {
-		if !includeInternal && strings.HasPrefix(m, "rpc.") {
-			continue
-		}
-		out = append(out, m)
-	}
-	sort.Strings(out)
-	return out
 }
 
 func init() {
