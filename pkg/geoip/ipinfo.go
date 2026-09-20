@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"time"
 )
 
 // IPInfoService 使用 ipinfo.io 服务实现 GeoIPService 接口。
 type IPInfoService struct {
+	noopLifecycle
 	Client *http.Client
 	// 每天 1000 次请求，限制由 IP 地址的所有人共享。
 	// APIToken string
@@ -31,9 +31,7 @@ type ipInfoResponse struct {
 // NewIPInfoService 创建并返回一个 IPInfoService 的新实例。
 func NewIPInfoService() (*IPInfoService, error) {
 	return &IPInfoService{
-		Client: &http.Client{
-			Timeout: 5 * time.Second,
-		},
+		Client: &http.Client{Timeout: httpProviderTimeout},
 	}, nil
 }
 
@@ -70,16 +68,4 @@ func (s *IPInfoService) GetGeoInfo(ip net.IP) (*GeoInfo, error) {
 		ISOCode: apiResp.Country, // IPinfo 的 'country' 字段就是 ISO 2-letter code
 		Name:    apiResp.Country, // 免费额度通常只提供 ISO 编码，这里暂时用 ISO 编码作为名称
 	}, nil
-}
-
-// UpdateDatabase 对于 ipinfo.io 是一个空操作，因为它是一个 Web 服务。
-func (s *IPInfoService) UpdateDatabase() error {
-	// 无需执行任何操作，因为数据由外部服务提供
-	return nil
-}
-
-// Close 对于 ipinfo.io 是一个空操作，因为没有需要关闭的持久连接。
-func (s *IPInfoService) Close() error {
-	// 无需执行任何操作
-	return nil
 }

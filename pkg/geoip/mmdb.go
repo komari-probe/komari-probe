@@ -16,11 +16,11 @@ import (
 	"github.com/oschwald/maxminddb-golang"
 )
 
-// GeoIpUrl 是 MaxMind 数据库的下载地址。
-var GeoIpUrl = "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country.mmdb"
+// GeoIPURL 是 MaxMind 数据库的下载地址。
+var GeoIPURL = "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country.mmdb"
 
-// GeoIpFilePath 是本地存储 MaxMind 数据库的路径。
-var GeoIpFilePath = "./data/GeoLite2-Country.mmdb"
+// GeoIPFilePath 是本地存储 MaxMind 数据库的路径。
+var GeoIPFilePath = "./data/GeoLite2-Country.mmdb"
 
 // geoIPDownloadTimeout 限制数据库下载耗时。downloadDatabase 在持有写锁期间同步
 // 执行这次下载，远端卡住时如果不设超时会让锁无限期无法释放，导致所有查询挂起。
@@ -29,9 +29,9 @@ var geoIPDownloadTimeout = 60 * time.Second
 // geoIPDownloadClient 是下载 MaxMind 数据库专用的 HTTP 客户端。
 var geoIPDownloadClient = &http.Client{Timeout: geoIPDownloadTimeout}
 
-// GeoIpRecord 结构体定义了 MaxMind 数据库查询结果的原始结构。
+// GeoIPRecord 结构体定义了 MaxMind 数据库查询结果的原始结构。
 // 它是 MaxMind 库特有的，用于从 .mmdb 文件中解析数据。
-type GeoIpRecord struct {
+type GeoIPRecord struct {
 	Country struct {
 		ISOCode string            `maxminddb:"iso_code"`
 		Names   map[string]string `maxminddb:"names"`
@@ -57,7 +57,7 @@ func (s *MaxMindGeoIPService) Name() string {
 // NewMaxMindGeoIPService 创建并返回一个 MaxMindGeoIPService 实例。
 // 它负责初始化服务，包括尝试加载或下载数据库。
 func NewMaxMindGeoIPService() (*MaxMindGeoIPService, error) {
-	dbFilePath := GeoIpFilePath
+	dbFilePath := GeoIPFilePath
 	service := &MaxMindGeoIPService{
 		dbFilePath: dbFilePath,
 	}
@@ -104,7 +104,7 @@ func (s *MaxMindGeoIPService) initialize() error {
 }
 
 // GetGeoInfo 根据 IP 地址获取 MaxMind 的地理位置信息。
-// 它查询 MaxMind 数据库并将其特有的 GeoIpRecord 转换为通用的 GeoInfo 结构体。
+// 它查询 MaxMind 数据库并将其特有的 GeoIPRecord 转换为通用的 GeoInfo 结构体。
 func (s *MaxMindGeoIPService) GetGeoInfo(ip net.IP) (*GeoInfo, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -116,7 +116,7 @@ func (s *MaxMindGeoIPService) GetGeoInfo(ip net.IP) (*GeoInfo, error) {
 		return nil, fmt.Errorf("IP address cannot be nil")
 	}
 
-	var record GeoIpRecord // 使用原始的 GeoIpRecord 结构体来接收查询结果
+	var record GeoIPRecord // 使用原始的 GeoIPRecord 结构体来接收查询结果
 	err := s.maxMindDBReader.Lookup(ip, &record)
 	if err != nil {
 		// 返回错误，但避免直接返回 maxminddb 库的内部错误，提供更友好的信息
@@ -151,7 +151,7 @@ func (s *MaxMindGeoIPService) downloadDatabase() error {
 	s.mu.Lock() // 获取写锁，确保更新过程的互斥性
 	defer s.mu.Unlock()
 
-	resp, err := geoIPDownloadClient.Get(GeoIpUrl) // GeoIpUrl 是预定义的 MaxMind 数据库下载地址
+	resp, err := geoIPDownloadClient.Get(GeoIPURL) // GeoIPURL 是预定义的 MaxMind 数据库下载地址
 	if err != nil {
 		return fmt.Errorf("failed to initiate MaxMind database download: %w", err)
 	}

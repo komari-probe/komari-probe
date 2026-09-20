@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"time"
 )
 
 // GeoJSService 使用 geojs.io 服务实现 GeoIPService 接口。
 type GeoJSService struct {
+	noopLifecycle
 	Client *http.Client
 }
 
@@ -26,9 +26,7 @@ type geoJSResponse struct {
 // NewGeoJSService 创建并返回一个 GeoJSService 的新实例。
 func NewGeoJSService() (*GeoJSService, error) {
 	return &GeoJSService{
-		Client: &http.Client{
-			Timeout: 5 * time.Second, // 设置一个合理的超时时间
-		},
+		Client: &http.Client{Timeout: httpProviderTimeout},
 	}, nil
 }
 
@@ -67,14 +65,4 @@ func (s *GeoJSService) GetGeoInfo(ip net.IP) (*GeoInfo, error) {
 		ISOCode: apiResp.CountryCode,
 		Name:    apiResp.Country,
 	}, nil
-}
-
-// UpdateDatabase 对于 geojs.io 是一个空操作，因为它是一个 Web 服务。
-func (s *GeoJSService) UpdateDatabase() error {
-	return nil
-}
-
-// Close 对于 geojs.io 是一个空操作。
-func (s *GeoJSService) Close() error {
-	return nil
 }
