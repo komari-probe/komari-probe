@@ -60,7 +60,7 @@ func Dispatch(ctx context.Context, meta *rpc.ContextMeta, req *rpc.JsonRpcReques
 
 // OnInternalRequest 内部调用 RPC 方法（如服务端代码代发请求），仅携带权限分组。
 // group: 调用者权限分组 (guest/client/admin)；method: "namespace:method"；params: 参数。
-func OnInternalRequest(ctx context.Context, group string, method string, params interface{}) *rpc.JsonRpcResponse {
+func OnInternalRequest(ctx context.Context, group string, method string, params any) *rpc.JsonRpcResponse {
 	meta := &rpc.ContextMeta{Permission: group}
 	req := &rpc.JsonRpcRequest{Version: rpc.RPC_VERSION, Method: method, Params: params}
 	return Dispatch(ctx, meta, req)

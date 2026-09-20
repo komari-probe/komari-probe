@@ -69,7 +69,7 @@ var metricStoreConfigKeys = map[string]struct{}{
 }
 
 // metricKeysTouched 判断本次设置变更是否涉及 metrics 数据库相关键。
-func metricKeysTouched(cfg map[string]interface{}) bool {
+func metricKeysTouched(cfg map[string]any) bool {
 	for key := range cfg {
 		if _, ok := metricStoreConfigKeys[key]; ok {
 			return true
@@ -79,7 +79,7 @@ func metricKeysTouched(cfg map[string]interface{}) bool {
 }
 
 func adminEditSettings(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	cfg := make(map[string]interface{})
+	cfg := make(map[string]any)
 	if err := req.BindParams(&cfg); err != nil {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid or missing request body: "+err.Error(), nil)
 	}
@@ -146,7 +146,7 @@ func adminEditSettings(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 	return nil, nil
 }
 
-func auditSettingsUpdate(ctx context.Context, cfg map[string]interface{}) {
+func auditSettingsUpdate(ctx context.Context, cfg map[string]any) {
 	message := "update settings: "
 	for key := range cfg {
 		message += key + ", "
@@ -160,13 +160,13 @@ func auditSettingsUpdate(ctx context.Context, cfg map[string]interface{}) {
 
 // removeRetiredLowResourceMode keeps older admin clients from recreating its
 // config row after the startup migration removes it.
-func removeRetiredLowResourceMode(cfg map[string]interface{}) {
+func removeRetiredLowResourceMode(cfg map[string]any) {
 	delete(cfg, "low_resource_mode")
 }
 
 // mergedMetricConfig 读取当前持久化的 metric store 配置，并把本次请求中涉及的
 // metrics 相关键覆盖上去，得到「即将生效」的目标配置，用于落库前的连接测试。
-func mergedMetricConfig(cfg map[string]interface{}) (*metricstore.MetricStoreConfig, error) {
+func mergedMetricConfig(cfg map[string]any) (*metricstore.MetricStoreConfig, error) {
 	merged, err := config.GetManyAs[metricstore.MetricStoreConfig]()
 	if err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func mergedMetricConfig(cfg map[string]interface{}) (*metricstore.MetricStoreCon
 	return merged, nil
 }
 
-func validateMetricRollupSettingChanges(cfg map[string]interface{}) error {
+func validateMetricRollupSettingChanges(cfg map[string]any) error {
 	keys := []string{
 		metricstore.MetricRollupMinuteRetentionMinutesKey,
 		metricstore.MetricRollupFiveMinuteRetentionMinutesKey,

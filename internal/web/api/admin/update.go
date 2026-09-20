@@ -1,7 +1,9 @@
 package admin
 
 import (
+	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"strings"
@@ -48,7 +50,7 @@ func UploadFavicon(c *gin.Context) {
 
 func DeleteFavicon(c *gin.Context) {
 	if err := os.Remove("./data/favicon.ico"); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			api.RespondError(c, http.StatusNotFound, "Favicon not found")
 		} else {
 			api.RespondError(c, http.StatusInternalServerError, "Failed to delete favicon: "+err.Error())

@@ -268,7 +268,7 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 		}
 	}
 
-	series := make([]publicMetricSeries, 0, len(metricKeys)*maxInt(1, len(entityIDs)))
+	series := make([]publicMetricSeries, 0, len(metricKeys)*max(1, len(entityIDs)))
 	for _, spec := range loadSpecs {
 		def := definitions[spec.metricKey]
 		item := publicMetricSeries{
@@ -1112,11 +1112,4 @@ func metricDownsampleInterval(rangeDuration time.Duration, maxPoints int) time.D
 		return time.Second
 	}
 	return tsdb.CeilStandardInterval(interval)
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
