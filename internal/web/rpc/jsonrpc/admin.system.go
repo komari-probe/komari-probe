@@ -124,7 +124,7 @@ func adminExec(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcE
 	if len(onlineClients) == 0 && len(queuedClients) == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "No clients connected", nil)
 	}
-	taskId := random.GenerateRandomString(16)
+	taskId := random.String(16)
 	taskClients := append(append([]string{}, onlineClients...), queuedClients...)
 	taskClients = append(taskClients, offlineClients...)
 	if err := tasks.CreateTask(taskId, taskClients, params.Command); err != nil {

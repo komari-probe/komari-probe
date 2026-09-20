@@ -28,7 +28,7 @@ func RegisterClient(c *gin.Context) {
 	}
 	name := c.Query("name")
 	if name == "" {
-		name = random.GenerateRandomString(8)
+		name = random.String(8)
 	}
 	name = "Auto-" + name
 	uuid, token, err := clients.CreateClientWithName(name)

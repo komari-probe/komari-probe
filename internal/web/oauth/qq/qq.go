@@ -23,7 +23,7 @@ func (q *QQ) GetConfiguration() factory.Configuration {
 }
 
 func (q *QQ) GetAuthorizationURL(redirectURI string) (string, string) {
-	state := random.GenerateRandomString(16)
+	state := random.String(16)
 
 	// 构建请求QQ聚合登录平台的URL
 	requestURL := fmt.Sprintf(

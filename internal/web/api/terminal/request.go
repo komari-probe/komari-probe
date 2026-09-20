@@ -86,7 +86,7 @@ func RequestTerminal(c *gin.Context) {
 	}
 
 	// 新建一个终端连接
-	id = random.GenerateRandomString(32)
+	id = random.String(32)
 	session := &TerminalSession{
 		UserUUID:    userID,
 		UUID:        uuid,

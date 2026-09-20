@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 )
 
-func GenerateRandomString(length int) string {
+func String(length int) string {
 	if length <= 0 {
 		return ""
 	}
@@ -30,6 +30,6 @@ func GenerateRandomString(length int) string {
 	return string(out)
 }
 
-func GenerateToken() string {
-	return GenerateRandomString(22)
+func Token() string {
+	return String(22)
 }

@@ -28,7 +28,7 @@ func GetAllSessions() (sessions []models.Session, err error) {
 // CreateSession 创建新会话
 func CreateSession(uuid string, expires int, userAgent, ip, login_method string) (string, error) {
 	db := dbcore.GetDBInstance()
-	session := random.GenerateRandomString(32)
+	session := random.String(32)
 
 	sessionRecord := models.Session{
 		UUID:         uuid,

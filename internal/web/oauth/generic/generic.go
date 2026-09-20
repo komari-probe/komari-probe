@@ -23,7 +23,7 @@ func (g *Generic) GetConfiguration() factory.Configuration {
 }
 
 func (g *Generic) GetAuthorizationURL(redirectURI string) (string, string) {
-	state := random.GenerateRandomString(16)
+	state := random.String(16)
 
 	// 构建GitHub OAuth授权URL
 	authURL := fmt.Sprintf(

@@ -26,7 +26,7 @@ func (g *Github) GetConfiguration() factory.Configuration {
 }
 
 func (g *Github) GetAuthorizationURL(_ string) (string, string) {
-	state := random.GenerateRandomString(16)
+	state := random.String(16)
 
 	// 构建GitHub OAuth授权URL
 	authURL := fmt.Sprintf(
