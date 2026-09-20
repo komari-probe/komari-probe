@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath" // 新增导入，用于处理文件路径
 	"sync"
+	"time"
 
 	"github.com/oschwald/maxminddb-golang"
 )
@@ -20,6 +21,13 @@ var GeoIpUrl = "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Geo
 
 // GeoIpFilePath 是本地存储 MaxMind 数据库的路径。
 var GeoIpFilePath = "./data/GeoLite2-Country.mmdb"
+
+// geoIPDownloadTimeout 限制数据库下载耗时。downloadDatabase 在持有写锁期间同步
+// 执行这次下载，远端卡住时如果不设超时会让锁无限期无法释放，导致所有查询挂起。
+var geoIPDownloadTimeout = 60 * time.Second
+
+// geoIPDownloadClient 是下载 MaxMind 数据库专用的 HTTP 客户端。
+var geoIPDownloadClient = &http.Client{Timeout: geoIPDownloadTimeout}
 
 // GeoIpRecord 结构体定义了 MaxMind 数据库查询结果的原始结构。
 // 它是 MaxMind 库特有的，用于从 .mmdb 文件中解析数据。
@@ -143,7 +151,7 @@ func (s *MaxMindGeoIPService) downloadDatabase() error {
 	s.mu.Lock() // 获取写锁，确保更新过程的互斥性
 	defer s.mu.Unlock()
 
-	resp, err := http.Get(GeoIpUrl) // GeoIpUrl 是预定义的 MaxMind 数据库下载地址
+	resp, err := geoIPDownloadClient.Get(GeoIpUrl) // GeoIpUrl 是预定义的 MaxMind 数据库下载地址
 	if err != nil {
 		return fmt.Errorf("failed to initiate MaxMind database download: %w", err)
 	}
