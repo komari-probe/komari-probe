@@ -1,4 +1,4 @@
-package admin
+package theme
 
 import (
 	"archive/zip"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/platform/market"
 )
 
 // TestIsValidThemeShort_PathTraversal 防止 DeleteTheme/UpdateTheme/SetTheme
@@ -32,8 +33,8 @@ func TestIsValidThemeShort_PathTraversal(t *testing.T) {
 		"a$(id)",
 	}
 	for _, in := range deny {
-		if isValidMarketShort(in) {
-			t.Errorf("isValidMarketShort(%q) = true, want false (路径穿越/非法字符未被拦截)", in)
+		if market.IsValidShort(in) {
+			t.Errorf("market.IsValidShort(%q) = true, want false (路径穿越/非法字符未被拦截)", in)
 		}
 	}
 
@@ -47,8 +48,8 @@ func TestIsValidThemeShort_PathTraversal(t *testing.T) {
 		"a",
 	}
 	for _, in := range accept {
-		if !isValidMarketShort(in) {
-			t.Errorf("isValidMarketShort(%q) = false, want true (合法名称被误拒)", in)
+		if !market.IsValidShort(in) {
+			t.Errorf("market.IsValidShort(%q) = false, want true (合法名称被误拒)", in)
 		}
 	}
 }
@@ -123,11 +124,26 @@ func TestPeekThemeFromZipAcceptsLocalizedMetadata(t *testing.T) {
 		_ = os.Chdir(workDir)
 	})
 
-	installed, err := extractAndValidateTheme(zipPath)
+	installed, err := InstallZip(zipPath)
 	if err != nil {
 		t.Fatalf("localized theme upload package was rejected: %v", err)
 	}
 	if installed.Short != "localized-theme" {
 		t.Fatalf("installed short = %q, want localized-theme", installed.Short)
+	}
+}
+
+func TestValidateThemeArchiveLimits(t *testing.T) {
+	files := make([]*zip.File, maxThemeArchiveFiles+1)
+	for i := range files {
+		files[i] = &zip.File{}
+	}
+	if err := validateThemeArchive(files); err == nil {
+		t.Fatal("validateThemeArchive() accepted too many files")
+	}
+
+	large := &zip.File{FileHeader: zip.FileHeader{UncompressedSize64: maxThemeFileSize + 1}}
+	if err := validateThemeArchive([]*zip.File{large}); err == nil {
+		t.Fatal("validateThemeArchive() accepted an oversized file")
 	}
 }

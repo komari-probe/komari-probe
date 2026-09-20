@@ -1,4 +1,4 @@
-package admin
+package router
 
 import (
 	"fmt"
@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/komari-monitor/komari/internal/features/backup"
+	"github.com/komari-monitor/komari/internal/features/theme"
+	"github.com/komari-monitor/komari/internal/platform/upload"
 	"github.com/komari-monitor/komari/internal/plugin"
-	"github.com/komari-monitor/komari/internal/web/backup"
-	"github.com/komari-monitor/komari/internal/web/upload"
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
@@ -62,7 +63,7 @@ func finalizePluginUpload(session upload.Session) (upload.Result, error) {
 }
 
 func finalizeThemeUpload(session upload.Session) (upload.Result, error) {
-	info, err := extractAndValidateTheme(session.ArchivePath)
+	info, err := theme.InstallZip(session.ArchivePath)
 	if err != nil {
 		return upload.Result{}, err
 	}

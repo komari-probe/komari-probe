@@ -1,7 +1,6 @@
-package admin
+package theme
 
 import (
-	"archive/zip"
 	"testing"
 )
 
@@ -20,21 +19,6 @@ func TestParseThemeMarketCatalogShapes(t *testing.T) {
 		if len(themes) != 1 || themes[0].Short != "Test" {
 			t.Fatalf("parseThemeMarketCatalog() = %#v", themes)
 		}
-	}
-}
-
-func TestValidateThemeArchiveLimits(t *testing.T) {
-	files := make([]*zip.File, maxThemeArchiveFiles+1)
-	for i := range files {
-		files[i] = &zip.File{}
-	}
-	if err := validateThemeArchive(files); err == nil {
-		t.Fatal("validateThemeArchive() accepted too many files")
-	}
-
-	large := &zip.File{FileHeader: zip.FileHeader{UncompressedSize64: maxThemeFileSize + 1}}
-	if err := validateThemeArchive([]*zip.File{large}); err == nil {
-		t.Fatal("validateThemeArchive() accepted an oversized file")
 	}
 }
 

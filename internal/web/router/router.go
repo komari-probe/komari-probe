@@ -2,6 +2,8 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/komari-monitor/komari/internal/features/backup"
+	"github.com/komari-monitor/komari/internal/features/theme"
 	"github.com/komari-monitor/komari/internal/web/api"
 	"github.com/komari-monitor/komari/internal/web/api/admin"
 	"github.com/komari-monitor/komari/internal/web/api/client"
@@ -75,8 +77,8 @@ func registerAdminRoutes(r *gin.Engine) {
 	admin.RegisterPprofRoutes(g)
 
 	// --- 二进制/流/重定向类，保留 REST handler ---
-	g.GET("/download/backup", admin.DownloadBackup)
-	uploadHandler := admin.NewArchiveUploadHandler()
+	backup.RegisterRoutes(g)
+	uploadHandler := NewArchiveUploadHandler()
 	uploadGroup := g.Group("/upload")
 	{
 		uploadGroup.POST("/init", uploadHandler.Init)
@@ -92,21 +94,7 @@ func registerAdminRoutes(r *gin.Engine) {
 	g.POST("/update/favicon", admin.DeleteFavicon)
 
 	// theme 的安装流程通过统一的分片上传接口；其余主题接口保留 REST handler。
-	theme := g.Group("/theme")
-	{
-		theme.GET("/list", admin.ListThemes)
-		theme.POST("/delete", admin.DeleteTheme)
-		theme.GET("/set", admin.SetTheme)
-		theme.POST("/update", admin.UpdateTheme)
-		theme.POST("/import", admin.ImportTheme)
-		theme.POST("/settings", admin.UpdateThemeSettings)
-		theme.GET("/market/sources", admin.ListThemeMarketSources)
-		theme.POST("/market/sources", admin.CreateThemeMarketSource)
-		theme.PUT("/market/sources/:id", admin.UpdateThemeMarketSource)
-		theme.DELETE("/market/sources/:id", admin.DeleteThemeMarketSource)
-		theme.GET("/market/catalog", admin.ListThemeMarketCatalog)
-		theme.POST("/market/install", admin.InstallThemeFromMarket)
-	}
+	theme.RegisterRoutes(g)
 
 	// 2FA 含二维码 PNG / 敏感操作，保留 REST handler。
 	twoFactor := g.Group("/2fa")

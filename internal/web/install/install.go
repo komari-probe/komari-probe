@@ -17,10 +17,10 @@ import (
 	appconfig "github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/accounts"
 	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/features/backup"
 	"github.com/komari-monitor/komari/internal/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/upload"
 	"github.com/komari-monitor/komari/internal/web/api"
-	"github.com/komari-monitor/komari/internal/web/backup"
-	"github.com/komari-monitor/komari/internal/web/upload"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"gorm.io/gorm"
 )

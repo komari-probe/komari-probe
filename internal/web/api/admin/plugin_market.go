@@ -15,6 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/config"
+	"github.com/komari-monitor/komari/internal/platform/download"
+	"github.com/komari-monitor/komari/internal/platform/market"
 	"github.com/komari-monitor/komari/internal/plugin"
 	"github.com/komari-monitor/komari/internal/web/api"
 )
@@ -122,7 +124,7 @@ func CreatePluginMarketSource(c *gin.Context) {
 		api.RespondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	source.ID, err = newMarketSourceID()
+	source.ID, err = market.NewSourceID()
 	if err != nil {
 		api.RespondError(c, http.StatusInternalServerError, "Failed to create source ID")
 		return
@@ -302,7 +304,7 @@ func InstallPluginFromMarket(c *gin.Context) {
 		api.RespondError(c, http.StatusBadRequest, "This plugin does not provide an installable package")
 		return
 	}
-	data, err := DownloadMarketURL(selected.Download, marketPackageMaxSize)
+	data, err := download.DownloadMarketURL(selected.Download, market.PackageMaxSize)
 	if err != nil {
 		api.RespondError(c, http.StatusBadRequest, "Failed to download plugin: "+err.Error())
 		return
@@ -349,7 +351,7 @@ func fetchPluginMarketCatalog(source PluginMarketSource, force bool) ([]PluginMa
 			return append([]PluginMarketPlugin(nil), cached.Plugins...), nil
 		}
 	}
-	data, err := DownloadMarketURL(source.URL, marketCatalogMaxSize)
+	data, err := download.DownloadMarketURL(source.URL, market.CatalogMaxSize)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +370,7 @@ func fetchPluginMarketCatalog(source PluginMarketSource, force bool) ([]PluginMa
 		plugins[i].SourceName = source.Name
 	}
 	pluginMarketCache.Lock()
-	pluginMarketCache.items[source.URL] = cachedPluginMarketCatalog{Plugins: plugins, ExpiresAt: time.Now().Add(marketCacheTTL)}
+	pluginMarketCache.items[source.URL] = cachedPluginMarketCatalog{Plugins: plugins, ExpiresAt: time.Now().Add(market.CacheTTL)}
 	pluginMarketCache.Unlock()
 	return append([]PluginMarketPlugin(nil), plugins...), nil
 }
@@ -393,10 +395,10 @@ func parsePluginMarketCatalog(data []byte) ([]PluginMarketPlugin, error) {
 }
 
 func validatePluginMarketPlugin(p PluginMarketPlugin) error {
-	if !isMarketText(p.Name) || p.Short == "" || p.Version == "" || !isMarketText(p.Author) {
+	if !market.IsText(p.Name) || p.Short == "" || p.Version == "" || !market.IsText(p.Author) {
 		return errors.New("name, short, version and author are required")
 	}
-	if !isValidMarketShort(p.Short) {
+	if !market.IsValidShort(p.Short) {
 		return errors.New("short contains invalid characters")
 	}
 	if (p.Download == "") != (p.SHA256 == "") {
@@ -411,7 +413,7 @@ func validatePluginMarketPlugin(p PluginMarketPlugin) error {
 		if value == "" && field == "download" {
 			continue
 		}
-		if err := validateMarketURLSyntax(value); err != nil {
+		if err := market.ValidateURLSyntax(value); err != nil {
 			return fmt.Errorf("%s: %w", field, err)
 		}
 	}

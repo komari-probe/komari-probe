@@ -1,4 +1,4 @@
-package admin
+package download
 
 import (
 	"context"
@@ -15,8 +15,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// marketDownloadMaxBytes limits the response size of a market download.
-const marketDownloadMaxBytes = 100 << 20
+// MaxBytes limits the response size of a market download.
+const MaxBytes = 100 << 20
 
 const marketDownloadTimeout = 45 * time.Second
 

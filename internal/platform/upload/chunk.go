@@ -11,10 +11,14 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/komari-monitor/komari/internal/web/backup"
 )
 
 const ChunkSize int64 = 5 * 1024 * 1024
+
+// DefaultMaxSize bounds an upload session created against DefaultStore.
+// It matches the backup feature's own archive size limit, but the two are
+// independent constants: this package has no business awareness of backup.
+const DefaultMaxSize int64 = 4 << 30 // 4 GiB
 
 type Purpose string
 
@@ -46,7 +50,7 @@ type Store struct {
 
 var DefaultStore = &Store{
 	Root:    filepath.Join(".", "data", ".uploading"),
-	MaxSize: backup.MaxArchiveSize,
+	MaxSize: DefaultMaxSize,
 }
 
 func (s *Store) Init(purpose Purpose, filename string, size int64) (Session, error) {
