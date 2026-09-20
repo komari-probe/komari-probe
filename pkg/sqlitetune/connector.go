@@ -125,8 +125,8 @@ func normalize(options Options) (Options, error) {
 	if options.PageSize < 0 {
 		return options, fmt.Errorf("sqlite tune: page size cannot be negative")
 	}
-	if options.BusyTimeout < 0 {
-		return options, fmt.Errorf("sqlite tune: busy timeout cannot be negative")
+	if options.BusyTimeout <= 0 {
+		return options, fmt.Errorf("sqlite tune: busy timeout must be positive")
 	}
 	if options.CacheSizeKB <= 0 {
 		return options, fmt.Errorf("sqlite tune: cache size must be positive")

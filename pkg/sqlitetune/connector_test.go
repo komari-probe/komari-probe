@@ -19,3 +19,19 @@ func TestNormalizeAllowsUnlimitedJournalSize(t *testing.T) {
 		t.Fatalf("journal size limit = %d, want -1", options.JournalSizeLimitBytes)
 	}
 }
+
+func TestNormalizeRejectsNonPositiveBusyTimeout(t *testing.T) {
+	base := Options{
+		BusyTimeout:       0,
+		CacheSizeKB:       8,
+		WALAutoCheckpoint: 1,
+	}
+	if _, err := normalize(base); err == nil {
+		t.Fatal("expected error for zero busy timeout, got nil")
+	}
+
+	base.BusyTimeout = -1 * time.Second
+	if _, err := normalize(base); err == nil {
+		t.Fatal("expected error for negative busy timeout, got nil")
+	}
+}
