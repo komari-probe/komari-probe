@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -115,17 +112,11 @@ func (a *App) Run() error {
 	// response: plugin hooks can still rewrite the body, then the registered
 	// head/body fragments are embedded into every text/html page.
 	a.server = &http.Server{Addr: a.listenAddr, Handler: plugin.HTMLInjectHandler(plugin.WrapHandler(a.engine))}
-	serverErr := make(chan error, 1)
 	logger.Infof("server", "Starting server on %s ...", a.listenAddr)
-	go func() {
-		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			serverErr <- err
-		}
-	}()
+	serverErr := serveInBackground(a.server)
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	defer signal.Stop(quit)
+	quit, stopWatchingQuit := watchQuitSignal()
+	defer stopWatchingQuit()
 	select {
 	case err := <-serverErr:
 		a.onFatal(err)

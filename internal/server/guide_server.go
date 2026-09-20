@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -60,17 +57,11 @@ func (a *App) runGuideServer(controller guideController, cfg guideServerConfig) 
 	server := &http.Server{Addr: a.listenAddr, Handler: r}
 	a.engine = r
 	a.server = server
-	serverErr := make(chan error, 1)
 	logger.Infof("server", cfg.logMessage, a.listenAddr)
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			serverErr <- err
-		}
-	}()
+	serverErr := serveInBackground(server)
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	defer signal.Stop(quit)
+	quit, stopWatchingQuit := watchQuitSignal()
+	defer stopWatchingQuit()
 
 	select {
 	case err := <-serverErr:
