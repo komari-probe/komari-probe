@@ -39,27 +39,69 @@ type cronSchedule struct {
 	dow     map[int]struct{}
 }
 
+// maxNextAttempts 是查找下一次匹配时刻的安全迭代上限，纯粹用于防止实现缺陷
+// 导致死循环；正常情况下按字段跳跃收敛所需的迭代次数远小于这个值（数百量级）。
+const maxNextAttempts = 100000
+
+// Next 计算下一次匹配 t 之后的时刻。按 秒/分/时/日/月 从粗到细逐级跳跃到下一个
+// 合法取值（而不是从 t 开始逐秒枚举），使耗时只取决于字段跳跃次数，跟"下一次
+// 匹配离现在有多久"无关——避免"每年一次"这种稀疏表达式要扫上千万秒才能找到下一次。
+// 一年内(与旧实现一致的搜索上限)找不到匹配时刻则视为不可达，返回零值。
 func (s cronSchedule) Next(t time.Time) time.Time {
-	next := t.UTC().Truncate(time.Second).Add(time.Second)
-	limit := next.Add(366 * 24 * time.Hour)
-	for next.Before(limit) {
-		if s.match(next) {
-			return next
+	candidate := t.In(time.Local).Truncate(time.Second).Add(time.Second)
+	limit := candidate.Add(366 * 24 * time.Hour)
+
+	for i := 0; i < maxNextAttempts; i++ {
+		if !candidate.Before(limit) {
+			return time.Time{}
 		}
-		next = next.Add(time.Second)
+		if _, ok := s.months[int(candidate.Month())]; !ok {
+			candidate = startOfNextMonth(candidate)
+			continue
+		}
+		if _, ok := s.dom[candidate.Day()]; !ok {
+			candidate = startOfNextDay(candidate)
+			continue
+		}
+		if _, ok := s.dow[int(candidate.Weekday())]; !ok {
+			candidate = startOfNextDay(candidate)
+			continue
+		}
+		if _, ok := s.hours[candidate.Hour()]; !ok {
+			candidate = startOfNextHour(candidate)
+			continue
+		}
+		if _, ok := s.minutes[candidate.Minute()]; !ok {
+			candidate = startOfNextMinute(candidate)
+			continue
+		}
+		if _, ok := s.seconds[candidate.Second()]; !ok {
+			candidate = candidate.Add(time.Second)
+			continue
+		}
+		return candidate.UTC()
 	}
 	return time.Time{}
 }
 
-func (s cronSchedule) match(t time.Time) bool {
-	t = t.In(time.Local)
-	_, okSecond := s.seconds[t.Second()]
-	_, okMinute := s.minutes[t.Minute()]
-	_, okHour := s.hours[t.Hour()]
-	_, okDay := s.dom[t.Day()]
-	_, okMonth := s.months[int(t.Month())]
-	_, okWeek := s.dow[int(t.Weekday())]
-	return okSecond && okMinute && okHour && okDay && okMonth && okWeek
+func startOfNextMonth(t time.Time) time.Time {
+	year, month, _ := t.Date()
+	return time.Date(year, month+1, 1, 0, 0, 0, 0, t.Location())
+}
+
+func startOfNextDay(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day+1, 0, 0, 0, 0, t.Location())
+}
+
+func startOfNextHour(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day, t.Hour()+1, 0, 0, 0, t.Location())
+}
+
+func startOfNextMinute(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day, t.Hour(), t.Minute()+1, 0, 0, t.Location())
 }
 
 type Manager struct {
