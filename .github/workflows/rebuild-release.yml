@@ -81,7 +81,7 @@ jobs:
           ref: ${{ inputs.server_ref }}
 
       - name: Restore frontend artifact
-        uses: komari-monitor/komari/.github/actions/restore-frontend@main
+        uses: komari-probe/komari-probe/.github/actions/restore-frontend@main
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -89,7 +89,7 @@ jobs:
           go-version: "1.23"
 
       - name: Install Zig cross-compiler toolchain
-        uses: komari-monitor/komari/.github/actions/setup-zig@main
+        uses: komari-probe/komari-probe/.github/actions/setup-zig@main
 
       - name: Build binary
         env:

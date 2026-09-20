@@ -7,7 +7,7 @@ inputs:
     default: "23"
   repository:
     description: komari-web repository URL.
-    default: https://github.com/komari-monitor/komari-web
+    default: https://github.com/komari-probe/komari-probe-web
   ref:
     description: Optional komari-web ref to build. Uses the repository default branch when empty.
     default: ""

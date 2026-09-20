@@ -27,7 +27,7 @@ import (
 // publish ZIP packages containing komari-plugin.json. The generic URL
 // download/validation helpers are shared with the theme market.
 
-const defaultPluginMarketURL = "https://raw.githubusercontent.com/komari-monitor/plugin-market/main/v1.json"
+const defaultPluginMarketURL = "https://raw.githubusercontent.com/komari-probe/plugin-market/main/v1.json"
 
 type PluginMarketSource struct {
 	ID      string `json:"id"`

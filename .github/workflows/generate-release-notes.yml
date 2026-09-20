@@ -32,7 +32,7 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const webRepo = { owner: "komari-monitor", repo: "komari-web" };
+            const webRepo = { owner: "komari-probe", repo: "komari-probe-web" };
 
             const AI_CONTEXT_CHAR_LIMIT = 120000;
             const AI_MAX_COMMITS = 160;

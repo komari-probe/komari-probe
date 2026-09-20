@@ -17,7 +17,7 @@ import (
 	config "github.com/komari-monitor/komari/pkg/kv"
 )
 
-const defaultThemeMarketURL = "https://raw.githubusercontent.com/komari-monitor/theme-market/main/v1.json"
+const defaultThemeMarketURL = "https://raw.githubusercontent.com/komari-probe/theme-market/main/v1.json"
 
 type ThemeMarketSource struct {
 	ID      string `json:"id"`

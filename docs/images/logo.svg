@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048" role="img" aria-label="探针标志">
+  <g fill="#5B5BD6" stroke="#5B5BD6">
+    <!-- Concentric circular edges; the angled opening follows the probe taper. -->
+    <path d="M 1094 1555
+             A 619 619 0 1 0 954 1555
+             L 940 1476.5
+             A 543 543 0 1 1 1108 1476.5 Z"
+          stroke-width="10" stroke-linejoin="round"/>
+
+    <!-- The two pulse traces use identical mirrored geometry. -->
+    <path d="M 520 927 H 619 L 653 819 L 701 1014 L 730 927 H 770
+             M 1278 927 H 1318 L 1347 1014 L 1395 819 L 1429 927 H 1528"
+          fill="none" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- A circular head and tapered probe share one continuous outline. -->
+    <path fill-rule="evenodd" stroke="none"
+          d="M 1118 1111
+             A 204 204 0 1 0 930 1111
+             C 949 1120 960 1137 963 1165
+             L 1018 1697
+             Q 1024 1712 1030 1697
+             L 1085 1165
+             C 1088 1137 1099 1120 1118 1111 Z
+             M 1024 817
+             A 113 113 0 1 0 1024 1043
+             A 113 113 0 1 0 1024 817 Z"/>
+  </g>
+</svg>
