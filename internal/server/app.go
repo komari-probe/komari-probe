@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/config"
+	"github.com/komari-monitor/komari/internal/platform/settings"
 )
 
 // cleanupFunc is a cleanup action run during shutdown.
@@ -18,7 +18,7 @@ type cleanupFunc struct {
 // bootstrap, metric store, providers, guides, router, and runtime.
 type App struct {
 	listenAddr              string
-	settings                *config.Settings
+	settings                *settings.Settings
 	engine                  *gin.Engine
 	server                  *http.Server
 	reload                  *ReloadManager

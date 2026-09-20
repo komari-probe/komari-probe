@@ -6,11 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/database/clients"
-	"github.com/komari-monitor/komari/internal/database/models"
-	recordsdb "github.com/komari-monitor/komari/internal/database/records"
-	"github.com/komari-monitor/komari/internal/database/tasks"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/features/ping"
+	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/komari-monitor/komari/internal/platform/models"
+	recordsdb "github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 func init() {
@@ -174,7 +174,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		if taskId == 0 {
 			taskId = -1
 		}
-		recs, err := tasks.GetPingRecords(params.UUID, taskId, startTime, endTime)
+		recs, err := ping.GetPingRecords(params.UUID, taskId, startTime, endTime)
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping records", err.Error())
 		}
@@ -264,7 +264,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		}
 
 		// tasks summary (always included for ping type; do not expose target field)
-		pingTasks, err := tasks.GetAllPingTasks()
+		pingTasks, err := ping.GetAllPingTasks()
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping tasks", err.Error())
 		}

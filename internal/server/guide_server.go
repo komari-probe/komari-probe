@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/web/api"
-	frontendpublic "github.com/komari-monitor/komari/internal/web/public"
-	"github.com/komari-monitor/komari/internal/web/security"
+	"github.com/komari-monitor/komari/internal/features/auth"
+	"github.com/komari-monitor/komari/internal/platform/api"
+	frontendpublic "github.com/komari-monitor/komari/internal/platform/public"
+	"github.com/komari-monitor/komari/internal/platform/security"
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
@@ -44,7 +45,7 @@ func (a *App) runGuideServer(controller guideController, cfg guideServerConfig) 
 	r.Use(logger.GinLogger(), logger.GinRecovery(), noStoreAPIResponses())
 	if cfg.requireIdentity {
 		cors := security.NewCorsController(a.settings.CorsOriginCheckEnabled, a.settings.CorsAllowedOrigins)
-		r.Use(cors.Middleware(), api.IdentityMiddleware())
+		r.Use(cors.Middleware(), auth.IdentityMiddleware())
 	}
 	controller.Register(r)
 

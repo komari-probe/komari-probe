@@ -4,11 +4,11 @@ import (
 	"context"
 	"sync"
 
-	"github.com/komari-monitor/komari/internal/database/auditlog"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/flags"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/flags"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 

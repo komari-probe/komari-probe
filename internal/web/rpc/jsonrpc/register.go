@@ -1,6 +1,19 @@
 package jsonrpc
 
-import "github.com/komari-monitor/komari/internal/rpc"
+import (
+	"context"
+
+	"github.com/komari-monitor/komari/pkg/rpc"
+)
+
+// auditActor 从上下文提取审计用的 actor UUID 与来源 IP。
+func auditActor(ctx context.Context) (uuid, ip string) {
+	if meta := rpc.MetaFromContext(ctx); meta != nil {
+		uuid = meta.UserUUID
+		ip = meta.RemoteIP
+	}
+	return uuid, ip
+}
 
 // Register 以默认分组 "common" 注册方法。
 func Register(name string, cb rpc.Handler) error {
@@ -9,6 +22,11 @@ func Register(name string, cb rpc.Handler) error {
 		Summary:     "This method does not provide a summary",
 		Description: "This method does not provide a description",
 	})
+}
+
+// reg 是 admin 命名空间方法的注册便捷封装。
+func reg(name string, h rpc.Handler, summary string) {
+	RegisterWithGroupAndMeta(name, rpc.RoleAdmin, h, &rpc.MethodMeta{Name: "admin:" + name, Summary: summary})
 }
 
 // RegisterWithGroupAndMeta 将回调按分组注册为 "group:name"，并附加元数据。

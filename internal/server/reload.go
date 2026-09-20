@@ -3,7 +3,7 @@ package server
 import (
 	logger "github.com/komari-monitor/komari/pkg/log"
 
-	"github.com/komari-monitor/komari/internal/config"
+	config "github.com/komari-monitor/komari/pkg/kv"
 )
 
 // reloadHandler 是单个配置热重载处理器。

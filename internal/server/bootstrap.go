@@ -6,9 +6,10 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/version"
+	config "github.com/komari-monitor/komari/pkg/kv"
 )
 
 // Bootstrap initializes the data directory, primary database, and settings.
@@ -31,7 +32,7 @@ func (a *App) Bootstrap() error {
 	a.addCleanup("database", func(context.Context) error { return dbcore.Close() })
 
 	gin.SetMode(gin.ReleaseMode)
-	settings, err := config.GetManyAs[config.Settings]()
+	settings, err := config.GetManyAs[settings.Settings]()
 	if err != nil {
 		return fmt.Errorf("failed to load settings: %w", err)
 	}

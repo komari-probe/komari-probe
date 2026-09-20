@@ -11,9 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/settings"
+	config "github.com/komari-monitor/komari/pkg/kv"
 )
 
 const defaultThemeMarketURL = "https://raw.githubusercontent.com/komari-monitor/theme-market/main/v1.json"
@@ -73,11 +74,11 @@ func defaultThemeMarketSources() []ThemeMarketSource {
 }
 
 func getThemeMarketSources() ([]ThemeMarketSource, error) {
-	return config.GetAs[[]ThemeMarketSource](config.ThemeMarketSourcesKey, defaultThemeMarketSources())
+	return config.GetAs[[]ThemeMarketSource](settings.ThemeMarketSourcesKey, defaultThemeMarketSources())
 }
 
 func saveThemeMarketSources(sources []ThemeMarketSource) error {
-	return config.Set(config.ThemeMarketSourcesKey, sources)
+	return config.Set(settings.ThemeMarketSourcesKey, sources)
 }
 
 func normalizeThemeMarketSource(source ThemeMarketSource) (ThemeMarketSource, error) {

@@ -3,8 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/komari-monitor/komari/internal/database/accounts"
-	"github.com/komari-monitor/komari/internal/flags"
+	"github.com/komari-monitor/komari/internal/features/auth"
+	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -27,19 +27,19 @@ var ChpasswdCmd = &cobra.Command{
 			cmd.Println("Database file does not exist.")
 			return
 		}
-		user, err := accounts.GetFirstUser()
+		user, err := auth.GetFirstUser()
 		if err != nil {
 			cmd.Println("Error:", err)
 			return
 		}
 		cmd.Println("Changing password for user:", user.Username)
-		if err := accounts.ForceResetPassword(user.Username, NewPassword); err != nil {
+		if err := auth.ForceResetPassword(user.Username, NewPassword); err != nil {
 			cmd.Println("Error:", err)
 			return
 		}
 		cmd.Println("Password changed successfully, new password:", NewPassword)
 
-		if err := accounts.DeleteAllSessions(); err != nil {
+		if err := auth.DeleteAllSessions(); err != nil {
 			cmd.Println("Unable to force logout of other devices:", err)
 			return
 		}

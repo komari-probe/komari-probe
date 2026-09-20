@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database/auditlog"
-	"github.com/komari-monitor/komari/internal/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	config "github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 

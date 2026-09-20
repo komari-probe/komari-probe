@@ -9,20 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database/accounts"
-	"github.com/komari-monitor/komari/internal/database/auditlog"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/internal/database/records"
-	"github.com/komari-monitor/komari/internal/database/tasks"
-	"github.com/komari-monitor/komari/internal/lifecycle"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/features/ping"
+	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/records"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/lifecycle"
+	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 // admin.misc.go
-// 杂项 admin RPC2 方法：会话管理、设置、客户端排序。
+// 杂项 admin RPC2 方法：设置、客户端排序相关的记录清理。会话管理已迁移到
+// internal/features/auth（见 admin_session.go）。
 
 func parseUintKey(s string) (uint, error) {
 	v, err := strconv.ParseUint(s, 10, 64)
@@ -30,21 +28,6 @@ func parseUintKey(s string) (uint, error) {
 }
 
 func init() {
-	RegisterWithGroupAndMeta("getSessions", rpc.RoleAdmin, adminGetSessions, &rpc.MethodMeta{
-		Name:    "admin:getSessions",
-		Summary: "List all login sessions",
-		Returns: "{ current: string, data: Session[] }",
-	})
-	RegisterWithGroupAndMeta("deleteSession", rpc.RoleAdmin, adminDeleteSession, &rpc.MethodMeta{
-		Name:    "admin:deleteSession",
-		Summary: "Delete a session by token",
-		Returns: "null",
-	})
-	RegisterWithGroupAndMeta("deleteAllSessions", rpc.RoleAdmin, adminDeleteAllSessions, &rpc.MethodMeta{
-		Name:    "admin:deleteAllSessions",
-		Summary: "Delete all sessions",
-		Returns: "null",
-	})
 	RegisterWithGroupAndMeta("getSettings", rpc.RoleAdmin, adminGetSettings, &rpc.MethodMeta{
 		Name:    "admin:getSettings",
 		Summary: "Get all settings",
@@ -60,48 +43,6 @@ func init() {
 		Summary: "Delete all load and ping records",
 		Returns: "null",
 	})
-	RegisterWithGroupAndMeta("orderClients", rpc.RoleAdmin, adminOrderClients, &rpc.MethodMeta{
-		Name:    "admin:orderClients",
-		Summary: "Reorder clients (map of uuid->weight)",
-		Returns: "null",
-	})
-}
-
-func adminGetSessions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	ss, err := accounts.GetAllSessions()
-	if err != nil {
-		return nil, rpc.MakeError(rpc.InternalError, "Failed to retrieve sessions: "+err.Error(), nil)
-	}
-	current := ""
-	if meta := rpc.MetaFromContext(ctx); meta != nil {
-		current = meta.SessionToken
-	}
-	return map[string]any{"current": current, "data": ss}, nil
-}
-
-func adminDeleteSession(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	var params struct {
-		Session string `json:"session"`
-	}
-	req.BindParams(&params)
-	if params.Session == "" {
-		return nil, rpc.MakeError(rpc.InvalidParams, "session is required", nil)
-	}
-	if err := accounts.DeleteSession(params.Session); err != nil {
-		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete session: "+err.Error(), nil)
-	}
-	actor, ip := auditActor(ctx)
-	auditlog.Log(ip, actor, "delete session", "info")
-	return nil, nil
-}
-
-func adminDeleteAllSessions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	if err := accounts.DeleteAllSessions(); err != nil {
-		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete all sessions: "+err.Error(), nil)
-	}
-	actor, ip := auditActor(ctx)
-	auditlog.Log(ip, actor, "delete all sessions", "warn")
-	return nil, nil
 }
 
 func adminGetSettings(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
@@ -355,24 +296,8 @@ func toInt(v any, fallback int) int {
 func adminClearAllRecords(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 
 	records.DeleteAll()
-	tasks.DeleteAllPingRecords()
+	ping.DeleteAllPingRecords()
 	actor, ip := auditActor(ctx)
 	auditlog.Log(ip, actor, "clear all records", "info")
-	return nil, nil
-}
-
-func adminOrderClients(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	var order map[string]int
-	if err := req.BindParams(&order); err != nil {
-		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid or missing request body: "+err.Error(), nil)
-	}
-	db := dbcore.GetDBInstance()
-	for uuid, weight := range order {
-		if err := db.Model(&models.Client{}).Where("uuid = ?", uuid).Update("weight", weight).Error; err != nil {
-			return nil, rpc.MakeError(rpc.InternalError, "Failed to update client weight: "+err.Error(), nil)
-		}
-	}
-	actor, ip := auditActor(ctx)
-	auditlog.Log(ip, actor, "order clients", "info")
 	return nil, nil
 }

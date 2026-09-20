@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/platform/api"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/market"
-	"github.com/komari-monitor/komari/internal/web/api"
-	"github.com/komari-monitor/komari/internal/web/public"
+	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/internal/platform/public"
+	config "github.com/komari-monitor/komari/pkg/kv"
 )
 
 // ListThemes 列出所有主题

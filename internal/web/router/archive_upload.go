@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/backup"
+	"github.com/komari-monitor/komari/internal/features/plugin"
 	"github.com/komari-monitor/komari/internal/features/theme"
 	"github.com/komari-monitor/komari/internal/platform/upload"
-	"github.com/komari-monitor/komari/internal/plugin"
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 

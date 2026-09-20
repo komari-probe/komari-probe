@@ -3,8 +3,9 @@ package jsonrpc
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/platform/settings"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 // privateSiteLoginWhitelist 私有站点模式下仍允许匿名访问的方法白名单。
@@ -43,7 +44,7 @@ func Dispatch(ctx context.Context, meta *rpc.ContextMeta, req *rpc.JsonRpcReques
 	// 持有有效临时分享许可(temp_key)的匿名访客同样放行，使「临时分析」分享链接在私有站点下可用；
 	// 后续 CheckPrincipal 仍会将匿名主体限制在 public:*(guest 角色)范围内，admin 方法不受影响。
 	if meta.Principal.Type == rpc.PrincipalAnonymous && !privateSiteLoginWhitelist[req.Method] && !meta.TempShareValid {
-		if privateSite, _ := config.GetAs[bool](config.PrivateSiteKey); privateSite {
+		if privateSite, _ := config.GetAs[bool](settings.PrivateSiteKey); privateSite {
 			return rpc.ErrorResponse(req.ID, rpc.PermissionDenied, "Private site enabled, please login first", nil)
 		}
 	}

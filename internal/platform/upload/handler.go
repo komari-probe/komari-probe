@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/web/api"
+	"github.com/komari-monitor/komari/internal/platform/api"
 )
 
 const maxChunkRequestSize = ChunkSize + 1*1024*1024

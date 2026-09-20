@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/komari-monitor/komari/internal/database/accounts"
+	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +12,7 @@ var Disable2FA = &cobra.Command{
 	Short: "Force disable 2FA",
 	Long:  `Force disable 2FA`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := accounts.ForceDisableAllTwoFactor(); err != nil {
+		if err := auth.ForceDisableAllTwoFactor(); err != nil {
 			cmd.Println("Error:", err)
 			os.Exit(1)
 		}

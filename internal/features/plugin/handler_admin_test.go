@@ -1,0 +1,127 @@
+package plugin
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/pkg/rpc"
+)
+
+// handler_admin_test.go
+// 原来在 web/rpc/jsonrpc/admin.plugin_test.go，随 handler_admin.go 的逻辑一起
+// 搬过来，改为调用导出的 AdminXxx 函数；DB/临时目录 fixture 复用 main_test.go
+// 已有的 withTempDataDir / writePluginZip。
+
+func TestAdminSetPluginEnabledPermissionGate(t *testing.T) {
+	withTempDataDir(t)
+	installTestPlugin(t, `{"name":"Demo","short":"demo","version":"1.0.0","permissions":{"allowRoutes":true}}`, "function load() {}")
+
+	request := func(params map[string]any) (any, *rpc.JsonRpcError) {
+		return AdminSetPluginEnabled(nil, &rpc.JsonRpcRequest{
+			Version: rpc.RPC_VERSION,
+			Method:  "admin:setPluginEnabled",
+			Params:  params,
+		})
+	}
+
+	// Enabling without approval must return requires_approval instead of an error.
+	result, jerr := request(map[string]any{"short": "demo", "enabled": true})
+	if jerr != nil {
+		t.Fatalf("expected requires_approval result, got error: %v", jerr)
+	}
+	if result == nil || result.(map[string]any)["requires_approval"] != true {
+		t.Fatalf("result = %v, want {requires_approval: true}", result)
+	}
+
+	// Approving and enabling must succeed, then disabling must unload.
+	if _, jerr := request(map[string]any{"short": "demo", "enabled": true, "approved": true}); jerr != nil {
+		t.Fatalf("approved enable failed: %v", jerr)
+	}
+	if _, jerr := request(map[string]any{"short": "demo", "enabled": false}); jerr != nil {
+		t.Fatalf("disable failed: %v", jerr)
+	}
+}
+
+func TestAdminPluginConfigurationRoundTrip(t *testing.T) {
+	withTempDataDir(t)
+	installTestPlugin(t, `{"name":"Cfg","short":"cfg","version":"1.0.0","configuration":{"type":"managed","data":[{"key":"greeting","name":"Greeting","type":"string","default":"hi"}]}}`, "function load() {}")
+
+	request := func(params map[string]any) (any, *rpc.JsonRpcError) {
+		return AdminGetPluginConfiguration(nil, &rpc.JsonRpcRequest{
+			Version: rpc.RPC_VERSION,
+			Method:  "admin:getPluginConfiguration",
+			Params:  params,
+		})
+	}
+	result, jerr := request(map[string]any{"short": "cfg"})
+	if jerr != nil {
+		t.Fatalf("get failed: %v", jerr)
+	}
+	cfg, ok := result.(map[string]any)["configuration"].(models.Configuration)
+	if !ok || cfg.Type != "managed" {
+		t.Fatalf("configuration = %v", result)
+	}
+
+	// 保存后读取
+	if _, jerr := AdminSetPluginConfiguration(nil, &rpc.JsonRpcRequest{
+		Version: rpc.RPC_VERSION,
+		Method:  "admin:setPluginConfiguration",
+		Params:  map[string]any{"short": "cfg", "data": map[string]any{"greeting": "saved"}},
+	}); jerr != nil {
+		t.Fatalf("set failed: %v", jerr)
+	}
+	result, jerr = request(map[string]any{"short": "cfg"})
+	if jerr != nil {
+		t.Fatalf("get after set failed: %v", jerr)
+	}
+	data, ok := result.(map[string]any)["data"].(map[string]any)
+	if !ok || data["greeting"] != "saved" {
+		t.Fatalf("data = %v", result)
+	}
+}
+
+func TestAdminPluginConfigurationKeepsSavedDataWhenReloadFails(t *testing.T) {
+	withTempDataDir(t)
+	installTestPlugin(t, `{"name":"Cfg","short":"cfg","version":"1.0.0","configuration":{"type":"managed","data":[{"key":"greeting","name":"Greeting","type":"string","default":"hi"}]}}`, "function load() {}")
+
+	if err := SetEnabled("cfg", true, false); err != nil {
+		t.Fatalf("enable failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(DataDir, "cfg", "script.js"), []byte(`function load() { throw new Error("reload-boom"); }`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, jerr := AdminSetPluginConfiguration(nil, &rpc.JsonRpcRequest{
+		Version: rpc.RPC_VERSION,
+		Method:  "admin:setPluginConfiguration",
+		Params:  map[string]any{"short": "cfg", "data": map[string]any{"greeting": "saved-before-reload-error"}},
+	})
+	if jerr == nil || !strings.Contains(jerr.Message, "plugin configuration saved but reload failed") {
+		t.Fatalf("expected reload error after saving, got %v", jerr)
+	}
+
+	values, err := GetConfiguration("cfg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if values["greeting"] != "saved-before-reload-error" {
+		t.Fatalf("saved configuration was rolled back: %#v", values)
+	}
+}
+
+// installTestPlugin writes a one-file plugin ZIP (via writePluginZip, see
+// main_test.go) and installs it.
+func installTestPlugin(t *testing.T, manifest, script string) {
+	t.Helper()
+	files := map[string]string{"komari-plugin.json": manifest}
+	if script != "" {
+		files["script.js"] = script
+	}
+	zipPath := writePluginZip(t, files)
+	if _, err := InstallZip(zipPath); err != nil {
+		t.Fatal(err)
+	}
+}

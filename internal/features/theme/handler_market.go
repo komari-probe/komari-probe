@@ -9,9 +9,9 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
-	"github.com/komari-monitor/komari/internal/web/api"
 )
 
 func ListThemeMarketSources(c *gin.Context) {

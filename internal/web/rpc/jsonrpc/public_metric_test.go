@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 

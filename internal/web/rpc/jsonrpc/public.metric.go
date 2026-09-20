@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/database/clients"
-	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/internal/database/tasks"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/features/ping"
+	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
@@ -443,7 +443,7 @@ func publicGetPingMetricStats(ctx context.Context, req *rpc.JsonRpcRequest) (any
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
 
-	taskList, err := tasks.GetAllPingTasks()
+	taskList, err := ping.GetAllPingTasks()
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping tasks: "+err.Error(), nil)
 	}

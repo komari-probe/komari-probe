@@ -11,25 +11,23 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database"
-	"github.com/komari-monitor/komari/internal/database/accounts"
-	"github.com/komari-monitor/komari/internal/database/auditlog"
-	d_notification "github.com/komari-monitor/komari/internal/database/notification"
-	"github.com/komari-monitor/komari/internal/database/tasks"
-	"github.com/komari-monitor/komari/internal/geoip"
-	"github.com/komari-monitor/komari/internal/lifecycle"
-	"github.com/komari-monitor/komari/internal/messageSender"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/internal/notifier"
-	"github.com/komari-monitor/komari/internal/plugin"
-	"github.com/komari-monitor/komari/internal/scheduler"
-	"github.com/komari-monitor/komari/internal/web/api"
-	"github.com/komari-monitor/komari/internal/web/oauth"
-	recoveryweb "github.com/komari-monitor/komari/internal/web/recovery"
+	"github.com/komari-monitor/komari/internal/features/auth"
+	"github.com/komari-monitor/komari/internal/features/auth/oauth"
+	"github.com/komari-monitor/komari/internal/features/notification"
+	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
+	"github.com/komari-monitor/komari/internal/features/ping"
+	"github.com/komari-monitor/komari/internal/features/plugin"
+	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
+	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/geoip"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/security"
+	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/web/router"
-	"github.com/komari-monitor/komari/internal/web/security"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/lifecycle"
 	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/scheduler"
 )
 
 // ErrRestartRequested is returned after a clean shutdown when a configuration
@@ -56,11 +54,11 @@ func (a *App) StartBackground() error {
 
 func (a *App) registerReloadHandlers(cors *security.CorsController) {
 	a.reload.Register("oauth-provider", func(event config.ConfigEvent) {
-		if ok, providerName := config.IsChangedT[string](event, config.OAuthProviderKey); ok {
+		if ok, providerName := config.IsChangedT[string](event, settings.OAuthProviderKey); ok {
 			if providerName == "" || providerName == "none" {
 				providerName = "github"
 			}
-			oidcProvider, err := database.GetOidcConfigByName(providerName)
+			oidcProvider, err := oauth.GetOidcConfigByName(providerName)
 			if err != nil {
 				logger.Errorf("server", "Failed to get OIDC provider config: %v", err)
 				return
@@ -72,13 +70,13 @@ func (a *App) registerReloadHandlers(cors *security.CorsController) {
 		}
 	})
 	a.reload.Register("geoip-provider", func(event config.ConfigEvent) {
-		if event.IsChanged(config.GeoIpProviderKey) {
+		if event.IsChanged(settings.GeoIpProviderKey) {
 			go geoip.InitGeoIp()
 		}
 	})
 	a.reload.Register("message-sender", func(event config.ConfigEvent) {
-		if event.IsChanged(config.NotificationMethodKey) {
-			go messageSender.Initialize()
+		if event.IsChanged(settings.NotificationMethodKey) {
+			go messagesender.Initialize()
 		}
 	})
 	a.reload.Register("cors", func(event config.ConfigEvent) { cors.Update(event) })
@@ -89,7 +87,7 @@ func (a *App) BuildRouter() error {
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery())
 	cors := security.NewCorsController(a.settings.CorsOriginCheckEnabled, a.settings.CorsAllowedOrigins)
-	r.Use(cors.Middleware(), api.IdentityMiddleware(), api.PrivateSiteMiddleware(), noStoreAPIResponses())
+	r.Use(cors.Middleware(), auth.IdentityMiddleware(), auth.PrivateSiteMiddleware(), noStoreAPIResponses())
 
 	// The recovery UI belongs only to its temporary restricted listener.
 	r.GET(recoveryweb.PagePath, func(c *gin.Context) {
@@ -185,10 +183,10 @@ func (a *App) runCleanups(ctx context.Context) error {
 }
 
 func registerScheduledWork() {
-	if err := tasks.ReloadPingSchedule(); err != nil {
+	if err := ping.ReloadPingSchedule(); err != nil {
 		logger.ErrorArgs("server", "Failed to reload ping schedule:", err)
 	}
-	if err := d_notification.ReloadLoadNotificationSchedule(); err != nil {
+	if err := notification.ReloadLoadNotificationSchedule(); err != nil {
 		logger.ErrorArgs("server", "Failed to reload load notification schedule:", err)
 	}
 	if err := scheduler.AddFunc("records:cleanup", "@every 30m", cleanupScheduledData); err != nil {
@@ -200,17 +198,17 @@ func registerScheduledWork() {
 	if err := scheduler.AddContextFunc("metrics:retention", "@every 1h", true, cleanupMetricStore); err != nil {
 		logger.ErrorArgs("server", "Failed to add metric retention scheduled task:", err)
 	}
-	if err := scheduler.AddFunc("notifier:traffic", "@every 1m", notifier.CheckTraffic); err != nil {
+	if err := scheduler.AddFunc("notifier:traffic", "@every 1m", notification.CheckTraffic); err != nil {
 		logger.ErrorArgs("server", "Failed to add traffic notification task:", err)
 	}
-	if err := scheduler.AddFunc("notifier:expire", "0 0 9 * * *", notifier.CheckExpireScheduledWork); err != nil {
+	if err := scheduler.AddFunc("notifier:expire", "0 0 9 * * *", notification.CheckExpireScheduledWork); err != nil {
 		logger.ErrorArgs("server", "Failed to add expire notification task:", err)
 	}
 }
 
 func cleanupScheduledData() {
 	auditlog.RemoveOldLogs()
-	accounts.RemoveExpiredSessions()
+	auth.RemoveExpiredSessions()
 }
 
 func compactMetricStore(ctx context.Context) {

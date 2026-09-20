@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/platform/models"
 )
 
 const (

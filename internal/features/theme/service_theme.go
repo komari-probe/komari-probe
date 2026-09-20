@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/models"
 )
 
 const (

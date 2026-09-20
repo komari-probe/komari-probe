@@ -5,15 +5,14 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/database/models"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/models"
 
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/geoip"
-	"github.com/komari-monitor/komari/internal/messageSender"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/platform/geoip"
+	"github.com/komari-monitor/komari/internal/platform/settings"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/rpc"
 	"gorm.io/gorm"
 )
 
@@ -31,7 +30,6 @@ func init() {
 		},
 		Returns: "{ logs: Log[], total: number }",
 	})
-	reg("testSendMessage", adminTestSendMessage, "Send a test notification")
 	reg("testGeoip", adminTestGeoip, "Test GeoIP lookup")
 }
 
@@ -86,17 +84,6 @@ func filterAdminLogsByMessageType(query *gorm.DB, msgType string) *gorm.DB {
 	return query
 }
 
-func adminTestSendMessage(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	if err := messageSender.SendNotification(models.EventMessage{
-		Event:   "Test",
-		Time:    time.Now().UTC(),
-		Message: "This is a test message from Komari.",
-	}); err != nil {
-		return nil, rpc.MakeError(rpc.InternalError, "Failed to send message: "+err.Error(), nil)
-	}
-	return nil, nil
-}
-
 func adminTestGeoip(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {
 		IP string `json:"ip"`
@@ -108,7 +95,7 @@ func adminTestGeoip(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 			ip = meta.RemoteIP
 		}
 	}
-	cfg, err := config.GetAs[bool](config.GeoIpEnabledKey, false)
+	cfg, err := config.GetAs[bool](settings.GeoIpEnabledKey, false)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get configuration: "+err.Error(), nil)
 	}

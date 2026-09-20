@@ -10,9 +10,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database/auditlog"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/settings"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 const (
@@ -96,7 +97,7 @@ func publicRecordVisitorEvent(ctx context.Context, req *rpc.JsonRpcRequest) (any
 	if !visitorAuditLimiter.Allow(ip, time.Now()) {
 		return map[string]any{"status": "rate_limited"}, nil
 	}
-	enabled, err := config.GetAs[bool](config.VisitorAuditEnabledKey, false)
+	enabled, err := config.GetAs[bool](settings.VisitorAuditEnabledKey, false)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get visitor audit configuration", nil)
 	}

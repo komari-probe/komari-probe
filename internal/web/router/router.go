@@ -2,13 +2,13 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/features/backup"
+	"github.com/komari-monitor/komari/internal/features/client"
+	"github.com/komari-monitor/komari/internal/features/plugin"
 	"github.com/komari-monitor/komari/internal/features/theme"
-	"github.com/komari-monitor/komari/internal/web/api"
+	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/web/api/admin"
-	"github.com/komari-monitor/komari/internal/web/api/client"
-	public_api "github.com/komari-monitor/komari/internal/web/api/public"
-	"github.com/komari-monitor/komari/internal/web/public"
 	jsonRpc "github.com/komari-monitor/komari/internal/web/rpc/jsonrpc"
 )
 
@@ -33,15 +33,15 @@ func Register(r *gin.Engine) {
 // registerPublicRoutes 公开路由。JSON 读接口经 Bind 绑定到 public: 命名空间方法。
 func registerPublicRoutes(r *gin.Engine) {
 	// 非 JSON / 特殊流程，保留 REST handler。
-	r.POST("/api/login", public_api.Login)
-	r.GET("/api/logout", public_api.Logout)
-	r.GET("/api/oauth", public_api.OAuth)
-	r.GET("/api/oauth_callback", public_api.OAuthCallback)
+	r.POST("/api/login", auth.Login)
+	r.GET("/api/logout", auth.Logout)
+	r.GET("/api/oauth", auth.OAuth)
+	r.GET("/api/oauth_callback", auth.OAuthCallback)
 	// 插件公开页面（visibility=public 的 iframe 页面），无需鉴权。
-	r.GET("/api/plugin/:short/*filepath", public_api.ServePluginFile)
+	r.GET("/api/plugin/:short/*filepath", plugin.ServePublicPluginFile)
 	// /api/clients 是 WebSocket 端点（客户端发 "get"/"get <uuid>" 拉取在线列表与最新上报），
 	// 非 JSON-RPC，保留为 WS handler。
-	r.GET("/api/clients", api.GetClients)
+	r.GET("/api/clients", client.GetClients)
 
 	// JSON 接口 -> RPC2。
 	r.GET("/api/me", jsonRpc.Bind("public:getMe", jsonRpc.WithRaw()))
@@ -63,7 +63,7 @@ func registerAgentRoutes(r *gin.Engine) {
 	// AutoDiscovery 注册使用独立的 Authorization key 鉴权，保留 REST handler。
 	r.POST("/api/clients/register", client.RegisterClient)
 
-	tokenAuthorized := r.Group("/api/clients", api.RequireRole(api.RoleAdmin, api.RoleClient))
+	tokenAuthorized := r.Group("/api/clients", auth.RequireRole(auth.RoleAdmin, auth.RoleClient))
 	{
 		// Agent 上报统一使用 v2 JSON-RPC。
 		tokenAuthorized.GET("/v2/rpc", client.WebSocketV2RPC)
@@ -73,7 +73,7 @@ func registerAgentRoutes(r *gin.Engine) {
 
 // registerAdminRoutes 管理员路由。除二进制/流类外全部经 Bind 绑定到 admin: 命名空间方法。
 func registerAdminRoutes(r *gin.Engine) {
-	g := r.Group("/api/admin", api.RequireRole(api.RoleAdmin))
+	g := r.Group("/api/admin", auth.RequireRole(auth.RoleAdmin))
 	admin.RegisterPprofRoutes(g)
 
 	// --- 二进制/流/重定向类，保留 REST handler ---
@@ -89,7 +89,7 @@ func registerAdminRoutes(r *gin.Engine) {
 	g.GET("/test/geoip", jsonRpc.Bind("admin:testGeoip", jsonRpc.WithQuery("ip")))
 	g.POST("/test/sendMessage", jsonRpc.Bind("admin:testSendMessage"))
 	g.POST("/update/mmdb", admin.UpdateMmdbGeoIP)
-	g.POST("/update/user", admin.UpdateUser)
+	g.POST("/update/user", auth.UpdateUser)
 	g.PUT("/update/favicon", admin.UploadFavicon)
 	g.POST("/update/favicon", admin.DeleteFavicon)
 
@@ -99,16 +99,16 @@ func registerAdminRoutes(r *gin.Engine) {
 	// 2FA 含二维码 PNG / 敏感操作，保留 REST handler。
 	twoFactor := g.Group("/2fa")
 	{
-		twoFactor.GET("/generate", admin.Generate2FA)
-		twoFactor.POST("/enable", admin.Enable2FA)
-		twoFactor.POST("/disable", api.RequireSensitive2FA(), admin.Disable2FA)
+		twoFactor.GET("/generate", auth.Generate2FA)
+		twoFactor.POST("/enable", auth.Enable2FA)
+		twoFactor.POST("/disable", auth.RequireSensitive2FA(), auth.Disable2FA)
 	}
 
 	// oauth2 绑定走重定向，保留 REST handler。
 	oauth2 := g.Group("/oauth2")
 	{
-		oauth2.GET("/bind", admin.BindingExternalAccount)
-		oauth2.POST("/unbind", admin.UnbindExternalAccount)
+		oauth2.GET("/bind", auth.BindingExternalAccount)
+		oauth2.POST("/unbind", auth.UnbindExternalAccount)
 	}
 
 	// --- 以下全部 JSON -> RPC2 ---
@@ -166,17 +166,17 @@ func registerAdminRoutes(r *gin.Engine) {
 		pluginGroup.GET("/list", jsonRpc.Bind("admin:listPlugins"))
 		pluginGroup.POST("/enabled", jsonRpc.Bind("admin:setPluginEnabled"))
 		pluginGroup.GET("/logs", jsonRpc.Bind("admin:getPluginLogs", jsonRpc.WithQuery("short")))
-		pluginGroup.GET("/market/sources", admin.ListPluginMarketSources)
-		pluginGroup.POST("/market/sources", admin.CreatePluginMarketSource)
-		pluginGroup.PUT("/market/sources/:id", admin.UpdatePluginMarketSource)
-		pluginGroup.DELETE("/market/sources/:id", admin.DeletePluginMarketSource)
-		pluginGroup.GET("/market/catalog", admin.ListPluginMarketCatalog)
-		pluginGroup.POST("/market/install", admin.InstallPluginFromMarket)
+		pluginGroup.GET("/market/sources", plugin.ListPluginMarketSources)
+		pluginGroup.POST("/market/sources", plugin.CreatePluginMarketSource)
+		pluginGroup.PUT("/market/sources/:id", plugin.UpdatePluginMarketSource)
+		pluginGroup.DELETE("/market/sources/:id", plugin.DeletePluginMarketSource)
+		pluginGroup.GET("/market/catalog", plugin.ListPluginMarketCatalog)
+		pluginGroup.POST("/market/install", plugin.InstallPluginFromMarket)
 		pluginGroup.POST("/delete", jsonRpc.Bind("admin:deletePlugin"))
 		pluginGroup.GET("/configuration", jsonRpc.Bind("admin:getPluginConfiguration", jsonRpc.WithQuery("short")))
 		pluginGroup.POST("/configuration", jsonRpc.Bind("admin:setPluginConfiguration"))
 		// 插件注入的管理页面静态文件
-		pluginGroup.GET("/:short/*filepath", admin.ServePluginFile)
+		pluginGroup.GET("/:short/*filepath", plugin.ServeAdminPluginFile)
 	}
 
 	// notifications

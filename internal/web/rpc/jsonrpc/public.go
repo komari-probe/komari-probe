@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/database"
-	"github.com/komari-monitor/komari/internal/database/clients"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/internal/database/records"
-	"github.com/komari-monitor/komari/internal/database/tasks"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/features/ping"
+	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
+	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/internal/platform/publicinfo"
+	"github.com/komari-monitor/komari/internal/platform/records"
 	"github.com/komari-monitor/komari/internal/version"
-	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
+	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 // public.go
@@ -68,7 +68,7 @@ func publicGetNodesInformation(ctx context.Context, _ *rpc.JsonRpcRequest) (any,
 }
 
 func publicGetPublicSettings(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	p, e := database.GetPublicInfo()
+	p, e := publicinfo.GetPublicInfo()
 	if e != nil {
 		return nil, rpc.MakeError(rpc.InternalError, e.Error(), nil)
 	}
@@ -100,7 +100,7 @@ func publicGetMe(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcE
 		"uuid":        u.UUID,
 		"sso_type":    u.SSOType,
 		"sso_id":      u.SSOID,
-		"2fa_enabled": u.TwoFactor != "",
+		"2fa_enabled": u.TwoFactorEnabled,
 	}, nil
 }
 
@@ -206,7 +206,7 @@ func publicGetRecordsByUUID(ctx context.Context, req *rpc.JsonRpcRequest) (any, 
 }
 
 func publicGetPublicPingTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	pingTasks, err := tasks.GetAllPingTasks()
+	pingTasks, err := ping.GetAllPingTasks()
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
@@ -350,7 +350,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		}
 	}
 
-	recs, err := tasks.GetPingRecords(params.UUID, taskId, startTime, endTime)
+	recs, err := ping.GetPingRecords(params.UUID, taskId, startTime, endTime)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping records: "+err.Error(), nil)
 	}
@@ -394,7 +394,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 	}
 
 	if params.UUID != "" || taskId != -1 {
-		pingTasks, err := tasks.GetAllPingTasks()
+		pingTasks, err := ping.GetAllPingTasks()
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping tasks: "+err.Error(), nil)
 		}

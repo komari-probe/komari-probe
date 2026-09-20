@@ -3,7 +3,7 @@ package jsonrpc
 import (
 	"testing"
 
-	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
+	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
 )
 
 func TestGpuUsageFromReport(t *testing.T) {

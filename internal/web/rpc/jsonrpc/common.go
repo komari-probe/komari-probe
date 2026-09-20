@@ -8,16 +8,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database"
-	"github.com/komari-monitor/komari/internal/database/clients"
-	"github.com/komari-monitor/komari/internal/database/dbcore"
-	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/internal/database/tasks"
-	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
-	"github.com/komari-monitor/komari/internal/rpc"
+	"github.com/komari-monitor/komari/internal/features/ping"
+	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
+	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/models"
+	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/publicinfo"
+	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/version"
-	agent_runtime "github.com/komari-monitor/komari/internal/web/agent"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/rpc"
 
 	cache "github.com/patrickmn/go-cache"
 )
@@ -60,7 +61,7 @@ func getPingStatsForNode(uuid string, pingTasks []models.PingTask) map[string]pi
 	}
 	end := time.Now().UTC()
 	start := end.Add(-1 * time.Hour)
-	recs, err := tasks.GetPingRecords(uuid, -1, start, end)
+	recs, err := ping.GetPingRecords(uuid, -1, start, end)
 	if err != nil || len(recs) == 0 {
 		empty := map[string]pingStat{}
 		pingStatsCache.Set(key, empty, cache.DefaultExpiration)
@@ -225,7 +226,7 @@ func getNodes(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcEr
 	}
 	meta := rpc.MetaFromContext(ctx)
 
-	SendIpAddrToGuest, _ := config.GetAs[bool](config.SendIpAddrToGuestKey)
+	SendIpAddrToGuest, _ := config.GetAs[bool](settings.SendIpAddrToGuestKey)
 	if meta.Principal == nil || !meta.Principal.HasRole(rpc.RoleAdmin) {
 		// 过滤 Hidden 节点并隐藏敏感字段
 		filtered := make([]models.Client, 0, len(cinfo))
@@ -277,7 +278,7 @@ func gpuUsageFromReport(rep *v2.Report) float32 {
 }
 
 func getPublicInfo(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	info, err := database.GetPublicInfo()
+	info, err := publicinfo.GetPublicInfo()
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get public info", err.Error())
 	}
@@ -358,7 +359,7 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 	respMap := make(map[string]recordLike, len(latest))
 
 	// 预取所有 ping 任务
-	pingTasks, _ := tasks.GetAllPingTasks()
+	pingTasks, _ := ping.GetAllPingTasks()
 
 	appendOne := func(uuid string, rep *v2.Report) {
 		if rep == nil {
@@ -441,7 +442,7 @@ func getMe(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) 
 			resp.Username = "api_key"
 			return resp, nil
 		}
-		resp.TwoFAEnabled = meta.User.TwoFactor != ""
+		resp.TwoFAEnabled = meta.User.TwoFactorEnabled
 		resp.LoggedIn = true
 		resp.SSOId = meta.User.SSOID
 		resp.SSOType = meta.User.SSOType

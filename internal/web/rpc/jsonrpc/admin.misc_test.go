@@ -3,7 +3,7 @@ package jsonrpc
 import (
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricstore"
 )
 
 func TestMetricKeysTouched(t *testing.T) {

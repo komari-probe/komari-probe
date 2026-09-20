@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/database/accounts"
-	"github.com/komari-monitor/komari/internal/rpc"
-	"github.com/komari-monitor/komari/internal/web/api"
+	"github.com/komari-monitor/komari/internal/features/auth"
+	"github.com/komari-monitor/komari/internal/platform/api"
+	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 // OnRpcRequest 是 /api/rpc2 的统一入口：GET 升级为 WebSocket，POST 处理单条/批量 JSON-RPC。
@@ -54,7 +54,7 @@ func dispatchWithSensitive(ctx context.Context, c *gin.Context, meta *rpc.Contex
 		if code == "" && c != nil {
 			code = headerOrQueryTwoFACode(c)
 		}
-		if err := api.VerifySensitive2FACore(meta.Principal.UserUUID, code, meta.Principal.IsAPIKey); err != nil {
+		if err := auth.VerifySensitive2FACore(meta.Principal.UserUUID, code, meta.Principal.IsAPIKey); err != nil {
 			return rpc.ErrorResponse(req.ID, rpc.PermissionDenied, err.Error(), nil)
 		}
 	}
@@ -144,13 +144,13 @@ func servePost(c *gin.Context) {
 }
 
 // buildContextMeta 从 gin.Context 构建 *rpc.ContextMeta。
-// 复用 IdentityMiddleware 已识别的 principal(api.GetPrincipal)；若未识别则兜底调用
-// api.IdentifyPrincipal。填充 principal、Permission(兼容)、User、各 UUID、token 等字段。
+// 复用 IdentityMiddleware 已识别的 principal(auth.GetPrincipal)；若未识别则兜底调用
+// auth.IdentifyPrincipal。填充 principal、Permission(兼容)、User、各 UUID、token 等字段。
 func buildContextMeta(c *gin.Context) *rpc.ContextMeta {
 	// 优先读取中间件已识别的 principal；未识别时兜底自行识别(如 /api/rpc2 请求)。
-	p := api.GetPrincipal(c)
+	p := auth.GetPrincipal(c)
 	if p == nil {
-		p = api.IdentifyPrincipal(c)
+		p = auth.IdentifyPrincipal(c)
 	}
 
 	meta := &rpc.ContextMeta{
@@ -166,8 +166,14 @@ func buildContextMeta(c *gin.Context) *rpc.ContextMeta {
 		meta.UserUUID = p.UserUUID
 		if session, err := c.Cookie("session_token"); err == nil && session != "" {
 			meta.SessionToken = session
-			if user, err := accounts.GetUserBySession(session); err == nil {
-				meta.User = &user
+			if user, err := auth.GetUserBySession(session); err == nil {
+				meta.User = &rpc.UserInfo{
+					UUID:             user.UUID,
+					Username:         user.Username,
+					SSOType:          user.SSOType,
+					SSOID:            user.SSOID,
+					TwoFactorEnabled: user.TwoFactor != "",
+				}
 			}
 		}
 	case rpc.PrincipalAgent:
