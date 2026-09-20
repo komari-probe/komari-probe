@@ -76,7 +76,7 @@ func NewManager() *Manager {
 // AddFunc 按 cron 表达式注册一个任务，fn 会在独立 goroutine 中执行。
 // 支持 5 字段、6 字段 cron 表达式，以及 @every 1m 这类固定间隔表达式。
 func AddFunc(name string, spec string, fn func()) error {
-	return AddContextFunc(name, spec, false, func(context.Context) { fn() })
+	return defaultManager.AddFunc(name, spec, fn)
 }
 
 // AddContextFunc 按 cron 表达式注册一个任务，支持传递带 context 的 func。
@@ -114,6 +114,9 @@ func (m *Manager) AddContextFunc(name string, spec string, runImmediately bool, 
 	}
 	if fn == nil {
 		return fmt.Errorf("cron job %q func is nil", name)
+	}
+	if s.Next(time.Now()).IsZero() {
+		return fmt.Errorf("cron job %q spec %q never matches any time", name, spec)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -288,6 +291,7 @@ func parseField(field string, min int, max int) (map[int]struct{}, error) {
 
 		base := part
 		step := 1
+		hasStep := false
 		if strings.Contains(part, "/") {
 			parts := strings.Split(part, "/")
 			if len(parts) != 2 {
@@ -299,11 +303,18 @@ func parseField(field string, min int, max int) (map[int]struct{}, error) {
 				return nil, fmt.Errorf("invalid step %q", parts[1])
 			}
 			step = parsedStep
+			hasStep = true
 		}
 
 		start, end, err := parseRange(base, min, max)
 		if err != nil {
 			return nil, err
+		}
+		// 裸数字 + 步长（如 "5/10"）按 cron 语义表示"从 5 开始，每隔 10 直到该
+		// 字段上界"，等价于 "5-max/10"；parseRange 对裸数字只返回退化区间
+		// (5,5)，这里补上边界，否则步长会被悄悄吃掉，只剩下起始值本身。
+		if hasStep && !strings.Contains(base, "-") && base != "*" {
+			end = max
 		}
 		for i := start; i <= end; i += step {
 			values[i] = struct{}{}
