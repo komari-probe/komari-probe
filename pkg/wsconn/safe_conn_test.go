@@ -252,3 +252,25 @@ func TestSafeConnOnCloseOnce(t *testing.T) {
 		t.Fatalf("OnClose fired %d times", closes)
 	}
 }
+
+func TestNewSafeConnAssignsUniqueIDsConcurrently(t *testing.T) {
+	const n = 1000
+	ids := make([]int64, n)
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ids[i] = NewSafeConn(nil).ID
+		}()
+	}
+	wg.Wait()
+
+	seen := make(map[int64]struct{}, n)
+	for _, id := range ids {
+		if _, dup := seen[id]; dup {
+			t.Fatalf("duplicate SafeConn ID %d", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

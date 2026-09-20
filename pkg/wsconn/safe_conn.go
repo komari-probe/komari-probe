@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -67,11 +68,17 @@ type SafeConn struct {
 	info        *ConnInfo
 }
 
+// nextConnID is a process-wide counter for SafeConn.ID. A wall-clock
+// timestamp can't guarantee uniqueness: two connections established within
+// the same tick (a burst of agents reconnecting after a restart, for
+// example) would collide, and plugin hooks/notifications key off this ID to
+// tell connections apart.
+var nextConnID atomic.Int64
+
 func NewSafeConn(conn *websocket.Conn) *SafeConn {
 	return &SafeConn{
 		conn: conn,
-		mu:   sync.Mutex{},
-		ID:   time.Now().UnixNano(),
+		ID:   nextConnID.Add(1),
 	}
 }
 
@@ -166,9 +173,9 @@ func (sc *SafeConn) SetReadDeadline(t time.Time) error {
 	return sc.conn.SetReadDeadline(t)
 }
 
+// GetConn returns the underlying connection. Safe without locking: conn is
+// set once at construction and never reassigned.
 func (sc *SafeConn) GetConn() *websocket.Conn {
-	sc.mu.Lock()
-	defer sc.mu.Unlock()
 	return sc.conn
 }
 
