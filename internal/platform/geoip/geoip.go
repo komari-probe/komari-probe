@@ -7,7 +7,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	provider "github.com/komari-monitor/komari/pkg/geoip"
 	"github.com/komari-monitor/komari/pkg/kv"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/patrickmn/go-cache"
 )
 

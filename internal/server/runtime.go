@@ -23,7 +23,7 @@ import (
 	"github.com/komari-monitor/komari/internal/web/router"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/lifecycle"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/scheduler"
 )
 

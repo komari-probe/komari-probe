@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/plugin"
 	"github.com/komari-monitor/komari/internal/features/theme"
 	"github.com/komari-monitor/komari/internal/platform/upload"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 func NewArchiveUploadHandler() *upload.Handler {

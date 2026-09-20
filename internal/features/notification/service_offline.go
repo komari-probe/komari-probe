@@ -1,7 +1,7 @@
 package notification
 
 import (
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"sync"
 	"time"
 

@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/geoip"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 // InitProviders initializes providers needed by the normal application.

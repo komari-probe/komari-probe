@@ -3,7 +3,7 @@ package messagesender
 import (
 	"encoding/json"
 	"fmt"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"reflect"
 	"strings"
 	"sync"

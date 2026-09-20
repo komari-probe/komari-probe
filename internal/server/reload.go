@@ -1,7 +1,7 @@
 package server
 
 import (
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 
 	"github.com/komari-monitor/komari/pkg/kv"
 )

@@ -1,7 +1,7 @@
 package client
 
 import (
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/clients"

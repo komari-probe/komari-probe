@@ -12,7 +12,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
 	"github.com/komari-monitor/komari/internal/platform/records"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/scheduler"
 )
 

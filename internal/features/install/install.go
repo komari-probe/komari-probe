@@ -21,7 +21,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/platform/upload"
 	"github.com/komari-monitor/komari/pkg/kv"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"gorm.io/gorm"
 )
 

@@ -1,7 +1,7 @@
 package auditlog
 
 import (
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/dbcore"

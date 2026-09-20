@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 // Start builds an App and runs it through the full startup lifecycle:

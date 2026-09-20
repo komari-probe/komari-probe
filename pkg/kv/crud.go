@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

@@ -3,7 +3,7 @@ package migrations
 import (
 	"database/sql"
 	"fmt"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"math"
 	"os"
 	"strconv"

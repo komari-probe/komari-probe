@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/dop251/goja"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 type level uint8

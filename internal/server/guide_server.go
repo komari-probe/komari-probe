@@ -13,7 +13,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/api"
 	frontendpublic "github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/security"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 type guideController interface {

@@ -14,7 +14,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/kv"
-	logger "github.com/komari-monitor/komari/pkg/log"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/sqlitetune"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
