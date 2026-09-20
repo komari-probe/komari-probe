@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -125,7 +125,7 @@ func TestRecoverStorePersistsLegacyStoreForStructureGuide(t *testing.T) {
 
 func TestReloadRejectsLegacyStoreForStructureUpgrade(t *testing.T) {
 	prepareRecoveryTest(t)
-	active, err := metric.Open(context.Background(), metric.SQLite(":memory:"))
+	active, err := tsdb.Open(context.Background(), tsdb.SQLite(":memory:"))
 	if err != nil {
 		t.Fatalf("open active metric store: %v", err)
 	}

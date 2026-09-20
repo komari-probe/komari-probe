@@ -3,7 +3,7 @@ package jsonrpc
 import (
 	"testing"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 func TestLocalDatabaseTotalRequiresTwoKnownLocalSizes(t *testing.T) {
@@ -30,12 +30,12 @@ func TestLocalDatabaseTotalRequiresTwoKnownLocalSizes(t *testing.T) {
 
 func TestDatabaseLocationForDriver(t *testing.T) {
 	tests := []struct {
-		driver metric.Driver
+		driver tsdb.Driver
 		want   string
 	}{
-		{driver: metric.DriverSQLite, want: databaseLocationLocal},
-		{driver: metric.DriverMySQL, want: databaseLocationExternal},
-		{driver: metric.DriverPostgreSQL, want: databaseLocationExternal},
+		{driver: tsdb.DriverSQLite, want: databaseLocationLocal},
+		{driver: tsdb.DriverMySQL, want: databaseLocationExternal},
+		{driver: tsdb.DriverPostgreSQL, want: databaseLocationExternal},
 		{driver: "", want: ""},
 	}
 	for _, test := range tests {

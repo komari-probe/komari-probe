@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 // GetRecordsByClientAndTime 从 metric store 查询记录并重构为 models.Record
@@ -59,19 +59,19 @@ type recordSeriesKey struct {
 	ts     int64
 }
 
-func getRecordsByClientAndTimeFromSeries(ctx context.Context, s *metric.Store, clientUUID string, start, end time.Time) ([]models.Record, error) {
+func getRecordsByClientAndTimeFromSeries(ctx context.Context, s *tsdb.Store, clientUUID string, start, end time.Time) ([]models.Record, error) {
 	now := time.Now().UTC()
 	interval := recordSeriesInterval(s, start, end, now)
 	recordMap := make(map[recordSeriesKey]*models.Record)
 
 	for _, metricName := range loadRecordMetricNames {
-		points, err := s.Series(ctx, metric.AggregateQuery{
-			Query: metric.Query{
+		points, err := s.Series(ctx, tsdb.AggregateQuery{
+			Query: tsdb.Query{
 				MetricName: metricName,
 				EntityID:   clientUUID,
 				Start:      start,
 				End:        end,
-				Order:      metric.OrderAsc,
+				Order:      tsdb.OrderAsc,
 			},
 			Aggregation: recordMetricAggregation(metricName),
 			Interval:    interval,
@@ -103,22 +103,22 @@ func getRecordsByClientAndTimeFromSeries(ctx context.Context, s *metric.Store, c
 	return records, nil
 }
 
-func getRecordMetricMaxByClientAndTimeFromSeries(ctx context.Context, s *metric.Store, clientUUID, recordMetric string, start, end time.Time) ([]models.Record, error) {
+func getRecordMetricMaxByClientAndTimeFromSeries(ctx context.Context, s *tsdb.Store, clientUUID, recordMetric string, start, end time.Time) ([]models.Record, error) {
 	metricName, ok := metricNameForRecordField(recordMetric)
 	if !ok {
 		return nil, fmt.Errorf("unsupported record metric %q", recordMetric)
 	}
 
 	now := time.Now().UTC()
-	points, err := s.Series(ctx, metric.AggregateQuery{
-		Query: metric.Query{
+	points, err := s.Series(ctx, tsdb.AggregateQuery{
+		Query: tsdb.Query{
 			MetricName: metricName,
 			EntityID:   clientUUID,
 			Start:      start,
 			End:        end,
-			Order:      metric.OrderAsc,
+			Order:      tsdb.OrderAsc,
 		},
-		Aggregation: metric.AggMax,
+		Aggregation: tsdb.AggMax,
 		Interval:    recordSeriesInterval(s, start, end, now),
 	}, now)
 	if err != nil {
@@ -138,18 +138,18 @@ func getRecordMetricMaxByClientAndTimeFromSeries(ctx context.Context, s *metric.
 	return records, nil
 }
 
-func recordMetricAggregation(metricName string) metric.Aggregation {
+func recordMetricAggregation(metricName string) tsdb.Aggregation {
 	switch metricName {
 	case MetricTrafficUp, MetricTrafficDown:
-		return metric.AggSum
+		return tsdb.AggSum
 	case MetricNetTotalUp, MetricNetTotalDown:
-		return metric.AggLast
+		return tsdb.AggLast
 	default:
-		return metric.AggAvg
+		return tsdb.AggAvg
 	}
 }
 
-func recordSeriesInterval(s *metric.Store, start, end, now time.Time) time.Duration {
+func recordSeriesInterval(s *tsdb.Store, start, end, now time.Time) time.Duration {
 	interval := recordDownsampleInterval(end.Sub(start), 500)
 	return s.CompatibleSeriesInterval(start, now, interval)
 }
@@ -166,13 +166,13 @@ func recordDownsampleInterval(rangeDuration time.Duration, maxPoints int) time.D
 	if interval < time.Second {
 		return time.Second
 	}
-	return metric.FloorStandardInterval(interval)
+	return tsdb.FloorStandardInterval(interval)
 }
 
-func listRecordEntityIDs(ctx context.Context, s *metric.Store, start, end time.Time, interval time.Duration) ([]string, error) {
+func listRecordEntityIDs(ctx context.Context, s *tsdb.Store, start, end time.Time, interval time.Duration) ([]string, error) {
 	seen := make(map[string]struct{})
 	for _, metricName := range loadRecordMetricNames {
-		ids, err := s.EntityIDs(ctx, metric.Query{
+		ids, err := s.EntityIDs(ctx, tsdb.Query{
 			MetricName: metricName,
 			Start:      start.Add(-interval),
 			End:        end,
@@ -254,12 +254,12 @@ func GetGPURecordsByClientAndTime(ctx context.Context, clientUUID string, start,
 	recordMap := make(map[gpuKey]*models.GPURecord)
 
 	for _, metricName := range gpuMetrics {
-		points, err := s.Query(ctx, metric.Query{
+		points, err := s.Query(ctx, tsdb.Query{
 			MetricName: metricName,
 			EntityID:   clientUUID,
 			Start:      start,
 			End:        end,
-			Order:      metric.OrderAsc,
+			Order:      tsdb.OrderAsc,
 		})
 		if err != nil {
 			continue // GPU 数据可能不存在

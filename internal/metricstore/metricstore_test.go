@@ -9,7 +9,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/database/models"
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 func TestDefaultRollupPolicy(t *testing.T) {
@@ -173,22 +173,22 @@ func TestBuildMetricConfigAlwaysEnablesDownsampling(t *testing.T) {
 func TestGetPingRecordsReadsRollupsAfterRawCompaction(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now().UTC().Truncate(time.Second)
-	s, err := metric.Open(ctx, metric.SQLite(":memory:",
-		metric.WithMaxOpenConns(1),
-		metric.WithRollupPolicy(defaultRollupPolicy()),
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:",
+		tsdb.WithMaxOpenConns(1),
+		tsdb.WithRollupPolicy(defaultRollupPolicy()),
 	))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
 	defer s.Close()
-	if err := s.UpsertMetric(ctx, metric.Definition{
+	if err := s.UpsertMetric(ctx, tsdb.Definition{
 		Name:          MetricPingLatency,
-		Type:          metric.TypeGauge,
+		Type:          tsdb.TypeGauge,
 		RetentionDays: 30,
 	}); err != nil {
 		t.Fatalf("create ping metric: %v", err)
 	}
-	if err := s.WriteBatch(ctx, []metric.Point{
+	if err := s.WriteBatch(ctx, []tsdb.Point{
 		{MetricName: MetricPingLatency, EntityID: "node-a", Timestamp: now.Add(-20 * time.Minute), Value: 20, Tags: map[string]string{"task_id": "7"}},
 		{MetricName: MetricPingLatency, EntityID: "node-a", Timestamp: now.Add(-10 * time.Minute), Value: 10, Tags: map[string]string{"task_id": "7"}},
 		{MetricName: MetricPingLatency, EntityID: "node-a", Timestamp: now.Add(-5 * time.Minute), Value: 5, Tags: map[string]string{"task_id": "7"}},
@@ -227,7 +227,7 @@ func TestCreateMetricDefinitionsUsesExplicitRetentionAndPreservesOverrides(t *te
 	}
 
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:", metric.WithMaxOpenConns(1)))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:", tsdb.WithMaxOpenConns(1)))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -284,15 +284,15 @@ func TestCreateMetricDefinitionsUsesExplicitRetentionAndPreservesOverrides(t *te
 
 func TestCreateMetricDefinitionsKeepsExistingMetrics(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:", metric.WithMaxOpenConns(1)))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:", tsdb.WithMaxOpenConns(1)))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
 	defer s.Close()
-	if err := s.CreateMetric(ctx, metric.Definition{Name: "memory.total", Type: metric.TypeGauge, RetentionDays: 1}); err != nil {
+	if err := s.CreateMetric(ctx, tsdb.Definition{Name: "memory.total", Type: tsdb.TypeGauge, RetentionDays: 1}); err != nil {
 		t.Fatalf("create obsolete definition: %v", err)
 	}
-	if err := s.Write(ctx, metric.Point{MetricName: "memory.total", EntityID: "node-a", Timestamp: time.Now().UTC(), Value: 1024}); err != nil {
+	if err := s.Write(ctx, tsdb.Point{MetricName: "memory.total", EntityID: "node-a", Timestamp: time.Now().UTC(), Value: 1024}); err != nil {
 		t.Fatalf("write obsolete point: %v", err)
 	}
 	if err := createMetricDefinitions(ctx, s); err != nil {
@@ -305,7 +305,7 @@ func TestCreateMetricDefinitionsKeepsExistingMetrics(t *testing.T) {
 	if definition.RetentionDays != 1 {
 		t.Fatalf("existing retention = %d, want 1", definition.RetentionDays)
 	}
-	points, err := s.Query(ctx, metric.Query{MetricName: "memory.total", EntityID: "node-a", Start: time.Now().UTC().Add(-time.Hour), End: time.Now().UTC().Add(time.Hour)})
+	points, err := s.Query(ctx, tsdb.Query{MetricName: "memory.total", EntityID: "node-a", Start: time.Now().UTC().Add(-time.Hour), End: time.Now().UTC().Add(time.Hour)})
 	if err != nil {
 		t.Fatalf("query existing points: %v", err)
 	}
@@ -316,7 +316,7 @@ func TestCreateMetricDefinitionsKeepsExistingMetrics(t *testing.T) {
 
 func TestCreateMetricDefinitionsUsesLegacySpanOnlyForNewDefinitions(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:", metric.WithMaxOpenConns(1)))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:", tsdb.WithMaxOpenConns(1)))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -357,7 +357,7 @@ func TestCreateMetricDefinitionsUsesLegacySpanOnlyForNewDefinitions(t *testing.T
 
 func TestGetRetentionSummaryUsesAllMetricDefinitions(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:", metric.WithMaxOpenConns(1)))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:", tsdb.WithMaxOpenConns(1)))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -380,9 +380,9 @@ func TestGetRetentionSummaryUsesAllMetricDefinitions(t *testing.T) {
 	if empty.AllPositive || empty.MaxDays != 0 {
 		t.Fatalf("unexpected empty summary: %#v", empty)
 	}
-	for _, def := range []metric.Definition{
-		{Name: "short", Type: metric.TypeGauge, RetentionDays: 7},
-		{Name: "long", Type: metric.TypeGauge, RetentionDays: 60},
+	for _, def := range []tsdb.Definition{
+		{Name: "short", Type: tsdb.TypeGauge, RetentionDays: 7},
+		{Name: "long", Type: tsdb.TypeGauge, RetentionDays: 60},
 	} {
 		if err := s.UpsertMetric(ctx, def); err != nil {
 			t.Fatalf("upsert %s: %v", def.Name, err)
@@ -408,7 +408,7 @@ func TestGetRetentionSummaryUsesAllMetricDefinitions(t *testing.T) {
 }
 
 func TestSummarizeRetentionDefinitionsRequiresEveryMetricToBePositive(t *testing.T) {
-	summary := summarizeRetentionDefinitions([]metric.Definition{
+	summary := summarizeRetentionDefinitions([]tsdb.Definition{
 		{Name: "enabled", RetentionDays: 30},
 		{Name: "disabled", RetentionDays: 0},
 		{Name: "long", RetentionDays: 60},
@@ -420,20 +420,20 @@ func TestSummarizeRetentionDefinitionsRequiresEveryMetricToBePositive(t *testing
 
 func TestCompactCleansPointsOutsideFixedRawWindow(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:", metric.WithMaxOpenConns(1), metric.WithRollupPolicy(metric.RollupPolicy{})))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:", tsdb.WithMaxOpenConns(1), tsdb.WithRollupPolicy(tsdb.RollupPolicy{})))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
-	if err := s.UpsertMetric(ctx, metric.Definition{
+	if err := s.UpsertMetric(ctx, tsdb.Definition{
 		Name:          "raw.metric",
-		Type:          metric.TypeGauge,
+		Type:          tsdb.TypeGauge,
 		RetentionDays: 1,
 	}); err != nil {
 		t.Fatalf("upsert metric: %v", err)
 	}
 
 	now := time.Now().UTC()
-	if err := s.WriteBatch(ctx, []metric.Point{
+	if err := s.WriteBatch(ctx, []tsdb.Point{
 		{MetricName: "raw.metric", EntityID: "node", Timestamp: now.Add(-11 * time.Minute), Value: 1},
 		{MetricName: "raw.metric", EntityID: "node", Timestamp: now.Add(-30 * time.Second), Value: 2},
 	}); err != nil {
@@ -454,7 +454,7 @@ func TestCompactCleansPointsOutsideFixedRawWindow(t *testing.T) {
 	if _, err := Compact(ctx, now); err != nil {
 		t.Fatalf("compact: %v", err)
 	}
-	points, err := s.Query(ctx, metric.Query{
+	points, err := s.Query(ctx, tsdb.Query{
 		MetricName: "raw.metric",
 		EntityID:   "node",
 		Start:      now.Add(-time.Hour),
@@ -471,23 +471,23 @@ func TestCompactCleansPointsOutsideFixedRawWindow(t *testing.T) {
 func TestRetentionCleanupReportsDeleteFailure(t *testing.T) {
 	ctx := context.Background()
 	dsn := filepath.Join(t.TempDir(), "compact.db")
-	s, err := metric.Open(ctx, metric.SQLite(dsn,
-		metric.WithMaxOpenConns(1),
-		metric.WithRollupPolicy(defaultRollupPolicy()),
+	s, err := tsdb.Open(ctx, tsdb.SQLite(dsn,
+		tsdb.WithMaxOpenConns(1),
+		tsdb.WithRollupPolicy(defaultRollupPolicy()),
 	))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
 	t.Cleanup(func() { _ = s.Close() })
 	for _, name := range []string{"a.invalid", "b.healthy"} {
-		if err := s.CreateMetric(ctx, metric.Definition{Name: name, Type: metric.TypeGauge, RetentionDays: 1}); err != nil {
+		if err := s.CreateMetric(ctx, tsdb.Definition{Name: name, Type: tsdb.TypeGauge, RetentionDays: 1}); err != nil {
 			t.Fatalf("create metric %s: %v", name, err)
 		}
 	}
 
 	now := time.Date(2026, 7, 20, 12, 0, 0, 0, time.UTC)
 	old := now.Add(-48 * time.Hour)
-	if err := s.WriteBatch(ctx, []metric.Point{
+	if err := s.WriteBatch(ctx, []tsdb.Point{
 		{MetricName: "a.invalid", EntityID: "node", Timestamp: old, Value: 1},
 		{MetricName: "b.healthy", EntityID: "node", Timestamp: old, Value: 2},
 	}); err != nil {
@@ -520,7 +520,7 @@ func TestRetentionCleanupReportsDeleteFailure(t *testing.T) {
 	if _, err := CleanupExpired(ctx, now); err == nil {
 		t.Fatal("expected retention cleanup to report the forced delete failure")
 	}
-	points, err := s.Query(ctx, metric.Query{
+	points, err := s.Query(ctx, tsdb.Query{
 		MetricName: "b.healthy",
 		EntityID:   "node",
 		Start:      old.Add(-time.Minute),
@@ -536,9 +536,9 @@ func TestRetentionCleanupReportsDeleteFailure(t *testing.T) {
 
 func TestGetRecordsByClientAndTimeReadsRollupsAfterRawCompaction(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:",
-		metric.WithMaxOpenConns(1),
-		metric.WithRollupPolicy(defaultRollupPolicy()),
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:",
+		tsdb.WithMaxOpenConns(1),
+		tsdb.WithRollupPolicy(defaultRollupPolicy()),
 	))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
@@ -612,9 +612,9 @@ func TestGetRecordsByClientAndTimeReadsRollupsAfterRawCompaction(t *testing.T) {
 
 func TestGetRecordMetricMaxByClientAndTimeQueriesOnlySelectedMetric(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:",
-		metric.WithMaxOpenConns(1),
-		metric.WithRollupPolicy(defaultRollupPolicy()),
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:",
+		tsdb.WithMaxOpenConns(1),
+		tsdb.WithRollupPolicy(defaultRollupPolicy()),
 	))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
@@ -625,7 +625,7 @@ func TestGetRecordMetricMaxByClientAndTimeQueriesOnlySelectedMetric(t *testing.T
 	}
 
 	base := time.Now().UTC().Truncate(time.Minute).Add(-time.Minute)
-	if err := s.WriteBatch(ctx, []metric.Point{
+	if err := s.WriteBatch(ctx, []tsdb.Point{
 		{MetricName: MetricCPU, EntityID: "node-a", Timestamp: base.Add(10 * time.Second), Value: 10},
 		{MetricName: MetricCPU, EntityID: "node-a", Timestamp: base.Add(20 * time.Second), Value: 90},
 		{MetricName: MetricRAM, EntityID: "node-a", Timestamp: base.Add(20 * time.Second), Value: 123456},

@@ -14,7 +14,7 @@ import (
 	appconfig "github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/gorm"
 )
 
@@ -70,7 +70,7 @@ type legacyP95Group struct {
 }
 
 type legacyHourlyP95Aggregator struct {
-	store        *metric.Store
+	store        *tsdb.Store
 	partitionKey string
 	bucket       time.Time
 	groups       map[string]*legacyP95Group
@@ -168,7 +168,7 @@ func InspectLegacyMonitoring(db *gorm.DB) (LegacyMonitoringSummary, error) {
 	return summary, nil
 }
 
-func MigrateLegacyMonitoring(ctx context.Context, db *gorm.DB, s *metric.Store, progress func(LegacyMonitoringProgress)) (LegacyMonitoringStats, error) {
+func MigrateLegacyMonitoring(ctx context.Context, db *gorm.DB, s *tsdb.Store, progress func(LegacyMonitoringProgress)) (LegacyMonitoringStats, error) {
 	if err := metricstore.EnsureBuiltinMetricDefinitions(ctx, s); err != nil {
 		return LegacyMonitoringStats{}, fmt.Errorf("ensure built-in metric definitions: %w", err)
 	}
@@ -194,7 +194,7 @@ func CompleteLegacyMonitoringMigration(db *gorm.DB, finalize func() error) error
 	return nil
 }
 
-func runLegacyMonitoringMigration(ctx context.Context, db *gorm.DB, s *metric.Store, done bool, markDone func() error) (LegacyMonitoringStats, error) {
+func runLegacyMonitoringMigration(ctx context.Context, db *gorm.DB, s *tsdb.Store, done bool, markDone func() error) (LegacyMonitoringStats, error) {
 	var stats LegacyMonitoringStats
 	if done {
 		return stats, nil
@@ -222,7 +222,7 @@ func runLegacyMonitoringMigration(ctx context.Context, db *gorm.DB, s *metric.St
 	return stats, nil
 }
 
-func migrateLegacyMonitoringTables(ctx context.Context, db *gorm.DB, s *metric.Store, progress func(LegacyMonitoringProgress)) (LegacyMonitoringStats, error) {
+func migrateLegacyMonitoringTables(ctx context.Context, db *gorm.DB, s *tsdb.Store, progress func(LegacyMonitoringProgress)) (LegacyMonitoringStats, error) {
 	var stats LegacyMonitoringStats
 	summary, err := InspectLegacyMonitoring(db)
 	if err != nil {
@@ -266,7 +266,7 @@ func migrateLegacyMonitoringTables(ctx context.Context, db *gorm.DB, s *metric.S
 	return stats, nil
 }
 
-func migrateLegacyRecordTables(ctx context.Context, s *metric.Store, db *gorm.DB, tables []string, progress legacyBatchProgress) (int64, error) {
+func migrateLegacyRecordTables(ctx context.Context, s *tsdb.Store, db *gorm.DB, tables []string, progress legacyBatchProgress) (int64, error) {
 	var existing []string
 	var total int64
 	for _, table := range tables {
@@ -302,7 +302,7 @@ func migrateLegacyRecordTables(ctx context.Context, s *metric.Store, db *gorm.DB
 	defer rows.Close()
 
 	logger.Infof("migration", "[legacy-migration] aggregating %d rows from %s into 1h P95 points", total, strings.Join(existing, ","))
-	migrated, err := migrateLegacyStream(ctx, db, s, rows, "records", func() *models.Record { return &models.Record{} }, func(value models.Record) []metric.Point {
+	migrated, err := migrateLegacyStream(ctx, db, s, rows, "records", func() *models.Record { return &models.Record{} }, func(value models.Record) []tsdb.Point {
 		return recordToPoints(value)
 	}, progress)
 	if err != nil {
@@ -312,7 +312,7 @@ func migrateLegacyRecordTables(ctx context.Context, s *metric.Store, db *gorm.DB
 	return migrated, nil
 }
 
-func migrateLegacyGPURecordTable(ctx context.Context, s *metric.Store, db *gorm.DB, table string, progress legacyBatchProgress) (int64, error) {
+func migrateLegacyGPURecordTable(ctx context.Context, s *tsdb.Store, db *gorm.DB, table string, progress legacyBatchProgress) (int64, error) {
 	if !db.Migrator().HasTable(table) {
 		return 0, nil
 	}
@@ -331,7 +331,7 @@ func migrateLegacyGPURecordTable(ctx context.Context, s *metric.Store, db *gorm.
 	}
 	defer rows.Close()
 	logger.Infof("migration", "[legacy-migration] aggregating %d rows from %s into 1h P95 points", total, table)
-	migrated, err := migrateLegacyStream(ctx, db, s, rows, table, func() *models.GPURecord { return &models.GPURecord{} }, func(value models.GPURecord) []metric.Point {
+	migrated, err := migrateLegacyStream(ctx, db, s, rows, table, func() *models.GPURecord { return &models.GPURecord{} }, func(value models.GPURecord) []tsdb.Point {
 		return gpuRecordToPoints(value)
 	}, progress)
 	if err != nil {
@@ -341,7 +341,7 @@ func migrateLegacyGPURecordTable(ctx context.Context, s *metric.Store, db *gorm.
 	return migrated, nil
 }
 
-func migrateLegacyPingRecordTable(ctx context.Context, s *metric.Store, db *gorm.DB, table string, progress legacyBatchProgress) (int64, error) {
+func migrateLegacyPingRecordTable(ctx context.Context, s *tsdb.Store, db *gorm.DB, table string, progress legacyBatchProgress) (int64, error) {
 	if !db.Migrator().HasTable(table) {
 		return 0, nil
 	}
@@ -360,7 +360,7 @@ func migrateLegacyPingRecordTable(ctx context.Context, s *metric.Store, db *gorm
 	}
 	defer rows.Close()
 	logger.Infof("migration", "[legacy-migration] aggregating %d rows from %s into 1h P95 points", total, table)
-	migrated, err := migrateLegacyStream(ctx, db, s, rows, table, func() *models.PingRecord { return &models.PingRecord{} }, func(value models.PingRecord) []metric.Point {
+	migrated, err := migrateLegacyStream(ctx, db, s, rows, table, func() *models.PingRecord { return &models.PingRecord{} }, func(value models.PingRecord) []tsdb.Point {
 		return pingRecordToPoints(value)
 	}, progress)
 	if err != nil {
@@ -370,7 +370,7 @@ func migrateLegacyPingRecordTable(ctx context.Context, s *metric.Store, db *gorm
 	return migrated, nil
 }
 
-func migrateLegacyStream[T any](ctx context.Context, db *gorm.DB, s *metric.Store, rows *sql.Rows, table string, newValue func() *T, toPoints func(T) []metric.Point, progress legacyBatchProgress) (int64, error) {
+func migrateLegacyStream[T any](ctx context.Context, db *gorm.DB, s *tsdb.Store, rows *sql.Rows, table string, newValue func() *T, toPoints func(T) []tsdb.Point, progress legacyBatchProgress) (int64, error) {
 	aggregator := &legacyHourlyP95Aggregator{store: s}
 	var migrated, batchRows, batchPoints int64
 	emit := func(force bool) {
@@ -443,7 +443,7 @@ func legacyRecordProjection(db *gorm.DB, table string) (string, error) {
 	return "SELECT " + strings.Join(projection, ", ") + " FROM " + table, nil
 }
 
-func (a *legacyHourlyP95Aggregator) Add(ctx context.Context, points []metric.Point) (int64, error) {
+func (a *legacyHourlyP95Aggregator) Add(ctx context.Context, points []tsdb.Point) (int64, error) {
 	var written int64
 	for _, point := range points {
 		bucket := point.Timestamp.UTC().Truncate(legacyMonitoringInterval)
@@ -489,10 +489,10 @@ func (a *legacyHourlyP95Aggregator) Flush(ctx context.Context) (int64, error) {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	points := make([]metric.Point, 0, len(names))
+	points := make([]tsdb.Point, 0, len(names))
 	for _, name := range names {
 		group := a.groups[name]
-		points = append(points, metric.Point{
+		points = append(points, tsdb.Point{
 			MetricName: group.metricName,
 			EntityID:   group.entityID,
 			Timestamp:  a.bucket,
@@ -527,7 +527,7 @@ func legacyP95(values []float64) float64 {
 	return values[lower]*(1-weight) + values[upper]*weight
 }
 
-func legacyPointPartition(point metric.Point) (string, error) {
+func legacyPointPartition(point tsdb.Point) (string, error) {
 	tags, err := json.Marshal(point.Tags)
 	if err != nil {
 		return "", fmt.Errorf("encode legacy point tags: %w", err)
@@ -602,10 +602,10 @@ func minLegacyBuckets(sourceRows, estimatedBuckets int64) int64 {
 	return estimatedBuckets
 }
 
-func recordToPoints(rec models.Record) []metric.Point {
+func recordToPoints(rec models.Record) []tsdb.Point {
 	ts := rec.Time
 	entityID := rec.Client
-	return []metric.Point{
+	return []tsdb.Point{
 		{MetricName: metricstore.MetricCPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.Cpu)},
 		{MetricName: metricstore.MetricGPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.Gpu)},
 		{MetricName: metricstore.MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(rec.Ram)},
@@ -624,13 +624,13 @@ func recordToPoints(rec models.Record) []metric.Point {
 	}
 }
 
-func gpuRecordToPoints(rec models.GPURecord) []metric.Point {
+func gpuRecordToPoints(rec models.GPURecord) []tsdb.Point {
 	ts := rec.Time
 	tags := map[string]string{
 		"device_index": fmt.Sprintf("%d", rec.DeviceIndex),
 		"device_name":  rec.DeviceName,
 	}
-	return []metric.Point{
+	return []tsdb.Point{
 		{MetricName: metricstore.MetricGPUMem, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.MemUsed), Tags: tags},
 		{MetricName: metricstore.MetricGPUMemTotal, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.MemTotal), Tags: tags},
 		{MetricName: metricstore.MetricGPUDeviceUsage, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.Utilization), Tags: tags},
@@ -638,14 +638,14 @@ func gpuRecordToPoints(rec models.GPURecord) []metric.Point {
 	}
 }
 
-func pingRecordToPoints(rec models.PingRecord) []metric.Point {
+func pingRecordToPoints(rec models.PingRecord) []tsdb.Point {
 	ts := rec.Time
 	tags := map[string]string{"task_id": fmt.Sprintf("%d", rec.TaskId)}
 	loss := 0.0
 	if rec.Value < 0 {
 		loss = 1
 	}
-	return []metric.Point{
+	return []tsdb.Point{
 		{
 			MetricName: metricstore.MetricPingLatency,
 			EntityID:   rec.Client,

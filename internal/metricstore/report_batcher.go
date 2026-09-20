@@ -11,7 +11,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/database/models"
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 type reportTrafficState struct {
@@ -349,7 +349,7 @@ func writeReportBatch(ctx context.Context, reports []v2.Report) ([]v2.Report, er
 
 	prepared := make([]v2.Report, len(reports))
 	copy(prepared, reports)
-	points := make([]metric.Point, 0, len(reports)*20)
+	points := make([]tsdb.Point, 0, len(reports)*20)
 	pendingStates := make(map[*reportTrafficState]reportTrafficValues)
 	for i, report := range prepared {
 		stateValue, _ := reportTrafficStates.LoadOrStore(report.UUID, &reportTrafficState{})

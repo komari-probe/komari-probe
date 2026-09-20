@@ -12,7 +12,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/metricstore"
 	"github.com/komari-monitor/komari/internal/rpc"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 func TestMetricQueryParamsRequireRFC3339Time(t *testing.T) {
@@ -236,31 +236,31 @@ func TestPublicPingStatsFromAggregateGroupsUsesTaskNamesAndLossMetric(t *testing
 		"1": {Id: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
 	}
 	groups := publicPingMetricAggregateGroups{
-		Avg: map[string][]metric.AggregatePoint{
+		Avg: map[string][]tsdb.AggregatePoint{
 			"1": {
 				{Bucket: base, Count: 2, Value: 20},
 				{Bucket: base.Add(time.Minute), Count: 2, Value: 40},
 			},
 		},
-		Min: map[string][]metric.AggregatePoint{
+		Min: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base, Count: 4, Value: 12}},
 		},
-		Max: map[string][]metric.AggregatePoint{
+		Max: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base, Count: 4, Value: 92}},
 		},
-		Last: map[string][]metric.AggregatePoint{
+		Last: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base.Add(time.Minute), Count: 1, Value: 44}},
 		},
-		P50: map[string][]metric.AggregatePoint{
+		P50: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base, Count: 4, Value: 30}},
 		},
-		P99: map[string][]metric.AggregatePoint{
+		P99: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base, Count: 4, Value: 80}},
 		},
-		StdDev: map[string][]metric.AggregatePoint{
+		StdDev: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base, Count: 4, Value: 8}},
 		},
-		Loss: map[string][]metric.AggregatePoint{
+		Loss: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base, Count: 4, Value: 0.25}},
 		},
 		LossAvailable: true,
@@ -328,11 +328,11 @@ func TestMetricDownsampleIntervalCeilsToStandardInterval(t *testing.T) {
 
 func TestLoadPublicMetricPointsReturnsAllRecentRawSamples(t *testing.T) {
 	ctx := context.Background()
-	store, err := metric.Open(ctx, metric.SQLite(":memory:",
-		metric.WithMaxOpenConns(1),
-		metric.WithRollupPolicy(metric.RollupPolicy{
+	store, err := tsdb.Open(ctx, tsdb.SQLite(":memory:",
+		tsdb.WithMaxOpenConns(1),
+		tsdb.WithRollupPolicy(tsdb.RollupPolicy{
 			RawRetention: metricstore.DefaultRollupRawRetention,
-			Tiers: []metric.RollupTier{
+			Tiers: []tsdb.RollupTier{
 				{Interval: time.Minute, Retention: 10 * time.Hour},
 			},
 			Compression: 30,
@@ -344,15 +344,15 @@ func TestLoadPublicMetricPointsReturnsAllRecentRawSamples(t *testing.T) {
 	defer store.Close()
 
 	const metricName = "query.raw"
-	if err := store.CreateMetric(ctx, metric.Definition{
+	if err := store.CreateMetric(ctx, tsdb.Definition{
 		Name:          metricName,
-		Type:          metric.TypeGauge,
+		Type:          tsdb.TypeGauge,
 		RetentionDays: 1,
 	}); err != nil {
 		t.Fatalf("create metric: %v", err)
 	}
 	now := time.Now().UTC().Truncate(time.Millisecond)
-	input := []metric.Point{
+	input := []tsdb.Point{
 		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-9 * time.Minute), Value: 1, Tags: map[string]string{"core": "0"}, Labels: map[string]string{"source": "oldest"}},
 		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-5 * time.Minute), Value: 2, Tags: map[string]string{"core": "0"}},
 		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-90 * time.Second), Value: 3, Tags: map[string]string{"core": "0"}},
@@ -363,13 +363,13 @@ func TestLoadPublicMetricPointsReturnsAllRecentRawSamples(t *testing.T) {
 	}
 
 	queryEnd := now.Add(-3 * time.Second)
-	got, err := loadPublicMetricPoints(ctx, store, metric.Query{
+	got, err := loadPublicMetricPoints(ctx, store, tsdb.Query{
 		MetricName: metricName,
 		EntityID:   "node-a",
 		Start:      queryEnd.Add(-10 * time.Minute),
 		End:        queryEnd,
-		Order:      metric.OrderAsc,
-	}, metric.AggAvg, 1, false, now)
+		Order:      tsdb.OrderAsc,
+	}, tsdb.AggAvg, 1, false, now)
 	if err != nil {
 		t.Fatalf("load public metric points: %v", err)
 	}
@@ -414,17 +414,17 @@ func TestPublicMetricUsesRawWindowOnlyForCurrentlyRetainedRange(t *testing.T) {
 func TestLoadPublicMetricPointsReturnsOnlyRawAfterRestart(t *testing.T) {
 	ctx := context.Background()
 	dsn := filepath.Join(t.TempDir(), "metrics.db")
-	policy := metric.RollupPolicy{
+	policy := tsdb.RollupPolicy{
 		RawRetention: metricstore.DefaultRollupRawRetention,
-		Tiers: []metric.RollupTier{
+		Tiers: []tsdb.RollupTier{
 			{Interval: time.Minute, Retention: 10 * time.Hour},
 		},
 		Compression: 30,
 	}
-	open := func() *metric.Store {
-		store, err := metric.Open(ctx, metric.SQLite(dsn,
-			metric.WithMaxOpenConns(1),
-			metric.WithRollupPolicy(policy),
+	open := func() *tsdb.Store {
+		store, err := tsdb.Open(ctx, tsdb.SQLite(dsn,
+			tsdb.WithMaxOpenConns(1),
+			tsdb.WithRollupPolicy(policy),
 		))
 		if err != nil {
 			t.Fatalf("open metric store: %v", err)
@@ -435,10 +435,10 @@ func TestLoadPublicMetricPointsReturnsOnlyRawAfterRestart(t *testing.T) {
 	const metricName = "query.restart"
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	store := open()
-	if err := store.CreateMetric(ctx, metric.Definition{Name: metricName, Type: metric.TypeGauge, RetentionDays: 1}); err != nil {
+	if err := store.CreateMetric(ctx, tsdb.Definition{Name: metricName, Type: tsdb.TypeGauge, RetentionDays: 1}); err != nil {
 		t.Fatalf("create metric: %v", err)
 	}
-	beforeRestart := []metric.Point{
+	beforeRestart := []tsdb.Point{
 		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-8 * time.Minute), Value: 1, Tags: map[string]string{"core": "0"}},
 		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-90 * time.Second), Value: 2, Tags: map[string]string{"core": "0"}},
 	}
@@ -451,7 +451,7 @@ func TestLoadPublicMetricPointsReturnsOnlyRawAfterRestart(t *testing.T) {
 
 	store = open()
 	defer store.Close()
-	afterRestart := metric.Point{
+	afterRestart := tsdb.Point{
 		MetricName: metricName,
 		EntityID:   "node-a",
 		Timestamp:  now.Add(-5 * time.Second),
@@ -463,13 +463,13 @@ func TestLoadPublicMetricPointsReturnsOnlyRawAfterRestart(t *testing.T) {
 		t.Fatalf("write post-restart point: %v", err)
 	}
 
-	got, err := loadPublicMetricPoints(ctx, store, metric.Query{
+	got, err := loadPublicMetricPoints(ctx, store, tsdb.Query{
 		MetricName: metricName,
 		EntityID:   "node-a",
 		Start:      now.Add(-10 * time.Minute),
 		End:        now,
-		Order:      metric.OrderAsc,
-	}, metric.AggAvg, 500, false, now)
+		Order:      tsdb.OrderAsc,
+	}, tsdb.AggAvg, 500, false, now)
 	if err != nil {
 		t.Fatalf("load mixed restart window: %v", err)
 	}

@@ -20,7 +20,7 @@ import (
 	"github.com/komari-monitor/komari/internal/web/api"
 	publicapi "github.com/komari-monitor/komari/internal/web/api/public"
 	jsonrpc "github.com/komari-monitor/komari/internal/web/rpc/jsonrpc"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/gorm"
 )
 
@@ -213,7 +213,7 @@ func (c *Controller) startLegacy(ctx *gin.Context) {
 		return
 	}
 	driver := metricstore.ResolveDriverFromConfig(cfg.Driver, cfg.DSN)
-	if driver == metric.DriverSQLite && summary.ServerCount > 5 && summary.RetentionDays > 7 && !request.ConfirmSQLiteRisk {
+	if driver == tsdb.DriverSQLite && summary.ServerCount > 5 && summary.RetentionDays > 7 && !request.ConfirmSQLiteRisk {
 		api.RespondError(ctx, http.StatusConflict, "SQLite risk confirmation is required")
 		return
 	}
@@ -493,11 +493,11 @@ func structureProgressPercent(progress metricstore.RestructureProgress) float64 
 func metricConfig(requestedDriver, requestedDSN string) (*metricstore.MetricStoreConfig, error) {
 	requestedDriver = strings.ToLower(strings.TrimSpace(requestedDriver))
 	requestedDSN = strings.TrimSpace(requestedDSN)
-	if requestedDriver != string(metric.DriverSQLite) && requestedDriver != string(metric.DriverMySQL) && requestedDriver != string(metric.DriverPostgreSQL) {
+	if requestedDriver != string(tsdb.DriverSQLite) && requestedDriver != string(tsdb.DriverMySQL) && requestedDriver != string(tsdb.DriverPostgreSQL) {
 		return nil, fmt.Errorf("driver must be sqlite, mysql, or postgresql")
 	}
 	if requestedDSN == "" {
-		if requestedDriver != string(metric.DriverSQLite) {
+		if requestedDriver != string(tsdb.DriverSQLite) {
 			return nil, fmt.Errorf("dsn is required for remote databases")
 		}
 		requestedDSN = "./data/metrics.db"

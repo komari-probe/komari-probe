@@ -10,7 +10,7 @@ import (
 	logger "github.com/komari-monitor/komari/pkg/log"
 
 	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 // store_migration.go
@@ -157,7 +157,7 @@ func StartStoreMigration(sourceDriver, sourceDSN string) error {
 }
 
 // runStoreMigration 执行实际的搬运逻辑（在独立 goroutine 中）。
-func runStoreMigration(ctx context.Context, cancel context.CancelFunc, done chan struct{}, srcCfg *MetricStoreConfig, cfg *MetricStoreConfig, dst *metric.Store, targetFP string) {
+func runStoreMigration(ctx context.Context, cancel context.CancelFunc, done chan struct{}, srcCfg *MetricStoreConfig, cfg *MetricStoreConfig, dst *tsdb.Store, targetFP string) {
 	defer func() {
 		cancel()
 		storeOperations.Release()

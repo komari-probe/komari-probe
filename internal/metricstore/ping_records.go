@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/database/models"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 // WritePingRecord 将 ping 记录写入 metric store
@@ -35,7 +35,7 @@ func writePingRecords(ctx context.Context, records []models.PingRecord) error {
 		return nil
 	}
 
-	points := make([]metric.Point, 0, len(records)*2)
+	points := make([]tsdb.Point, 0, len(records)*2)
 	for _, rec := range records {
 		tags := map[string]string{"task_id": fmt.Sprintf("%d", rec.TaskId)}
 		loss := 0.0
@@ -43,14 +43,14 @@ func writePingRecords(ctx context.Context, records []models.PingRecord) error {
 			loss = 1
 		}
 		points = append(points,
-			metric.Point{
+			tsdb.Point{
 				MetricName: MetricPingLatency,
 				EntityID:   rec.Client,
 				Timestamp:  rec.Time,
 				Value:      float64(rec.Value),
 				Tags:       tags,
 			},
-			metric.Point{
+			tsdb.Point{
 				MetricName: MetricPingLoss,
 				EntityID:   rec.Client,
 				Timestamp:  rec.Time,
@@ -68,11 +68,11 @@ func GetPingRecords(ctx context.Context, clientUUID string, taskID int, start, e
 		return nil, fmt.Errorf("metric store not enabled")
 	}
 
-	query := metric.Query{
+	query := tsdb.Query{
 		MetricName: MetricPingLatency,
 		Start:      start,
 		End:        end,
-		Order:      metric.OrderAsc,
+		Order:      tsdb.OrderAsc,
 	}
 
 	if clientUUID != "" {
@@ -85,9 +85,9 @@ func GetPingRecords(ctx context.Context, clientUUID string, taskID int, start, e
 
 	interval := pingQueryInterval(end.Sub(start), 4000)
 	interval = s.CompatibleSeriesInterval(start, time.Now().UTC(), interval)
-	points, err := s.Series(ctx, metric.AggregateQuery{
+	points, err := s.Series(ctx, tsdb.AggregateQuery{
 		Query:          query,
-		Aggregation:    metric.AggLast,
+		Aggregation:    tsdb.AggLast,
 		Interval:       interval,
 		PreserveSeries: true,
 	}, time.Now().UTC())
@@ -129,5 +129,5 @@ func pingQueryInterval(rangeDuration time.Duration, maxPoints int) time.Duration
 	if interval < time.Second {
 		return time.Second
 	}
-	return metric.FloorStandardInterval(interval)
+	return tsdb.FloorStandardInterval(interval)
 }

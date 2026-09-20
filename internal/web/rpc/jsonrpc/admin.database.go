@@ -9,7 +9,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/metricstore"
 	"github.com/komari-monitor/komari/internal/rpc"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 const (
@@ -117,7 +117,7 @@ func mainDatabaseStatus() databaseStorageStatus {
 	status := databaseStorageStatus{
 		Driver:   flags.NormalizeDatabaseType(flags.DatabaseType),
 		Location: databaseLocationLocal,
-		Action:   string(metric.MaintenanceVacuum),
+		Action:   string(tsdb.MaintenanceVacuum),
 	}
 	size, err := dbcore.StorageSize()
 	if err != nil {
@@ -194,8 +194,8 @@ func maintainMonitoringDatabase(ctx context.Context) databaseMaintenanceResult {
 	return result
 }
 
-func databaseLocationForDriver(driver metric.Driver) string {
-	if driver == metric.DriverSQLite {
+func databaseLocationForDriver(driver tsdb.Driver) string {
+	if driver == tsdb.DriverSQLite {
 		return databaseLocationLocal
 	}
 	if driver == "" {

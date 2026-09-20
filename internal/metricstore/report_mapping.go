@@ -8,13 +8,13 @@ import (
 
 	"github.com/komari-monitor/komari/internal/database/models"
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
-func reportMetricPoints(report v2.Report, trafficUp, trafficDown int64) []metric.Point {
+func reportMetricPoints(report v2.Report, trafficUp, trafficDown int64) []tsdb.Point {
 	entityID := report.UUID
 	ts := report.UpdatedAt
-	points := []metric.Point{
+	points := []tsdb.Point{
 		{MetricName: MetricCPU, EntityID: entityID, Timestamp: ts, Value: report.CPU.Usage},
 		{MetricName: MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(report.Ram.Used)},
 		{MetricName: MetricSwap, EntityID: entityID, Timestamp: ts, Value: float64(report.Swap.Used)},
@@ -33,23 +33,23 @@ func reportMetricPoints(report v2.Report, trafficUp, trafficDown int64) []metric
 	if report.GPU == nil {
 		return points
 	}
-	points = append(points, metric.Point{MetricName: MetricGPU, EntityID: entityID, Timestamp: ts, Value: report.GPU.AverageUsage})
+	points = append(points, tsdb.Point{MetricName: MetricGPU, EntityID: entityID, Timestamp: ts, Value: report.GPU.AverageUsage})
 	for deviceIndex, gpu := range report.GPU.DetailedInfo {
 		tags := map[string]string{
 			"device_index": strconv.Itoa(deviceIndex),
 			"device_name":  gpu.Name,
 		}
 		points = append(points,
-			metric.Point{MetricName: MetricGPUMem, EntityID: entityID, Timestamp: ts, Value: float64(gpu.MemoryUsed), Tags: tags},
-			metric.Point{MetricName: MetricGPUMemTotal, EntityID: entityID, Timestamp: ts, Value: float64(gpu.MemoryTotal), Tags: tags},
-			metric.Point{MetricName: MetricGPUDeviceUsage, EntityID: entityID, Timestamp: ts, Value: gpu.Utilization, Tags: tags},
-			metric.Point{MetricName: MetricGPUTemp, EntityID: entityID, Timestamp: ts, Value: float64(gpu.Temperature), Tags: tags},
+			tsdb.Point{MetricName: MetricGPUMem, EntityID: entityID, Timestamp: ts, Value: float64(gpu.MemoryUsed), Tags: tags},
+			tsdb.Point{MetricName: MetricGPUMemTotal, EntityID: entityID, Timestamp: ts, Value: float64(gpu.MemoryTotal), Tags: tags},
+			tsdb.Point{MetricName: MetricGPUDeviceUsage, EntityID: entityID, Timestamp: ts, Value: gpu.Utilization, Tags: tags},
+			tsdb.Point{MetricName: MetricGPUTemp, EntityID: entityID, Timestamp: ts, Value: float64(gpu.Temperature), Tags: tags},
 		)
 	}
 	return points
 }
 
-func latestReportCounter(ctx context.Context, s *metric.Store, metricName, entityID string, before time.Time) (int64, bool, error) {
+func latestReportCounter(ctx context.Context, s *tsdb.Store, metricName, entityID string, before time.Time) (int64, bool, error) {
 	point, ok, err := s.LatestBefore(ctx, metricName, entityID, before)
 	if err != nil {
 		return 0, false, err

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 const (
@@ -61,12 +61,12 @@ func targetFingerprint(cfg *MetricStoreConfig) string {
 	return fmt.Sprintf("%s|%s", driver, dsn)
 }
 
-// buildMetricConfig 根据 MetricStoreConfig 构造底层 metric.Config。
+// buildMetricConfig 根据 MetricStoreConfig 构造底层 tsdb.Config。
 // autoMigrate 控制是否在 Open 时自动建表：正式初始化/热加载时为 true，
 // 仅做连接测试时为 false（不写入 schema，避免对目标库产生副作用）。
-func buildMetricConfig(cfg *MetricStoreConfig, autoMigrate bool) (metric.Config, error) {
+func buildMetricConfig(cfg *MetricStoreConfig, autoMigrate bool) (tsdb.Config, error) {
 	if cfg == nil {
-		return metric.Config{}, fmt.Errorf("metric store config is nil")
+		return tsdb.Config{}, fmt.Errorf("metric store config is nil")
 	}
 	driver := ResolveDriverFromConfig(cfg.Driver, cfg.DSN)
 
@@ -74,18 +74,18 @@ func buildMetricConfig(cfg *MetricStoreConfig, autoMigrate bool) (metric.Config,
 	if tablePrefix == "" {
 		tablePrefix = "metric_"
 	}
-	opts := []metric.Option{
-		metric.WithTablePrefix(tablePrefix),
-		metric.WithAutoMigrate(autoMigrate),
+	opts := []tsdb.Option{
+		tsdb.WithTablePrefix(tablePrefix),
+		tsdb.WithAutoMigrate(autoMigrate),
 	}
 	policy, err := rollupPolicyFromConfig(cfg)
 	if err != nil {
-		return metric.Config{}, err
+		return tsdb.Config{}, err
 	}
-	opts = append(opts, metric.WithRollupPolicy(policy))
+	opts = append(opts, tsdb.WithRollupPolicy(policy))
 
 	switch driver {
-	case metric.DriverSQLite:
+	case tsdb.DriverSQLite:
 		dsn := cfg.DSN
 		if dsn == "" || dsn == "./data/metrics.db" {
 			// 注意：刻意不使用 cache=shared。SQLite 共享缓存模式使用表级锁，
@@ -102,27 +102,27 @@ func buildMetricConfig(cfg *MetricStoreConfig, autoMigrate bool) (metric.Config,
 		// 同时启用独立的 WAL 只读连接池提升前台查询并发（写仍走单主连接）。
 		// 这里刻意忽略 cfg.MaxOpenConns/MaxIdleConns —— 对 SQLite 而言多写连接
 		// 只会引入锁竞争而非提升吞吐。
-		opts = append(opts, metric.WithMaxOpenConns(1), metric.WithMaxIdleConns(1))
-		opts = append(opts, metric.WithSQLiteReadPool(2))
-		return metric.SQLite(dsn, opts...), nil
-	case metric.DriverMySQL:
+		opts = append(opts, tsdb.WithMaxOpenConns(1), tsdb.WithMaxIdleConns(1))
+		opts = append(opts, tsdb.WithSQLiteReadPool(2))
+		return tsdb.SQLite(dsn, opts...), nil
+	case tsdb.DriverMySQL:
 		opts = append(opts,
-			metric.WithMaxOpenConns(cfg.MaxOpenConns),
-			metric.WithMaxIdleConns(cfg.MaxIdleConns),
+			tsdb.WithMaxOpenConns(cfg.MaxOpenConns),
+			tsdb.WithMaxIdleConns(cfg.MaxIdleConns),
 		)
-		return metric.MySQL(cfg.DSN, opts...), nil
-	case metric.DriverPostgreSQL:
+		return tsdb.MySQL(cfg.DSN, opts...), nil
+	case tsdb.DriverPostgreSQL:
 		opts = append(opts,
-			metric.WithMaxOpenConns(cfg.MaxOpenConns),
-			metric.WithMaxIdleConns(cfg.MaxIdleConns),
+			tsdb.WithMaxOpenConns(cfg.MaxOpenConns),
+			tsdb.WithMaxIdleConns(cfg.MaxIdleConns),
 		)
-		return metric.PostgreSQL(cfg.DSN, opts...), nil
+		return tsdb.PostgreSQL(cfg.DSN, opts...), nil
 	default:
-		return metric.Config{}, fmt.Errorf("unsupported metric database driver: %s", cfg.Driver)
+		return tsdb.Config{}, fmt.Errorf("unsupported metric database driver: %s", cfg.Driver)
 	}
 }
 
-func defaultRollupPolicy() metric.RollupPolicy {
+func defaultRollupPolicy() tsdb.RollupPolicy {
 	return rollupPolicyFromValues(
 		defaultRollupMinuteRetentionMinutes,
 		defaultRollupFiveMinuteRetentionMinutes,
@@ -130,9 +130,9 @@ func defaultRollupPolicy() metric.RollupPolicy {
 	)
 }
 
-func rollupPolicyFromConfig(cfg *MetricStoreConfig) (metric.RollupPolicy, error) {
+func rollupPolicyFromConfig(cfg *MetricStoreConfig) (tsdb.RollupPolicy, error) {
 	if cfg == nil {
-		return metric.RollupPolicy{}, fmt.Errorf("metric store config is nil")
+		return tsdb.RollupPolicy{}, fmt.Errorf("metric store config is nil")
 	}
 
 	minuteRetention := cfg.RollupMinuteRetentionMinutes
@@ -150,30 +150,30 @@ func rollupPolicyFromConfig(cfg *MetricStoreConfig) (metric.RollupPolicy, error)
 		hourRetention = defaultRollupHourRetentionHours
 	}
 	if minuteRetention < 0 || fiveMinuteRetention < 0 || hourRetention < 0 {
-		return metric.RollupPolicy{}, fmt.Errorf("metric rollup retention values must be positive integers")
+		return tsdb.RollupPolicy{}, fmt.Errorf("metric rollup retention values must be positive integers")
 	}
 
 	minuteDuration, err := rollupDuration(minuteRetention, time.Minute)
 	if err != nil {
-		return metric.RollupPolicy{}, err
+		return tsdb.RollupPolicy{}, err
 	}
 	fiveMinuteDuration, err := rollupDuration(fiveMinuteRetention, time.Minute)
 	if err != nil {
-		return metric.RollupPolicy{}, err
+		return tsdb.RollupPolicy{}, err
 	}
 	hourDuration, err := rollupDuration(hourRetention, time.Hour)
 	if err != nil {
-		return metric.RollupPolicy{}, err
+		return tsdb.RollupPolicy{}, err
 	}
 
 	policy := rollupPolicyFromDurations(minuteDuration, fiveMinuteDuration, hourDuration)
 	if err := policy.Validate(); err != nil {
-		return metric.RollupPolicy{}, fmt.Errorf("invalid metric rollup retention policy: %w", err)
+		return tsdb.RollupPolicy{}, fmt.Errorf("invalid metric rollup retention policy: %w", err)
 	}
 	return policy, nil
 }
 
-func rollupPolicyFromValues(minuteRetentionMinutes, fiveMinuteRetentionMinutes, hourRetentionHours int) metric.RollupPolicy {
+func rollupPolicyFromValues(minuteRetentionMinutes, fiveMinuteRetentionMinutes, hourRetentionHours int) tsdb.RollupPolicy {
 	return rollupPolicyFromDurations(
 		time.Duration(minuteRetentionMinutes)*time.Minute,
 		time.Duration(fiveMinuteRetentionMinutes)*time.Minute,
@@ -181,10 +181,10 @@ func rollupPolicyFromValues(minuteRetentionMinutes, fiveMinuteRetentionMinutes, 
 	)
 }
 
-func rollupPolicyFromDurations(minuteRetention, fiveMinuteRetention, hourRetention time.Duration) metric.RollupPolicy {
-	return metric.RollupPolicy{
+func rollupPolicyFromDurations(minuteRetention, fiveMinuteRetention, hourRetention time.Duration) tsdb.RollupPolicy {
+	return tsdb.RollupPolicy{
 		RawRetention: DefaultRollupRawRetention,
-		Tiers: []metric.RollupTier{
+		Tiers: []tsdb.RollupTier{
 			{Interval: time.Minute, Retention: minuteRetention},
 			{Interval: 5 * time.Minute, Retention: fiveMinuteRetention},
 			{Interval: time.Hour, Retention: hourRetention},
@@ -206,57 +206,57 @@ func rollupDuration(value int, unit time.Duration) (time.Duration, error) {
 
 // ResolveDriverFromConfig 根据 DSN 自动推断 metrics 数据库类型；当 DSN 不能可靠
 // 识别时回退到旧配置中的 driver，以兼容已有配置和非常规 DSN。
-func ResolveDriverFromConfig(configuredDriver, dsn string) metric.Driver {
+func ResolveDriverFromConfig(configuredDriver, dsn string) tsdb.Driver {
 	if driver, ok := InferDriverFromDSN(dsn); ok {
 		return driver
 	}
 
-	switch driver := metric.Driver(strings.ToLower(strings.TrimSpace(configuredDriver))); driver {
-	case metric.DriverSQLite, metric.DriverMySQL, metric.DriverPostgreSQL:
+	switch driver := tsdb.Driver(strings.ToLower(strings.TrimSpace(configuredDriver))); driver {
+	case tsdb.DriverSQLite, tsdb.DriverMySQL, tsdb.DriverPostgreSQL:
 		return driver
 	default:
-		return metric.DriverSQLite
+		return tsdb.DriverSQLite
 	}
 }
 
 // InferDriverFromDSN 尽量根据常见 DSN 格式推断数据库类型。
 // 返回 ok=false 表示格式不够明确，调用方应使用已有配置作为兜底。
-func InferDriverFromDSN(dsn string) (metric.Driver, bool) {
+func InferDriverFromDSN(dsn string) (tsdb.Driver, bool) {
 	raw := strings.TrimSpace(dsn)
 	if raw == "" {
-		return metric.DriverSQLite, true
+		return tsdb.DriverSQLite, true
 	}
 	lower := strings.ToLower(raw)
 
 	// PostgreSQL URL DSN: postgres://... 或 postgresql://...
 	if strings.HasPrefix(lower, "postgres://") || strings.HasPrefix(lower, "postgresql://") {
-		return metric.DriverPostgreSQL, true
+		return tsdb.DriverPostgreSQL, true
 	}
 
 	// SQLite 常见文件/内存 DSN。
 	if raw == ":memory:" || strings.HasPrefix(lower, "file:") || strings.HasPrefix(lower, "sqlite://") || strings.HasPrefix(lower, "sqlite3://") {
-		return metric.DriverSQLite, true
+		return tsdb.DriverSQLite, true
 	}
 
 	// MySQL URL（虽然 go-sql-driver/mysql 原生 DSN 通常不是 URL，但这里用于给出
 	// 类型推断；连接测试仍会校验 DSN 是否可被驱动接受）。
 	if strings.HasPrefix(lower, "mysql://") {
-		return metric.DriverMySQL, true
+		return tsdb.DriverMySQL, true
 	}
 
 	// PostgreSQL 关键字/值 DSN: host=... user=... dbname=...
 	if looksLikePostgreSQLKeyValueDSN(lower) {
-		return metric.DriverPostgreSQL, true
+		return tsdb.DriverPostgreSQL, true
 	}
 
 	// go-sql-driver/mysql DSN: user:pass@tcp(host:3306)/db、user@unix(...)/db、user:pass@/db 等。
 	if looksLikeMySQLDSN(lower) {
-		return metric.DriverMySQL, true
+		return tsdb.DriverMySQL, true
 	}
 
 	// SQLite 路径：./data/metrics.db、/var/lib/metrics.sqlite3、metrics.sqlite 等。
 	if looksLikeSQLitePath(lower) {
-		return metric.DriverSQLite, true
+		return tsdb.DriverSQLite, true
 	}
 
 	return "", false

@@ -5,20 +5,20 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 // QueryContext runs a raw read query against the active metric store. The
 // caller must invoke the returned release function after closing rows.
-func QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, metric.Driver, func(), error) {
-	return QueryForDriver(ctx, func(metric.Driver) (string, error) {
+func QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, tsdb.Driver, func(), error) {
+	return QueryForDriver(ctx, func(tsdb.Driver) (string, error) {
 		return query, nil
 	}, args...)
 }
 
 // QueryForDriver runs a raw read query whose SQL depends on the active store's
 // driver. The caller must invoke the returned release function after closing rows.
-func QueryForDriver(ctx context.Context, query func(metric.Driver) (string, error), args ...any) (*sql.Rows, metric.Driver, func(), error) {
+func QueryForDriver(ctx context.Context, query func(tsdb.Driver) (string, error), args ...any) (*sql.Rows, tsdb.Driver, func(), error) {
 	if err := storeOperations.AcquireShared(ctx); err != nil {
 		return nil, "", nil, fmt.Errorf("wait for metric store operations before query: %w", err)
 	}
@@ -45,7 +45,7 @@ func QueryForDriver(ctx context.Context, query func(metric.Driver) (string, erro
 }
 
 // ExecContext runs a raw statement against the active metric store.
-func ExecContext(ctx context.Context, query string, args ...any) (sql.Result, metric.Driver, error) {
+func ExecContext(ctx context.Context, query string, args ...any) (sql.Result, tsdb.Driver, error) {
 	if err := storeOperations.Acquire(ctx); err != nil {
 		return nil, "", fmt.Errorf("wait for metric store operations before execution: %w", err)
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/dbcore"
 	"github.com/komari-monitor/komari/internal/metricstore"
 	"github.com/komari-monitor/komari/internal/rpc"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 const (
@@ -219,7 +219,7 @@ func queryDatabase(ctx context.Context, target, statement string, args []any, li
 	}, nil
 }
 
-func executeDatabase(ctx context.Context, target, statement string, args []any) (sql.Result, metric.Driver, error) {
+func executeDatabase(ctx context.Context, target, statement string, args []any) (sql.Result, tsdb.Driver, error) {
 	switch target {
 	case databaseTargetMain:
 		db, err := dbcore.GetDBInstance().DB()
@@ -227,7 +227,7 @@ func executeDatabase(ctx context.Context, target, statement string, args []any) 
 			return nil, "", err
 		}
 		result, err := db.ExecContext(ctx, statement, args...)
-		return result, metric.DriverSQLite, err
+		return result, tsdb.DriverSQLite, err
 	case databaseTargetMetrics:
 		return metricstore.ExecContext(ctx, statement, args...)
 	default:
@@ -238,13 +238,13 @@ func executeDatabase(ctx context.Context, target, statement string, args []any) 
 func listDatabaseTables(ctx context.Context, target string) (databaseTablesResponse, error) {
 	var (
 		rows         *sql.Rows
-		actualDriver metric.Driver
+		actualDriver tsdb.Driver
 		release      func()
 		err          error
 	)
 	switch target {
 	case databaseTargetMain:
-		statement, err := tableListSQL(metric.DriverSQLite)
+		statement, err := tableListSQL(tsdb.DriverSQLite)
 		if err != nil {
 			return databaseTablesResponse{}, err
 		}
@@ -277,7 +277,7 @@ func listDatabaseTables(ctx context.Context, target string) (databaseTablesRespo
 	return databaseTablesResponse{Database: target, Driver: string(actualDriver), Tables: tables}, nil
 }
 
-func openDatabaseRows(ctx context.Context, target, statement string, args ...any) (*sql.Rows, metric.Driver, func(), error) {
+func openDatabaseRows(ctx context.Context, target, statement string, args ...any) (*sql.Rows, tsdb.Driver, func(), error) {
 	switch target {
 	case databaseTargetMain:
 		db, err := dbcore.GetDBInstance().DB()
@@ -285,7 +285,7 @@ func openDatabaseRows(ctx context.Context, target, statement string, args ...any
 			return nil, "", nil, err
 		}
 		rows, err := db.QueryContext(ctx, statement, args...)
-		return rows, metric.DriverSQLite, func() {}, err
+		return rows, tsdb.DriverSQLite, func() {}, err
 	case databaseTargetMetrics:
 		return metricstore.QueryContext(ctx, statement, args...)
 	default:
@@ -335,13 +335,13 @@ func normalizeDatabaseValue(value any) any {
 	}
 }
 
-func tableListSQL(driver metric.Driver) (string, error) {
+func tableListSQL(driver tsdb.Driver) (string, error) {
 	switch driver {
-	case metric.DriverSQLite:
+	case tsdb.DriverSQLite:
 		return "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'", nil
-	case metric.DriverMySQL:
+	case tsdb.DriverMySQL:
 		return "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'", nil
-	case metric.DriverPostgreSQL:
+	case tsdb.DriverPostgreSQL:
 		return "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema()", nil
 	default:
 		return "", fmt.Errorf("unsupported database driver: %s", driver)

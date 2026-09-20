@@ -7,7 +7,7 @@ import (
 
 	logger "github.com/komari-monitor/komari/pkg/log"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 // farFuture 返回一个足够远的未来时间，用于以 DeleteBefore 语义清空某指标的全部数据。
@@ -54,7 +54,7 @@ func DeletePingRecordsByTask(ctx context.Context, taskIDs []uint) error {
 	}
 	for _, id := range taskIDs {
 		for _, metricName := range pingMetricNames {
-			if _, err := s.DeleteSeries(ctx, metric.Query{
+			if _, err := s.DeleteSeries(ctx, tsdb.Query{
 				MetricName: metricName,
 				Tags:       map[string]string{"task_id": fmt.Sprintf("%d", id)},
 			}); err != nil {

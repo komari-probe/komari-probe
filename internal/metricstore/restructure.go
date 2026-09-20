@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 // RestructureProgress is the authenticated guide's stable progress payload.
@@ -41,7 +41,7 @@ func structureUpgradeRequiredForConfig(ctx context.Context, cfg *MetricStoreConf
 	if err != nil {
 		return false, err
 	}
-	store, err := metric.Open(ctx, metricCfg)
+	store, err := tsdb.Open(ctx, metricCfg)
 	if err != nil {
 		return false, err
 	}
@@ -60,7 +60,7 @@ func RestructureConfiguredStore(ctx context.Context, report func(RestructureProg
 	if err != nil {
 		return RestructureResult{}, err
 	}
-	store, err := metric.Open(ctx, metricCfg)
+	store, err := tsdb.Open(ctx, metricCfg)
 	if err != nil {
 		return RestructureResult{}, err
 	}
@@ -70,7 +70,7 @@ func RestructureConfiguredStore(ctx context.Context, report func(RestructureProg
 	if err != nil {
 		return RestructureResult{}, fmt.Errorf("measure legacy metric storage: %w", err)
 	}
-	result, err := store.Restructure(ctx, func(progress metric.RestructureProgress) {
+	result, err := store.Restructure(ctx, func(progress tsdb.RestructureProgress) {
 		if report == nil {
 			return
 		}
@@ -104,7 +104,7 @@ func DiscardConfiguredStoreHistory(ctx context.Context, report func(RestructureP
 	if err != nil {
 		return RestructureResult{}, err
 	}
-	store, err := metric.Open(ctx, metricCfg)
+	store, err := tsdb.Open(ctx, metricCfg)
 	if err != nil {
 		return RestructureResult{}, err
 	}
@@ -114,7 +114,7 @@ func DiscardConfiguredStoreHistory(ctx context.Context, report func(RestructureP
 	if err != nil {
 		return RestructureResult{}, fmt.Errorf("measure legacy metric storage: %w", err)
 	}
-	result, err := store.DiscardHistory(ctx, func(progress metric.RestructureProgress) {
+	result, err := store.DiscardHistory(ctx, func(progress tsdb.RestructureProgress) {
 		if report == nil {
 			return
 		}

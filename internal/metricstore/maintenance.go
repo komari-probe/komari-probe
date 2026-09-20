@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 var (
@@ -17,8 +17,8 @@ var (
 // Size remains useful even when the store points at an external database because
 // pkg/metric limits its query to the three tables managed by this Store.
 type StorageInfo struct {
-	Driver metric.Driver
-	Action metric.MaintenanceAction
+	Driver tsdb.Driver
+	Action tsdb.MaintenanceAction
 	Size   int64
 }
 
@@ -26,8 +26,8 @@ type StorageInfo struct {
 // error. A database may allow table maintenance while denying catalog queries,
 // and callers should still be able to report that the operation succeeded.
 type MaintenanceResult struct {
-	Driver          metric.Driver
-	Action          metric.MaintenanceAction
+	Driver          tsdb.Driver
+	Action          tsdb.MaintenanceAction
 	Before          int64
 	After           int64
 	BeforeSizeError error
@@ -92,7 +92,7 @@ func ReclaimSpace(ctx context.Context) (MaintenanceResult, error) {
 	return result, maintenanceErr
 }
 
-func deleteUndefinedMetrics(ctx context.Context, s *metric.Store) error {
+func deleteUndefinedMetrics(ctx context.Context, s *tsdb.Store) error {
 	definitions, err := s.ListMetrics(ctx)
 	if err != nil {
 		return fmt.Errorf("list metric definitions before reclaim: %w", err)

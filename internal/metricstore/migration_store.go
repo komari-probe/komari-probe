@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	logger "github.com/komari-monitor/komari/pkg/log"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 const storeMigrationBatchSize = 500
@@ -41,12 +41,12 @@ func configFromFingerprint(fingerprint string, base *MetricStoreConfig) (*Metric
 // 使用 autoMigrate=true 确保规范化表和索引存在；创建语句不会删除已有数据。
 // 当源库文件/表不存在（例如老快照记录了 completed 但 metrics.db 缺失）时，
 // 创建空表可让后续 ListMetrics 返回空集，把“无历史可迁移”识别为正常情况。
-func openSourceStore(ctx context.Context, cfg *MetricStoreConfig) (*metric.Store, error) {
+func openSourceStore(ctx context.Context, cfg *MetricStoreConfig) (*tsdb.Store, error) {
 	metricCfg, err := buildMetricConfig(cfg, true)
 	if err != nil {
 		return nil, err
 	}
-	return metric.Open(ctx, metricCfg)
+	return tsdb.Open(ctx, metricCfg)
 }
 
 // defaultSQLiteFingerprint 返回默认 SQLite metrics 库（./data/metrics.db）的目标指纹。
@@ -64,7 +64,7 @@ type storeMigrationObserver func(currentMetric string, metricIndex, totalMetrics
 
 // 观察者 observe（为 nil 时行为与旧版本完全一致）。WebUI/API 手动触发的迁移传入
 // 回调以实时更新进度。
-func migrateBetweenStores(ctx context.Context, src, dst *metric.Store, observe storeMigrationObserver) (int64, error) {
+func migrateBetweenStores(ctx context.Context, src, dst *tsdb.Store, observe storeMigrationObserver) (int64, error) {
 	if src == nil || dst == nil {
 		return 0, fmt.Errorf("source or destination metric store is nil")
 	}
@@ -88,7 +88,7 @@ func migrateBetweenStores(ctx context.Context, src, dst *metric.Store, observe s
 			continue
 		}
 		var migrated int64
-		_, err := src.ExportRollups(ctx, def.Name, storeMigrationBatchSize, func(batch []metric.PersistedRollup) error {
+		_, err := src.ExportRollups(ctx, def.Name, storeMigrationBatchSize, func(batch []tsdb.PersistedRollup) error {
 			if err := dst.ImportRollups(ctx, batch); err != nil {
 				return fmt.Errorf("write metric %q rollup batch to target: %w", def.Name, err)
 			}

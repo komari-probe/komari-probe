@@ -14,7 +14,7 @@ import (
 	"github.com/komari-monitor/komari/internal/database/tasks"
 	"github.com/komari-monitor/komari/internal/metricstore"
 	"github.com/komari-monitor/komari/internal/rpc"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 const defaultMetricQueryPoints = 500
@@ -181,7 +181,7 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 
 	type metricLoadSpec struct {
 		metricKey string
-		algorithm metric.Aggregation
+		algorithm tsdb.Aggregation
 		maxPoints int
 		interval  time.Duration
 	}
@@ -200,9 +200,9 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 
 	metricFillEmpty := resolveMetricFillEmpty(params)
 	useRaw := publicMetricUsesRawWindow(start, end, queryNow)
-	definitions := make(map[string]metric.Definition, len(metricKeys))
-	rawValues := make(map[string][]metric.Point)
-	rollupValues := make(map[string]map[metric.Aggregation][]metric.AggregatePoint)
+	definitions := make(map[string]tsdb.Definition, len(metricKeys))
+	rawValues := make(map[string][]tsdb.Point)
+	rollupValues := make(map[string]map[tsdb.Aggregation][]tsdb.AggregatePoint)
 	if len(entityIDs) > 0 && useRaw {
 		var err error
 		definitions, err = store.GetMetrics(ctx, metricKeys)
@@ -214,36 +214,36 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 				return nil, rpc.MakeError(rpc.InvalidParams, "unknown metric key: "+spec.metricKey, nil)
 			}
 		}
-		rawValues, err = store.QueryBatch(ctx, metric.BatchQuery{
+		rawValues, err = store.QueryBatch(ctx, tsdb.BatchQuery{
 			MetricNames: metricKeys,
 			EntityIDs:   entityIDs,
 			Start:       start,
 			End:         end,
 			Tags:        params.Tags,
-			Order:       metric.OrderAsc,
+			Order:       tsdb.OrderAsc,
 		})
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InvalidParams, "Failed to query metrics: "+err.Error(), nil)
 		}
 	} else if len(entityIDs) > 0 {
-		batchSpecs := make([]metric.BatchSeriesSpec, 0, len(loadSpecs))
+		batchSpecs := make([]tsdb.BatchSeriesSpec, 0, len(loadSpecs))
 		for i := range loadSpecs {
 			loadSpecs[i].interval = metricDownsampleInterval(end.Sub(start), loadSpecs[i].maxPoints)
 			loadSpecs[i].interval = store.CompatibleSeriesInterval(start, queryNow, loadSpecs[i].interval)
-			batchSpecs = append(batchSpecs, metric.BatchSeriesSpec{
+			batchSpecs = append(batchSpecs, tsdb.BatchSeriesSpec{
 				MetricName:     loadSpecs[i].metricKey,
-				Aggregations:   []metric.Aggregation{loadSpecs[i].algorithm},
+				Aggregations:   []tsdb.Aggregation{loadSpecs[i].algorithm},
 				Interval:       loadSpecs[i].interval,
 				PreserveSeries: true,
 			})
 		}
-		loaded, err := store.SeriesBatch(ctx, metric.BatchSeriesQuery{
+		loaded, err := store.SeriesBatch(ctx, tsdb.BatchSeriesQuery{
 			Specs:     batchSpecs,
 			EntityIDs: entityIDs,
 			Start:     start,
 			End:       end,
 			Tags:      params.Tags,
-			Order:     metric.OrderAsc,
+			Order:     tsdb.OrderAsc,
 		}, queryNow)
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InvalidParams, "Failed to query metrics: "+err.Error(), nil)
@@ -352,9 +352,9 @@ type publicMetricPointResult struct {
 
 func loadPublicMetricPoints(
 	ctx context.Context,
-	store *metric.Store,
-	query metric.Query,
-	algorithm metric.Aggregation,
+	store *tsdb.Store,
+	query tsdb.Query,
+	algorithm tsdb.Aggregation,
 	maxPoints int,
 	fillEmpty bool,
 	now time.Time,
@@ -380,7 +380,7 @@ func loadPublicMetricPoints(
 
 	interval := metricDownsampleInterval(query.End.Sub(query.Start), maxPoints)
 	interval = store.CompatibleSeriesInterval(query.Start, now, interval)
-	points, err := store.Series(ctx, metric.AggregateQuery{
+	points, err := store.Series(ctx, tsdb.AggregateQuery{
 		Query:          query,
 		Aggregation:    algorithm,
 		Interval:       interval,
@@ -730,7 +730,7 @@ func resolveMetricMaxPoints(metricKey string, params publicMetricQueryParams) (i
 	return maxPoints, nil
 }
 
-func resolveMetricAggregation(metricKey string, params publicMetricQueryParams) metric.Aggregation {
+func resolveMetricAggregation(metricKey string, params publicMetricQueryParams) tsdb.Aggregation {
 	raw := firstNonEmpty(params.Aggregation, params.Algorithm)
 	if v := firstNonEmpty(
 		params.AggregationByMetric[metricKey],
@@ -739,9 +739,9 @@ func resolveMetricAggregation(metricKey string, params publicMetricQueryParams) 
 		raw = v
 	}
 	if raw == "" {
-		raw = string(metric.AggAvg)
+		raw = string(tsdb.AggAvg)
 	}
-	return metric.Aggregation(normalizeMetricAggregation(raw))
+	return tsdb.Aggregation(normalizeMetricAggregation(raw))
 }
 
 func resolveMetricFillEmpty(params publicMetricQueryParams) bool {
@@ -767,54 +767,54 @@ func isNullPingMetricValue(metricName string, value float64, fillEmpty bool) boo
 }
 
 type publicPingMetricAggregateGroups struct {
-	Avg           map[string][]metric.AggregatePoint
-	Min           map[string][]metric.AggregatePoint
-	Max           map[string][]metric.AggregatePoint
-	Last          map[string][]metric.AggregatePoint
-	P50           map[string][]metric.AggregatePoint
-	P99           map[string][]metric.AggregatePoint
-	StdDev        map[string][]metric.AggregatePoint
-	Loss          map[string][]metric.AggregatePoint
+	Avg           map[string][]tsdb.AggregatePoint
+	Min           map[string][]tsdb.AggregatePoint
+	Max           map[string][]tsdb.AggregatePoint
+	Last          map[string][]tsdb.AggregatePoint
+	P50           map[string][]tsdb.AggregatePoint
+	P99           map[string][]tsdb.AggregatePoint
+	StdDev        map[string][]tsdb.AggregatePoint
+	Loss          map[string][]tsdb.AggregatePoint
 	LossAvailable bool
 }
 
-func loadPublicPingMetricAggregateGroups(ctx context.Context, store *metric.Store, entityIDs []string, start, end time.Time, interval time.Duration, now time.Time) (map[string]publicPingMetricAggregateGroups, error) {
-	latencyAggregations := []metric.Aggregation{
-		metric.AggAvg,
-		metric.AggMin,
-		metric.AggMax,
-		metric.AggLast,
-		metric.AggP50,
-		metric.AggP99,
-		metric.AggStdDev,
+func loadPublicPingMetricAggregateGroups(ctx context.Context, store *tsdb.Store, entityIDs []string, start, end time.Time, interval time.Duration, now time.Time) (map[string]publicPingMetricAggregateGroups, error) {
+	latencyAggregations := []tsdb.Aggregation{
+		tsdb.AggAvg,
+		tsdb.AggMin,
+		tsdb.AggMax,
+		tsdb.AggLast,
+		tsdb.AggP50,
+		tsdb.AggP99,
+		tsdb.AggStdDev,
 	}
-	loaded, err := store.SeriesBatch(ctx, metric.BatchSeriesQuery{
-		Specs: []metric.BatchSeriesSpec{
+	loaded, err := store.SeriesBatch(ctx, tsdb.BatchSeriesQuery{
+		Specs: []tsdb.BatchSeriesSpec{
 			{MetricName: metricstore.MetricPingLatency, Aggregations: latencyAggregations, Interval: interval, PreserveSeries: true},
-			{MetricName: metricstore.MetricPingLoss, Aggregations: []metric.Aggregation{metric.AggAvg}, Interval: interval, PreserveSeries: true},
+			{MetricName: metricstore.MetricPingLoss, Aggregations: []tsdb.Aggregation{tsdb.AggAvg}, Interval: interval, PreserveSeries: true},
 		},
 		EntityIDs: entityIDs,
 		Start:     start,
 		End:       end,
-		Order:     metric.OrderAsc,
+		Order:     tsdb.OrderAsc,
 	}, now)
 	if err != nil {
 		return nil, err
 	}
 	latency := loaded.Values[metricstore.MetricPingLatency]
-	lossPoints := loaded.Values[metricstore.MetricPingLoss][metric.AggAvg]
+	lossPoints := loaded.Values[metricstore.MetricPingLoss][tsdb.AggAvg]
 
-	avg := groupPingMetricAggregatePointsByEntity(latency[metric.AggAvg])
-	minimum := groupPingMetricAggregatePointsByEntity(latency[metric.AggMin])
-	maximum := groupPingMetricAggregatePointsByEntity(latency[metric.AggMax])
-	last := groupPingMetricAggregatePointsByEntity(latency[metric.AggLast])
-	p50 := groupPingMetricAggregatePointsByEntity(latency[metric.AggP50])
-	p99 := groupPingMetricAggregatePointsByEntity(latency[metric.AggP99])
-	stddev := groupPingMetricAggregatePointsByEntity(latency[metric.AggStdDev])
+	avg := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggAvg])
+	minimum := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggMin])
+	maximum := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggMax])
+	last := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggLast])
+	p50 := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggP50])
+	p99 := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggP99])
+	stddev := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggStdDev])
 	loss := groupPingMetricAggregatePointsByEntity(lossPoints)
 
 	entitySet := make(map[string]struct{})
-	for _, groups := range []map[string]map[string][]metric.AggregatePoint{avg, minimum, maximum, last, p50, p99, stddev, loss} {
+	for _, groups := range []map[string]map[string][]tsdb.AggregatePoint{avg, minimum, maximum, last, p50, p99, stddev, loss} {
 		for currentEntityID := range groups {
 			entitySet[currentEntityID] = struct{}{}
 		}
@@ -837,8 +837,8 @@ func loadPublicPingMetricAggregateGroups(ctx context.Context, store *metric.Stor
 	return result, nil
 }
 
-func groupPingMetricAggregatePointsByEntity(points []metric.AggregatePoint) map[string]map[string][]metric.AggregatePoint {
-	out := make(map[string]map[string][]metric.AggregatePoint)
+func groupPingMetricAggregatePointsByEntity(points []tsdb.AggregatePoint) map[string]map[string][]tsdb.AggregatePoint {
+	out := make(map[string]map[string][]tsdb.AggregatePoint)
 	for _, point := range points {
 		taskID := strings.TrimSpace(point.Tags["task_id"])
 		if taskID == "" {
@@ -846,7 +846,7 @@ func groupPingMetricAggregatePointsByEntity(points []metric.AggregatePoint) map[
 		}
 		byTask := out[point.EntityID]
 		if byTask == nil {
-			byTask = make(map[string][]metric.AggregatePoint)
+			byTask = make(map[string][]tsdb.AggregatePoint)
 			out[point.EntityID] = byTask
 		}
 		byTask[taskID] = append(byTask[taskID], point)
@@ -854,7 +854,7 @@ func groupPingMetricAggregatePointsByEntity(points []metric.AggregatePoint) map[
 	return out
 }
 
-func pingMetricGroupsHaveData(groups map[string][]metric.AggregatePoint) bool {
+func pingMetricGroupsHaveData(groups map[string][]tsdb.AggregatePoint) bool {
 	for _, points := range groups {
 		for _, point := range points {
 			if point.Count > 0 {
@@ -867,7 +867,7 @@ func pingMetricGroupsHaveData(groups map[string][]metric.AggregatePoint) bool {
 
 func publicPingStatsFromAggregateGroups(entityID string, groups publicPingMetricAggregateGroups, taskMap map[string]models.PingTask, taskFilter map[string]bool) []publicPingMetricTaskStats {
 	taskIDs := make(map[string]struct{})
-	for _, group := range []map[string][]metric.AggregatePoint{
+	for _, group := range []map[string][]tsdb.AggregatePoint{
 		groups.Avg, groups.Min, groups.Max, groups.Last, groups.P50, groups.P99, groups.StdDev, groups.Loss,
 	} {
 		for taskID := range group {
@@ -973,7 +973,7 @@ type jsonNumber interface {
 	String() string
 }
 
-func aggregatePointCount(points []metric.AggregatePoint) int {
+func aggregatePointCount(points []tsdb.AggregatePoint) int {
 	total := 0
 	for _, point := range points {
 		total += point.Count
@@ -981,7 +981,7 @@ func aggregatePointCount(points []metric.AggregatePoint) int {
 	return total
 }
 
-func publicPingLossRate(latencyPoints, lossPoints []metric.AggregatePoint, total int, lossAvailable bool) (float64, int, bool) {
+func publicPingLossRate(latencyPoints, lossPoints []tsdb.AggregatePoint, total int, lossAvailable bool) (float64, int, bool) {
 	if total <= 0 {
 		return 0, 0, !lossAvailable
 	}
@@ -1015,7 +1015,7 @@ func publicPingLossRate(latencyPoints, lossPoints []metric.AggregatePoint, total
 	return float64(lost) / float64(total) * 100, valid, true
 }
 
-func weightedAggregateValue(points []metric.AggregatePoint, skipNegative bool) (*float64, int) {
+func weightedAggregateValue(points []tsdb.AggregatePoint, skipNegative bool) (*float64, int) {
 	sum := 0.0
 	count := 0
 	for _, point := range points {
@@ -1035,7 +1035,7 @@ func weightedAggregateValue(points []metric.AggregatePoint, skipNegative bool) (
 	return &value, count
 }
 
-func positiveAggregateMin(points []metric.AggregatePoint) *float64 {
+func positiveAggregateMin(points []tsdb.AggregatePoint) *float64 {
 	var out *float64
 	for _, point := range points {
 		if point.Count <= 0 || point.Value < 0 {
@@ -1049,7 +1049,7 @@ func positiveAggregateMin(points []metric.AggregatePoint) *float64 {
 	return out
 }
 
-func positiveAggregateMax(points []metric.AggregatePoint) *float64 {
+func positiveAggregateMax(points []tsdb.AggregatePoint) *float64 {
 	var out *float64
 	for _, point := range points {
 		if point.Count <= 0 || point.Value < 0 {
@@ -1063,7 +1063,7 @@ func positiveAggregateMax(points []metric.AggregatePoint) *float64 {
 	return out
 }
 
-func latestPositiveAggregate(points []metric.AggregatePoint) *float64 {
+func latestPositiveAggregate(points []tsdb.AggregatePoint) *float64 {
 	var out *float64
 	var latest time.Time
 	for _, point := range points {
@@ -1091,9 +1091,9 @@ func firstNonEmpty(values ...string) string {
 func normalizeMetricAggregation(raw string) string {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
 	case "average", "mean":
-		return string(metric.AggAvg)
+		return string(tsdb.AggAvg)
 	case "std_dev", "stddev_pop", "std_dev_pop":
-		return string(metric.AggStdDev)
+		return string(tsdb.AggStdDev)
 	default:
 		return strings.ToLower(strings.TrimSpace(raw))
 	}
@@ -1111,7 +1111,7 @@ func metricDownsampleInterval(rangeDuration time.Duration, maxPoints int) time.D
 	if interval < time.Second {
 		return time.Second
 	}
-	return metric.CeilStandardInterval(interval)
+	return tsdb.CeilStandardInterval(interval)
 }
 
 func maxInt(a, b int) int {

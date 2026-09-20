@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 func TestInspectAndReclaimStorage(t *testing.T) {
 	ctx := context.Background()
-	s, err := metric.Open(ctx, metric.SQLite(":memory:"))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(":memory:"))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -21,7 +21,7 @@ func TestInspectAndReclaimStorage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspect storage: %v", err)
 	}
-	if info.Driver != metric.DriverSQLite || info.Action != metric.MaintenanceVacuum {
+	if info.Driver != tsdb.DriverSQLite || info.Action != tsdb.MaintenanceVacuum {
 		t.Fatalf("unexpected storage info: %#v", info)
 	}
 	if info.Size != 0 {
@@ -32,7 +32,7 @@ func TestInspectAndReclaimStorage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reclaim space: %v", err)
 	}
-	if result.Driver != metric.DriverSQLite || result.Action != metric.MaintenanceVacuum {
+	if result.Driver != tsdb.DriverSQLite || result.Action != tsdb.MaintenanceVacuum {
 		t.Fatalf("unexpected maintenance result: %#v", result)
 	}
 	if result.BeforeSizeError != nil || result.AfterSizeError != nil {
@@ -41,7 +41,7 @@ func TestInspectAndReclaimStorage(t *testing.T) {
 }
 
 func TestReclaimSpaceWaitsForStore(t *testing.T) {
-	s, err := metric.Open(context.Background(), metric.SQLite(":memory:"))
+	s, err := tsdb.Open(context.Background(), tsdb.SQLite(":memory:"))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestReclaimSpaceWaitsForStore(t *testing.T) {
 	if reclaimErr != nil {
 		t.Fatalf("reclaim error: %v", reclaimErr)
 	}
-	if result.Driver != metric.DriverSQLite || result.Action != metric.MaintenanceVacuum {
+	if result.Driver != tsdb.DriverSQLite || result.Action != tsdb.MaintenanceVacuum {
 		t.Fatalf("reclaim result lost store metadata: %#v", result)
 	}
 	if result.BeforeSizeError != nil || result.AfterSizeError != nil {
@@ -113,7 +113,7 @@ func TestInspectStorageRequiresInitializedStore(t *testing.T) {
 }
 
 func TestCloseStoreContextCancelsMigrationBeforeTakingStoreLock(t *testing.T) {
-	s, err := metric.Open(context.Background(), metric.SQLite(":memory:"))
+	s, err := tsdb.Open(context.Background(), tsdb.SQLite(":memory:"))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -171,7 +171,7 @@ func TestStoreOperationWaitsRespectContext(t *testing.T) {
 	}
 }
 
-func installTestStore(t *testing.T, s *metric.Store) {
+func installTestStore(t *testing.T, s *tsdb.Store) {
 	t.Helper()
 	storeMigMu.Lock()
 	previousClosing := storeClosing

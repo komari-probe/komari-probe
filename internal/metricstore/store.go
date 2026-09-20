@@ -11,11 +11,11 @@ import (
 	logger "github.com/komari-monitor/komari/pkg/log"
 
 	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
 var (
-	store             *metric.Store
+	store             *tsdb.Store
 	storeFingerprint  string
 	storeMu           sync.RWMutex
 	storeInitMu       sync.Mutex
@@ -30,17 +30,17 @@ var ErrCompactInProgress = errors.New("metric store compact already in progress"
 var ErrStructureUpgradeRequired = errors.New("metric store structure upgrade is required")
 
 // openStore 按配置打开 metric store 并创建指标定义。
-func openStore(ctx context.Context, cfg *MetricStoreConfig) (*metric.Store, error) {
+func openStore(ctx context.Context, cfg *MetricStoreConfig) (*tsdb.Store, error) {
 	return openStoreWithDefaultRetention(ctx, cfg, defaultBuiltinMetricRetentionDays)
 }
 
-func openStoreWithDefaultRetention(ctx context.Context, cfg *MetricStoreConfig, defaultRetentionDays int) (*metric.Store, error) {
+func openStoreWithDefaultRetention(ctx context.Context, cfg *MetricStoreConfig, defaultRetentionDays int) (*tsdb.Store, error) {
 	metricCfg, err := buildMetricConfig(cfg, true)
 	if err != nil {
 		return nil, err
 	}
 
-	s, err := metric.Open(ctx, metricCfg)
+	s, err := tsdb.Open(ctx, metricCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open metric store: %w", err)
 	}
@@ -56,14 +56,14 @@ func openStoreWithDefaultRetention(ctx context.Context, cfg *MetricStoreConfig, 
 // OpenStore opens an isolated metric store using the supplied configuration.
 // It is used by the pre-start upgrade flow before the process-wide store is
 // initialized. The caller owns the returned store and must close it.
-// func OpenStore(ctx context.Context, cfg *MetricStoreConfig) (*metric.Store, error) {
+// func OpenStore(ctx context.Context, cfg *MetricStoreConfig) (*tsdb.Store, error) {
 // 	return openStore(ctx, cfg)
 // }
 
 // OpenStoreForMigration opens an isolated target and uses the legacy data span
 // as the initial retention for definitions that do not exist yet. Existing
 // definitions keep their configured retention, including an explicit zero.
-func OpenStoreForMigration(ctx context.Context, cfg *MetricStoreConfig, legacyRetentionDays int) (*metric.Store, error) {
+func OpenStoreForMigration(ctx context.Context, cfg *MetricStoreConfig, legacyRetentionDays int) (*tsdb.Store, error) {
 	if legacyRetentionDays < defaultBuiltinMetricRetentionDays {
 		legacyRetentionDays = defaultBuiltinMetricRetentionDays
 	}
@@ -78,7 +78,7 @@ func TestConnection(ctx context.Context, cfg *MetricStoreConfig) error {
 		return err
 	}
 
-	s, err := metric.Open(ctx, metricCfg)
+	s, err := tsdb.Open(ctx, metricCfg)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func Reload(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	checkStore, err := metric.Open(ctx, checkCfg)
+	checkStore, err := tsdb.Open(ctx, checkCfg)
 	if err != nil {
 		return err
 	}
@@ -257,7 +257,7 @@ func Reload(ctx context.Context) error {
 }
 
 // GetStore 获取 metric store 实例（如果未启用返回 nil）
-func GetStore() *metric.Store {
+func GetStore() *tsdb.Store {
 	storeMu.RLock()
 	defer storeMu.RUnlock()
 	return store

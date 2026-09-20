@@ -10,10 +10,10 @@ import (
 	"github.com/komari-monitor/komari/internal/database/auditlog"
 	"github.com/komari-monitor/komari/internal/metricstore"
 	"github.com/komari-monitor/komari/internal/rpc"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
-// admin.metric.go
+// admin.tsdb.go
 // Metrics 数据库迁移相关 RPC 方法（admin 命名空间）。
 //
 // 这些方法服务于「metrics 存储后端迁移」：把默认 SQLite（./data/metrics.db）中的
@@ -103,7 +103,7 @@ func adminUpdateMetricDefinition(ctx context.Context, req *rpc.JsonRpcRequest) (
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
 	def, err := store.UpdateMetricRetention(ctx, params.Name, params.RetentionDays)
-	if errors.Is(err, metric.ErrNotFound) {
+	if errors.Is(err, tsdb.ErrNotFound) {
 		return nil, rpc.MakeError(rpc.InvalidParams, "metric not found: "+params.Name, nil)
 	}
 	if err != nil {

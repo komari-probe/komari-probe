@@ -12,7 +12,7 @@ import (
 	appconfig "github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/database/models"
 	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -66,7 +66,7 @@ func TestLegacyMonitoringTablesMigratedByOneShotMigration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open metric db: %v", err)
 	}
-	metricStore, err := metric.Open(ctx, metric.SQLite("", metric.WithDB(metricDB)))
+	metricStore, err := tsdb.Open(ctx, tsdb.SQLite("", tsdb.WithDB(metricDB)))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -101,22 +101,22 @@ func TestLegacyMonitoringTablesMigratedByOneShotMigration(t *testing.T) {
 	}
 
 	hour := base.Truncate(time.Hour)
-	cpuPoints := queryLegacyRollups(t, ctx, metricStore, metric.Query{MetricName: metricstore.MetricCPU, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour)})
+	cpuPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricCPU, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour)})
 	if len(cpuPoints) != 1 || math.Abs(cpuPoints[0].Value-22) > 1e-9 || !cpuPoints[0].Bucket.Equal(hour) {
 		t.Fatalf("unexpected cpu points: %#v", cpuPoints)
 	}
 
-	gpuPoints := queryLegacyRollups(t, ctx, metricStore, metric.Query{MetricName: metricstore.MetricGPUDeviceUsage, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"device_index": "0"}})
+	gpuPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricGPUDeviceUsage, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"device_index": "0"}})
 	if len(gpuPoints) != 1 || gpuPoints[0].Value != 67 {
 		t.Fatalf("unexpected gpu points: %#v", gpuPoints)
 	}
 
-	pingPoints := queryLegacyRollups(t, ctx, metricStore, metric.Query{MetricName: metricstore.MetricPingLatency, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
+	pingPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricPingLatency, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
 	if len(pingPoints) != 1 || math.Abs(pingPoints[0].Value-34.15) > 1e-9 || !pingPoints[0].Bucket.Equal(hour) {
 		t.Fatalf("unexpected ping points: %#v", pingPoints)
 	}
 
-	pingLossPoints := queryLegacyRollups(t, ctx, metricStore, metric.Query{MetricName: metricstore.MetricPingLoss, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
+	pingLossPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricPingLoss, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
 	if len(pingLossPoints) != 1 || math.Abs(pingLossPoints[0].Value-0.95) > 1e-9 || !pingLossPoints[0].Bucket.Equal(hour) {
 		t.Fatalf("unexpected ping loss points: %#v", pingLossPoints)
 	}
@@ -148,7 +148,7 @@ func TestLegacyHourlyP95PreservesHoursAndTaggedSeries(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open metric db: %v", err)
 	}
-	store, err := metric.Open(ctx, metric.SQLite("", metric.WithDB(metricDB)))
+	store, err := tsdb.Open(ctx, tsdb.SQLite("", tsdb.WithDB(metricDB)))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -156,13 +156,13 @@ func TestLegacyHourlyP95PreservesHoursAndTaggedSeries(t *testing.T) {
 		_ = store.Close()
 		_ = metricDB.Close()
 	})
-	if err := store.UpsertMetric(ctx, metric.Definition{Name: "test.p95", Type: metric.TypeGauge, RetentionDays: 1}); err != nil {
+	if err := store.UpsertMetric(ctx, tsdb.Definition{Name: "test.p95", Type: tsdb.TypeGauge, RetentionDays: 1}); err != nil {
 		t.Fatalf("create test metric: %v", err)
 	}
 
 	base := time.Date(2026, 7, 8, 10, 0, 0, 0, time.UTC)
 	aggregator := &legacyHourlyP95Aggregator{store: store}
-	inputs := [][]metric.Point{
+	inputs := [][]tsdb.Point{
 		{{MetricName: "test.p95", EntityID: "node-a", Timestamp: base.Add(time.Minute), Value: 10, Tags: map[string]string{"task_id": "1"}}},
 		{{MetricName: "test.p95", EntityID: "node-a", Timestamp: base.Add(2 * time.Minute), Value: 20, Tags: map[string]string{"task_id": "1"}}},
 		{{MetricName: "test.p95", EntityID: "node-a", Timestamp: base.Add(time.Hour), Value: 30, Tags: map[string]string{"task_id": "1"}}},
@@ -177,26 +177,26 @@ func TestLegacyHourlyP95PreservesHoursAndTaggedSeries(t *testing.T) {
 		t.Fatalf("flush aggregate input: %v", err)
 	}
 
-	taskOne := queryLegacyRollups(t, ctx, store, metric.Query{
+	taskOne := queryLegacyRollups(t, ctx, store, tsdb.Query{
 		MetricName: "test.p95", EntityID: "node-a", Start: base.Add(-time.Second), End: base.Add(2 * time.Hour),
-		Tags: map[string]string{"task_id": "1"}, Order: metric.OrderAsc,
+		Tags: map[string]string{"task_id": "1"}, Order: tsdb.OrderAsc,
 	})
 	if len(taskOne) != 2 || math.Abs(taskOne[0].Value-19.5) > 1e-9 || taskOne[1].Value != 30 {
 		t.Fatalf("unexpected task one aggregates: %#v", taskOne)
 	}
-	taskTwo := queryLegacyRollups(t, ctx, store, metric.Query{
+	taskTwo := queryLegacyRollups(t, ctx, store, tsdb.Query{
 		MetricName: "test.p95", EntityID: "node-a", Start: base.Add(-time.Second), End: base.Add(2 * time.Hour),
-		Tags: map[string]string{"task_id": "2"}, Order: metric.OrderAsc,
+		Tags: map[string]string{"task_id": "2"}, Order: tsdb.OrderAsc,
 	})
 	if len(taskTwo) != 1 || taskTwo[0].Value != 100 || !taskTwo[0].Bucket.Equal(base) {
 		t.Fatalf("unexpected task two aggregates: %#v", taskTwo)
 	}
 }
 
-func queryLegacyRollups(t *testing.T, ctx context.Context, store *metric.Store, query metric.Query) []metric.AggregatePoint {
+func queryLegacyRollups(t *testing.T, ctx context.Context, store *tsdb.Store, query tsdb.Query) []tsdb.AggregatePoint {
 	t.Helper()
-	points, err := store.Series(ctx, metric.AggregateQuery{
-		Query: query, Aggregation: metric.AggLast, Interval: time.Hour, PreserveSeries: true,
+	points, err := store.Series(ctx, tsdb.AggregateQuery{
+		Query: query, Aggregation: tsdb.AggLast, Interval: time.Hour, PreserveSeries: true,
 	}, query.End)
 	if err != nil {
 		t.Fatalf("query %s rollups: %v", query.MetricName, err)

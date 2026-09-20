@@ -12,19 +12,19 @@ import (
 
 	"github.com/komari-monitor/komari/internal/database/models"
 	v2 "github.com/komari-monitor/komari/internal/protocol/v2"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/komari-monitor/komari/pkg/tsdb"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
-func useReportTestStore(t *testing.T, policy *metric.RollupPolicy) *metric.Store {
+func useReportTestStore(t *testing.T, policy *tsdb.RollupPolicy) *tsdb.Store {
 	t.Helper()
 	ctx := context.Background()
-	opts := []metric.Option{metric.WithMaxOpenConns(1)}
+	opts := []tsdb.Option{tsdb.WithMaxOpenConns(1)}
 	if policy != nil {
-		opts = append(opts, metric.WithRollupPolicy(*policy))
+		opts = append(opts, tsdb.WithRollupPolicy(*policy))
 	}
 	dsn := fmt.Sprintf("file:report-%d?mode=memory&cache=shared", time.Now().UnixNano())
-	s, err := metric.Open(ctx, metric.SQLite(dsn, opts...))
+	s, err := tsdb.Open(ctx, tsdb.SQLite(dsn, opts...))
 	if err != nil {
 		t.Fatalf("open metric store: %v", err)
 	}
@@ -81,7 +81,7 @@ func (c *reportSQLiteConnector) Driver() driver.Driver {
 
 // useReportCounterFailureStore denies exactly two rollup reads after schema
 // setup, exercising failed counter restoration while leaving writes usable.
-func useReportCounterFailureStore(t *testing.T) (*metric.Store, *reportCounterFault) {
+func useReportCounterFailureStore(t *testing.T) (*tsdb.Store, *reportCounterFault) {
 	t.Helper()
 	fault := &reportCounterFault{}
 	dsn := fmt.Sprintf("file:report-counter-fault-%d?mode=memory&cache=shared", time.Now().UnixNano())
@@ -97,7 +97,7 @@ func useReportCounterFailureStore(t *testing.T) (*metric.Store, *reportCounterFa
 		},
 	}
 	db := sql.OpenDB(&reportSQLiteConnector{driver: driver, dsn: dsn})
-	s, err := metric.Open(context.Background(), metric.SQLite("", metric.WithDB(db), metric.WithMaxOpenConns(1)))
+	s, err := tsdb.Open(context.Background(), tsdb.SQLite("", tsdb.WithDB(db), tsdb.WithMaxOpenConns(1)))
 	if err != nil {
 		_ = db.Close()
 		t.Fatalf("open metric store: %v", err)
@@ -212,16 +212,16 @@ func TestWriteReportStoresMinuteMetricsAndResetAwareTraffic(t *testing.T) {
 	assertMetricValues(t, s, MetricTrafficUp, report.UUID, base.Add(-time.Second), base.Add(time.Minute), []float64{0, 50, 20})
 	assertMetricValues(t, s, MetricTrafficDown, report.UUID, base.Add(-time.Second), base.Add(time.Minute), []float64{0, 60, 30})
 	assertMetricValues(t, s, MetricNetTotalUp, report.UUID, base.Add(-time.Second), base.Add(time.Minute), []float64{100, 150, 20})
-	assertMetricAggregate(t, s, MetricTrafficUp, report.UUID, base.Add(-time.Second), base.Add(time.Minute), metric.AggSum, 70, 3)
-	assertMetricAggregate(t, s, MetricTrafficDown, report.UUID, base.Add(-time.Second), base.Add(time.Minute), metric.AggSum, 90, 3)
+	assertMetricAggregate(t, s, MetricTrafficUp, report.UUID, base.Add(-time.Second), base.Add(time.Minute), tsdb.AggSum, 70, 3)
+	assertMetricAggregate(t, s, MetricTrafficDown, report.UUID, base.Add(-time.Second), base.Add(time.Minute), tsdb.AggSum, 90, 3)
 
-	gpuPoints, err := s.Query(ctx, metric.Query{
+	gpuPoints, err := s.Query(ctx, tsdb.Query{
 		MetricName: MetricGPUDeviceUsage,
 		EntityID:   report.UUID,
 		Start:      base.Add(-time.Second),
 		End:        base.Add(time.Minute),
 		Tags:       map[string]string{"device_index": "0"},
-		Order:      metric.OrderAsc,
+		Order:      tsdb.OrderAsc,
 	})
 	if err != nil {
 		t.Fatalf("query GPU points: %v", err)
@@ -253,7 +253,7 @@ func TestWriteReportSkipsMetricsWithoutAgentData(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("write report: %v", err)
 	}
-	points, err := s.Query(ctx, metric.Query{
+	points, err := s.Query(ctx, tsdb.Query{
 		MetricName: MetricGPU, EntityID: "node-without-gpu",
 		Start: timestamp.Add(-time.Second), End: timestamp.Add(time.Second),
 	})
@@ -294,12 +294,12 @@ func TestReportBatcherFlushesQueuedReports(t *testing.T) {
 	if _, err := WriteReport(ctx, second); err != nil {
 		t.Fatalf("queue second report: %v", err)
 	}
-	points, err := s.Query(ctx, metric.Query{
+	points, err := s.Query(ctx, tsdb.Query{
 		MetricName: MetricCPU,
 		EntityID:   first.UUID,
 		Start:      base.Add(-time.Second),
 		End:        base.Add(time.Minute),
-		Order:      metric.OrderAsc,
+		Order:      tsdb.OrderAsc,
 	})
 	if err != nil {
 		t.Fatalf("query before flush: %v", err)
@@ -314,7 +314,7 @@ func TestReportBatcherFlushesQueuedReports(t *testing.T) {
 	assertMetricValues(t, s, MetricCPU, first.UUID, base.Add(-time.Second), base.Add(time.Minute), []float64{10, 20})
 	assertMetricValues(t, s, MetricTrafficUp, first.UUID, base.Add(-time.Second), base.Add(time.Minute), []float64{0, 50})
 	assertMetricValues(t, s, MetricTrafficDown, first.UUID, base.Add(-time.Second), base.Add(time.Minute), []float64{0, 60})
-	assertMetricAggregate(t, s, MetricCPU, first.UUID, base.Add(-time.Second), base.Add(time.Minute), metric.AggAvg, 15, 2)
+	assertMetricAggregate(t, s, MetricCPU, first.UUID, base.Add(-time.Second), base.Add(time.Minute), tsdb.AggAvg, 15, 2)
 }
 
 func TestPingBatcherFlushesLatencyAndLossTogether(t *testing.T) {
@@ -340,7 +340,7 @@ func TestPingBatcherFlushesLatencyAndLossTogether(t *testing.T) {
 	}
 
 	for _, name := range []string{MetricPingLatency, MetricPingLoss} {
-		points, err := s.Query(ctx, metric.Query{
+		points, err := s.Query(ctx, tsdb.Query{
 			MetricName: name,
 			EntityID:   "ping-node",
 			Start:      base.Add(-time.Second),
@@ -358,13 +358,13 @@ func TestPingBatcherFlushesLatencyAndLossTogether(t *testing.T) {
 		t.Fatalf("flush ping batch: %v", err)
 	}
 
-	latency, err := s.Query(ctx, metric.Query{
+	latency, err := s.Query(ctx, tsdb.Query{
 		MetricName: MetricPingLatency,
 		EntityID:   "ping-node",
 		Tags:       map[string]string{"task_id": "7"},
 		Start:      base.Add(-time.Second),
 		End:        base.Add(2 * time.Minute),
-		Order:      metric.OrderAsc,
+		Order:      tsdb.OrderAsc,
 	})
 	if err != nil {
 		t.Fatalf("query flushed latency points: %v", err)
@@ -373,13 +373,13 @@ func TestPingBatcherFlushesLatencyAndLossTogether(t *testing.T) {
 		t.Fatalf("latency points = %#v, want both original samples", latency)
 	}
 
-	loss, err := s.Query(ctx, metric.Query{
+	loss, err := s.Query(ctx, tsdb.Query{
 		MetricName: MetricPingLoss,
 		EntityID:   "ping-node",
 		Tags:       map[string]string{"task_id": "7"},
 		Start:      base.Add(-time.Second),
 		End:        base.Add(2 * time.Minute),
-		Order:      metric.OrderAsc,
+		Order:      tsdb.OrderAsc,
 	})
 	if err != nil {
 		t.Fatalf("query flushed loss points: %v", err)
@@ -445,7 +445,7 @@ func TestRecordReconstructionUsesMetricSpecificAggregation(t *testing.T) {
 	s := useReportTestStore(t, nil)
 	base := time.Now().UTC().Truncate(time.Minute)
 	entityID := "node-aggregation"
-	points := []metric.Point{
+	points := []tsdb.Point{
 		{MetricName: MetricCPU, EntityID: entityID, Timestamp: base.Add(time.Second), Value: 10},
 		{MetricName: MetricCPU, EntityID: entityID, Timestamp: base.Add(2 * time.Second), Value: 30},
 		{MetricName: MetricNetTotalUp, EntityID: entityID, Timestamp: base.Add(time.Second), Value: 100},
@@ -715,7 +715,7 @@ func TestWriteReportNormalizesReceiveTimeToUTC(t *testing.T) {
 	if !saved.UpdatedAt.Equal(receiveTime) || saved.UpdatedAt.Location() != time.UTC {
 		t.Fatalf("saved receive time = %s (%s), want UTC", saved.UpdatedAt, saved.UpdatedAt.Location())
 	}
-	points, err := s.Query(ctx, metric.Query{
+	points, err := s.Query(ctx, tsdb.Query{
 		MetricName: MetricCPU,
 		EntityID:   report.UUID,
 		Start:      receiveTime.Add(-time.Nanosecond),
@@ -729,14 +729,14 @@ func TestWriteReportNormalizesReceiveTimeToUTC(t *testing.T) {
 	}
 }
 
-func assertMetricValues(t *testing.T, s *metric.Store, metricName, entityID string, start, end time.Time, want []float64) {
+func assertMetricValues(t *testing.T, s *tsdb.Store, metricName, entityID string, start, end time.Time, want []float64) {
 	t.Helper()
-	points, err := s.Query(context.Background(), metric.Query{
+	points, err := s.Query(context.Background(), tsdb.Query{
 		MetricName: metricName,
 		EntityID:   entityID,
 		Start:      start,
 		End:        end,
-		Order:      metric.OrderAsc,
+		Order:      tsdb.OrderAsc,
 	})
 	if err != nil {
 		t.Fatalf("query %s: %v", metricName, err)
@@ -751,10 +751,10 @@ func assertMetricValues(t *testing.T, s *metric.Store, metricName, entityID stri
 	}
 }
 
-func assertMetricAggregate(t *testing.T, s *metric.Store, metricName, entityID string, start, end time.Time, aggregation metric.Aggregation, want float64, wantCount int) {
+func assertMetricAggregate(t *testing.T, s *tsdb.Store, metricName, entityID string, start, end time.Time, aggregation tsdb.Aggregation, want float64, wantCount int) {
 	t.Helper()
-	points, err := s.Series(context.Background(), metric.AggregateQuery{
-		Query:       metric.Query{MetricName: metricName, EntityID: entityID, Start: start, End: end},
+	points, err := s.Series(context.Background(), tsdb.AggregateQuery{
+		Query:       tsdb.Query{MetricName: metricName, EntityID: entityID, Start: start, End: end},
 		Aggregation: aggregation, Interval: time.Minute, PreserveSeries: true,
 	}, end)
 	if err != nil {
