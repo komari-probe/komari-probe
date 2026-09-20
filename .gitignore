@@ -12,7 +12,7 @@ __debug*
 # local development data
 komari.db
 /data
-/internal/geoip/data
+/internal/platform/geoip/data
 .vscode/
 /backup
 
@@ -36,5 +36,3 @@ go.work.sum
 komari
 /dist/
 .codex
-
-/internal/web/filemanager/data
