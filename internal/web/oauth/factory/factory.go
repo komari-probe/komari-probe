@@ -3,13 +3,13 @@ package factory
 import (
 	logger "github.com/komari-monitor/komari/pkg/log"
 
-	"github.com/komari-monitor/komari/pkg/item"
+	"github.com/komari-monitor/komari/pkg/configfield"
 )
 
 var (
 	providers                = make(map[string]IOidcProvider)
 	providerConstructor      = make(map[string]OidcConstructor)
-	providersAdditionalItems = make(map[string][]item.Item)
+	providersAdditionalItems = make(map[string][]configfield.Field)
 )
 
 func RegisterOidcProvider(constructor OidcConstructor) {
@@ -25,11 +25,11 @@ func RegisterOidcProvider(constructor OidcConstructor) {
 
 	// 使用反射来提取提供程序的配置字段
 	config := provider.GetConfiguration()
-	items := item.Parse(config)
+	items := configfield.Parse(config)
 	providersAdditionalItems[provider.GetName()] = items
 }
 
-func GetProviderConfigs() map[string][]item.Item {
+func GetProviderConfigs() map[string][]configfield.Field {
 	return providersAdditionalItems
 }
 

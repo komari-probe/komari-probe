@@ -3,13 +3,13 @@ package factory
 import (
 	logger "github.com/komari-monitor/komari/pkg/log"
 
-	"github.com/komari-monitor/komari/pkg/item"
+	"github.com/komari-monitor/komari/pkg/configfield"
 )
 
 var (
 	senders                = make(map[string]IMessageSender)
 	senderConstructor      = make(map[string]MessageSenderConstructor)
-	sendersAdditionalItems = make(map[string][]item.Item)
+	sendersAdditionalItems = make(map[string][]configfield.Field)
 )
 
 func RegisterMessageSender(constructor MessageSenderConstructor) {
@@ -25,12 +25,12 @@ func RegisterMessageSender(constructor MessageSenderConstructor) {
 
 	// 使用反射来提取提供程序的配置字段
 	config := sender.GetConfiguration()
-	items := item.Parse(config)
+	items := configfield.Parse(config)
 
 	sendersAdditionalItems[sender.GetName()] = items
 }
 
-func GetSenderConfigs() map[string][]item.Item {
+func GetSenderConfigs() map[string][]configfield.Field {
 	return sendersAdditionalItems
 }
 
