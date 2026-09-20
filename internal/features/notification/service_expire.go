@@ -9,7 +9,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/timeutil"
 )
 
@@ -18,7 +18,7 @@ func CheckExpireScheduledWork() {
 }
 
 func CheckExpire() {
-	cfg, err := config.GetMany(map[string]any{
+	cfg, err := kv.GetMany(map[string]any{
 		settings.ExpireNotificationEnabledKey:  false,
 		settings.ExpireNotificationLeadDaysKey: 7,
 	})

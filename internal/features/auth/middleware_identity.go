@@ -14,7 +14,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"gorm.io/gorm"
 )
@@ -126,7 +126,7 @@ func PrivateSiteMiddleware() gin.HandlerFunc {
 		}
 
 		// 非私有站点直接放行
-		privateSite, err := config.GetAs[bool](settings.PrivateSiteKey, false)
+		privateSite, err := kv.GetAs[bool](settings.PrivateSiteKey, false)
 		if err != nil {
 			api.RespondError(c, http.StatusInternalServerError, "Failed to get configuration.")
 			c.Abort()
@@ -153,11 +153,11 @@ func hasTempAccess(c *gin.Context) bool {
 	if err != nil {
 		return false
 	}
-	expireAt, err := config.GetAs[int64]("tempory_share_token_expire_at", 0)
+	expireAt, err := kv.GetAs[int64]("tempory_share_token_expire_at", 0)
 	if err != nil {
 		return false
 	}
-	allowKey, err := config.GetAs[string]("tempory_share_token", "")
+	allowKey, err := kv.GetAs[string]("tempory_share_token", "")
 	if err != nil {
 		return false
 	}
@@ -212,7 +212,7 @@ func checkTokenAndGetUUID(token string) (string, error) {
 }
 
 func isApiKeyValid(apiKey string) bool {
-	apiKeyConfig, err := config.GetAs[string](settings.ApiKeyKey, "")
+	apiKeyConfig, err := kv.GetAs[string](settings.ApiKeyKey, "")
 	if err != nil {
 		return false
 	}

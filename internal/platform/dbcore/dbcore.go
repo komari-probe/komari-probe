@@ -13,7 +13,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"github.com/komari-monitor/komari/pkg/sqlitetune"
 	"gorm.io/driver/sqlite"
@@ -210,7 +210,7 @@ func resolveDatabaseFile() string {
 // ./data/backup/upgrade-{time}.zip，便于升级（含 metrics 迁移）异常时回滚。
 //
 // 版本标识存放于配置库（configs 表，键 system_version），因此本函数必须在
-// config.SetDb 之后、一次性 metrics 迁移（InitStores）之前调用。
+// kv.SetDb 之后、一次性 metrics 迁移（InitStores）之前调用。
 //
 // 触发规则：
 //   - versionID 为空：跳过（未注入版本，如部分测试场景）。
@@ -225,7 +225,7 @@ func backupOnVersionUpgrade() {
 		return
 	}
 
-	prevVersion, readErr := config.GetAs[string](SystemVersionKey)
+	prevVersion, readErr := kv.GetAs[string](SystemVersionKey)
 	prevVersion = strings.TrimSpace(prevVersion)
 	versionRecorded := readErr == nil && prevVersion != ""
 
@@ -268,7 +268,7 @@ func backupOnVersionUpgrade() {
 
 // writeVersionMarker 将当前 versionID 写入配置库。
 func writeVersionMarker() {
-	if err := config.Set(SystemVersionKey, versionID); err != nil {
+	if err := kv.Set(SystemVersionKey, versionID); err != nil {
 		logger.Errorf("dbcore", "[upgrade-backup] failed to persist version marker: %v", err)
 	}
 }
@@ -432,7 +432,7 @@ func doInitialize() error {
 	if err := migrations.Run(migrations.Context{DB: instance}); err != nil {
 		return fmt.Errorf("failed to run startup migrations: %w", err)
 	}
-	config.SetDb(instance)
+	kv.SetDb(instance)
 
 	// 配置库就绪后、执行后续 AutoMigrate 之前：
 	// 基于配置中的版本标记检测升级并自动备份 ./data，便于回滚。

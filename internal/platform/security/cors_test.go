@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -175,9 +175,9 @@ func setupCORSConfigDB(t *testing.T, apiKey string) {
 		_ = sqlDB.Close()
 	})
 
-	config.SetDb(db)
+	kv.SetDb(db)
 	if apiKey != "" {
-		if err := config.Set(settings.ApiKeyKey, apiKey); err != nil {
+		if err := kv.Set(settings.ApiKeyKey, apiKey); err != nil {
 			t.Fatalf("set api key: %v", err)
 		}
 	}

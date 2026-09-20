@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
@@ -29,7 +29,7 @@ type RestructureResult struct {
 // tables. It is called before normal metric-store initialization so an existing
 // installation is never rebuilt at startup without an administrator action.
 func StructureUpgradeRequired(ctx context.Context) (bool, error) {
-	cfg, err := config.GetManyAs[MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[MetricStoreConfig]()
 	if err != nil {
 		return false, err
 	}
@@ -73,7 +73,7 @@ func rebuildConfiguredStore(
 	report func(RestructureProgress),
 	coreOp func(*tsdb.Store, context.Context, func(tsdb.RestructureProgress)) (tsdb.RestructureResult, error),
 ) (RestructureResult, error) {
-	cfg, err := config.GetManyAs[MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[MetricStoreConfig]()
 	if err != nil {
 		return RestructureResult{}, err
 	}

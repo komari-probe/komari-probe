@@ -12,7 +12,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -23,7 +23,7 @@ func setupInstallRouter(t *testing.T) (*gin.Engine, *gorm.DB, *Controller) {
 	if err != nil {
 		t.Fatalf("open install database: %v", err)
 	}
-	if err := db.AutoMigrate(&models.User{}, &appconfig.ConfigItem{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &kv.ConfigItem{}); err != nil {
 		t.Fatalf("migrate install database: %v", err)
 	}
 	sqlDB, err := db.DB()
@@ -31,7 +31,7 @@ func setupInstallRouter(t *testing.T) (*gin.Engine, *gorm.DB, *Controller) {
 		t.Fatalf("get install sql database: %v", err)
 	}
 	t.Cleanup(func() { _ = sqlDB.Close() })
-	appconfig.SetDb(db)
+	kv.SetDb(db)
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	controller := NewController(db)
@@ -100,7 +100,7 @@ func TestInstallCompletesAndPersistsSettings(t *testing.T) {
 		metricstore.MetricDBDriverKey: "sqlite",
 		metricstore.MetricDBDSNKey:    metricDSN,
 	}
-	got, err := appconfig.GetAll()
+	got, err := kv.GetAll()
 	if err != nil {
 		t.Fatalf("read all install settings: %v", err)
 	}

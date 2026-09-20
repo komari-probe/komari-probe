@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/gorm"
 )
 
@@ -195,14 +195,14 @@ func isBlockedMarketIP(ip net.IP) bool {
 }
 
 func ssrfProtectionEnabled() (bool, error) {
-	enabled, err := config.GetAs[bool](settings.SSRFProtectionEnabledKey)
+	enabled, err := kv.GetAs[bool](settings.SSRFProtectionEnabledKey)
 	if err == nil {
 		return enabled, nil
 	}
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, err
 	}
-	if err := config.Set(settings.SSRFProtectionEnabledKey, false); err != nil {
+	if err := kv.Set(settings.SSRFProtectionEnabledKey, false); err != nil {
 		return false, err
 	}
 	return false, nil

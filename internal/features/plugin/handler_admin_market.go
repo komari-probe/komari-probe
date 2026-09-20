@@ -18,7 +18,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 // handler_admin_market.go
@@ -84,11 +84,11 @@ func defaultPluginMarketSources() []PluginMarketSource {
 }
 
 func getPluginMarketSources() ([]PluginMarketSource, error) {
-	return config.GetAs[[]PluginMarketSource](settings.PluginMarketSourcesKey, defaultPluginMarketSources())
+	return kv.GetAs[[]PluginMarketSource](settings.PluginMarketSourcesKey, defaultPluginMarketSources())
 }
 
 func savePluginMarketSources(sources []PluginMarketSource) error {
-	return config.Set(settings.PluginMarketSourcesKey, sources)
+	return kv.Set(settings.PluginMarketSourcesKey, sources)
 }
 
 func normalizePluginMarketSource(source PluginMarketSource) (PluginMarketSource, error) {

@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/random"
 )
 
@@ -14,7 +14,7 @@ func RegisterClient(c *gin.Context) {
 		api.RespondError(c, 403, "Invalid AutoDiscovery Key")
 		return
 	}
-	AutoDiscoveryKey, err := config.GetAs[string](settings.AutoDiscoveryKeyKey, "")
+	AutoDiscoveryKey, err := kv.GetAs[string](settings.AutoDiscoveryKeyKey, "")
 	if err != nil {
 		api.RespondError(c, 500, "Failed to get AutoDiscovery Key: "+err.Error())
 		return

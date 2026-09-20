@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -137,17 +137,17 @@ func Run(ctx Context) error {
 }
 
 func migrateDeprecatedMetricRetentionConfig(db *gorm.DB) error {
-	if !db.Migrator().HasTable(&appconfig.ConfigItem{}) {
+	if !db.Migrator().HasTable(&kv.ConfigItem{}) {
 		return nil
 	}
-	return db.Delete(&appconfig.ConfigItem{}, "key = ?", "metric_retention_days").Error
+	return db.Delete(&kv.ConfigItem{}, "key = ?", "metric_retention_days").Error
 }
 
 func migrateRemovedCompatibilityConfig(db *gorm.DB) error {
-	if !db.Migrator().HasTable(&appconfig.ConfigItem{}) {
+	if !db.Migrator().HasTable(&kv.ConfigItem{}) {
 		return nil
 	}
-	return db.Delete(&appconfig.ConfigItem{}, "key IN ?", []string{
+	return db.Delete(&kv.ConfigItem{}, "key IN ?", []string{
 		"nezha_compat_enabled",
 		"nezha_compat_listen",
 		"low_resource_mode",
@@ -316,7 +316,7 @@ func migrateLegacyConfigToItems(db *gorm.DB) error {
 		if err := db.Migrator().DropTable("configs"); err != nil {
 			return err
 		}
-		return db.AutoMigrate(&appconfig.ConfigItem{})
+		return db.AutoMigrate(&kv.ConfigItem{})
 	}
 
 	newRows, err := legacyConfigRows(oldData)
@@ -328,7 +328,7 @@ func migrateLegacyConfigToItems(db *gorm.DB) error {
 		if err := tx.Migrator().DropTable("configs"); err != nil {
 			return err
 		}
-		if err := tx.AutoMigrate(&appconfig.ConfigItem{}); err != nil {
+		if err := tx.AutoMigrate(&kv.ConfigItem{}); err != nil {
 			return err
 		}
 		if len(newRows) == 0 {
@@ -341,10 +341,10 @@ func migrateLegacyConfigToItems(db *gorm.DB) error {
 	})
 }
 
-func legacyConfigRows(oldData legacyConfig) ([]appconfig.ConfigItem, error) {
+func legacyConfigRows(oldData legacyConfig) ([]kv.ConfigItem, error) {
 	val := reflect.ValueOf(oldData)
 	typ := reflect.TypeOf(oldData)
-	newRows := make([]appconfig.ConfigItem, 0, val.NumField())
+	newRows := make([]kv.ConfigItem, 0, val.NumField())
 
 	for i := 0; i < val.NumField(); i++ {
 		field := typ.Field(i)
@@ -358,7 +358,7 @@ func legacyConfigRows(oldData legacyConfig) ([]appconfig.ConfigItem, error) {
 		if err != nil {
 			return nil, fmt.Errorf("marshal legacy config %s: %w", key, err)
 		}
-		newRows = append(newRows, appconfig.ConfigItem{
+		newRows = append(newRows, kv.ConfigItem{
 			Key:   key,
 			Value: string(jsonBytes),
 		})

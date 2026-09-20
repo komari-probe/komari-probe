@@ -14,7 +14,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 const defaultThemeMarketURL = "https://raw.githubusercontent.com/komari-probe/theme-market/main/v1.json"
@@ -74,11 +74,11 @@ func defaultThemeMarketSources() []ThemeMarketSource {
 }
 
 func getThemeMarketSources() ([]ThemeMarketSource, error) {
-	return config.GetAs[[]ThemeMarketSource](settings.ThemeMarketSourcesKey, defaultThemeMarketSources())
+	return kv.GetAs[[]ThemeMarketSource](settings.ThemeMarketSourcesKey, defaultThemeMarketSources())
 }
 
 func saveThemeMarketSources(sources []ThemeMarketSource) error {
-	return config.Set(settings.ThemeMarketSourcesKey, sources)
+	return kv.Set(settings.ThemeMarketSourcesKey, sources)
 }
 
 func normalizeThemeMarketSource(source ThemeMarketSource) (ThemeMarketSource, error) {

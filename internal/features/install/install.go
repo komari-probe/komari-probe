@@ -20,7 +20,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/platform/upload"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"gorm.io/gorm"
 )
@@ -182,7 +182,7 @@ func (c *Controller) createAccountAndSettings(request *completeRequest, cfg *met
 		metricstore.MetricDBDriverKey: cfg.Driver,
 		metricstore.MetricDBDSNKey:    cfg.DSN,
 	}
-	if err := appconfig.SetMany(settings); err != nil {
+	if err := kv.SetMany(settings); err != nil {
 		_ = auth.DeleteAccountByUsernameWithDB(c.db, user.Username)
 		return err
 	}

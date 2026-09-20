@@ -14,7 +14,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/market"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/public"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 // ListThemes 列出所有主题
@@ -118,7 +118,7 @@ func SetTheme(c *gin.Context) {
 		}
 	}
 
-	if err := config.Set("theme", themeName); err != nil {
+	if err := kv.Set("theme", themeName); err != nil {
 		api.RespondError(c, http.StatusInternalServerError, "更新主题设置失败: "+err.Error())
 		return
 	}

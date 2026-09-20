@@ -9,7 +9,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 // GetCallbackURL 构造 OIDC provider 回调地址（固定路径 /api/oauth_callback）。
@@ -19,7 +19,7 @@ func GetCallbackURL(c *gin.Context) string {
 
 // /api/oauth
 func OAuth(c *gin.Context) {
-	OAuthEnabled, _ := config.GetAs[bool](settings.OAuthEnabledKey, false)
+	OAuthEnabled, _ := kv.GetAs[bool](settings.OAuthEnabledKey, false)
 	if !OAuthEnabled {
 		c.JSON(403, gin.H{"status": "error", "error": "OAuth is not enabled"})
 		return

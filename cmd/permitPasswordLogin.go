@@ -5,7 +5,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +15,7 @@ var PermitPasswordLoginCmd = &cobra.Command{
 	Long:  `Force permit password login`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dbcore.GetDBInstance()
-		if err := config.Set(settings.DisablePasswordLoginKey, false); err != nil {
+		if err := kv.Set(settings.DisablePasswordLoginKey, false); err != nil {
 			cmd.Println("Error:", err)
 			os.Exit(1)
 		}

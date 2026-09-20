@@ -13,7 +13,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/gorm"
 )
@@ -80,7 +80,7 @@ type legacyHourlyP95Aggregator struct {
 // restricted 1.2.7 upgrade flow. The migration itself runs only after an
 // administrator explicitly starts it from that guide.
 func LegacyMonitoringMigrationRequired(db *gorm.DB) (bool, LegacyMonitoringSummary, error) {
-	done, err := appconfig.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
+	done, err := kv.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
 	if err != nil {
 		return false, LegacyMonitoringSummary{}, fmt.Errorf("read legacy monitoring migration marker: %w", err)
 	}
@@ -188,7 +188,7 @@ func CompleteLegacyMonitoringMigration(db *gorm.DB, finalize func() error) error
 			return fmt.Errorf("finalize legacy monitoring migration: %w", err)
 		}
 	}
-	if err := appconfig.Set(legacyMonitoringMigrationDoneKey, true); err != nil {
+	if err := kv.Set(legacyMonitoringMigrationDoneKey, true); err != nil {
 		return fmt.Errorf("mark legacy monitoring migration done: %w", err)
 	}
 	return nil

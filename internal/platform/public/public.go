@@ -13,7 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 //go:embed defaultTheme/komari-theme.json
@@ -140,7 +140,7 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 	}
 
 	getConfig := func() map[string]any {
-		cfg, _ := config.GetMany(map[string]any{
+		cfg, _ := kv.GetMany(map[string]any{
 			settings.DescriptionKey: "A simple server monitor tool.",
 			settings.CustomHeadKey:  "",
 			settings.CustomBodyKey:  "",
@@ -311,11 +311,11 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 				return
 			}
 
-			tempKeyExpireTime, err := config.GetAs[int64]("tempory_share_token_expire_at", 0)
+			tempKeyExpireTime, err := kv.GetAs[int64]("tempory_share_token_expire_at", 0)
 			if err != nil {
 				return
 			}
-			allowTempKey, err := config.GetAs[string]("tempory_share_token", "")
+			allowTempKey, err := kv.GetAs[string]("tempory_share_token", "")
 			if err != nil {
 				return
 			}

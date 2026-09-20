@@ -8,7 +8,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -32,7 +32,7 @@ func openTestDB(t *testing.T, name string) *gorm.DB {
 func TestHasLegacyConfigTable(t *testing.T) {
 	t.Run("config item table", func(t *testing.T) {
 		db := openTestDB(t, "migrations_config_item")
-		if err := db.AutoMigrate(&appconfig.ConfigItem{}); err != nil {
+		if err := db.AutoMigrate(&kv.ConfigItem{}); err != nil {
 			t.Fatalf("migrate config item table: %v", err)
 		}
 		if hasLegacyConfigTable(db) {
@@ -53,10 +53,10 @@ func TestHasLegacyConfigTable(t *testing.T) {
 
 func TestRunSkipsLegacyConfigMigrationForCurrentConfigItemTable(t *testing.T) {
 	db := openTestDB(t, "migrations_config_item_run")
-	if err := db.AutoMigrate(&appconfig.ConfigItem{}); err != nil {
+	if err := db.AutoMigrate(&kv.ConfigItem{}); err != nil {
 		t.Fatalf("migrate config item table: %v", err)
 	}
-	if err := db.Create(&appconfig.ConfigItem{Key: "o_auth_provider", Value: `"github"`}).Error; err != nil {
+	if err := db.Create(&kv.ConfigItem{Key: "o_auth_provider", Value: `"github"`}).Error; err != nil {
 		t.Fatalf("seed config item: %v", err)
 	}
 
@@ -71,7 +71,7 @@ func TestRunSkipsLegacyConfigMigrationForCurrentConfigItemTable(t *testing.T) {
 		t.Fatal("legacy OIDC migration ran against the config item table")
 	}
 
-	var item appconfig.ConfigItem
+	var item kv.ConfigItem
 	if err := db.First(&item, "key = ?", "o_auth_provider").Error; err != nil {
 		t.Fatalf("config item was not preserved: %v", err)
 	}
@@ -82,17 +82,17 @@ func TestRunSkipsLegacyConfigMigrationForCurrentConfigItemTable(t *testing.T) {
 
 func TestRunRemovesDeprecatedMetricRetentionConfig(t *testing.T) {
 	db := openTestDB(t, "migrations_remove_metric_retention")
-	if err := db.AutoMigrate(&appconfig.ConfigItem{}); err != nil {
+	if err := db.AutoMigrate(&kv.ConfigItem{}); err != nil {
 		t.Fatalf("migrate config item table: %v", err)
 	}
-	if err := db.Create(&appconfig.ConfigItem{Key: "metric_retention_days", Value: "90"}).Error; err != nil {
+	if err := db.Create(&kv.ConfigItem{Key: "metric_retention_days", Value: "90"}).Error; err != nil {
 		t.Fatalf("seed deprecated config: %v", err)
 	}
 	if err := Run(Context{DB: db}); err != nil {
 		t.Fatalf("run migrations: %v", err)
 	}
 	var count int64
-	if err := db.Model(&appconfig.ConfigItem{}).Where("key = ?", "metric_retention_days").Count(&count).Error; err != nil {
+	if err := db.Model(&kv.ConfigItem{}).Where("key = ?", "metric_retention_days").Count(&count).Error; err != nil {
 		t.Fatalf("count deprecated config: %v", err)
 	}
 	if count != 0 {
@@ -102,15 +102,15 @@ func TestRunRemovesDeprecatedMetricRetentionConfig(t *testing.T) {
 
 func TestRunRemovesCompatibilityConfig(t *testing.T) {
 	db := openTestDB(t, "migrations_remove_compatibility_config")
-	if err := db.AutoMigrate(&appconfig.ConfigItem{}); err != nil {
+	if err := db.AutoMigrate(&kv.ConfigItem{}); err != nil {
 		t.Fatalf("migrate config item table: %v", err)
 	}
 	for _, key := range []string{"nezha_compat_enabled", "nezha_compat_listen", "low_resource_mode"} {
-		if err := db.Create(&appconfig.ConfigItem{Key: key, Value: "true"}).Error; err != nil {
+		if err := db.Create(&kv.ConfigItem{Key: key, Value: "true"}).Error; err != nil {
 			t.Fatalf("seed removed config %q: %v", key, err)
 		}
 	}
-	if err := db.Create(&appconfig.ConfigItem{Key: "sitename", Value: `"Komari"`}).Error; err != nil {
+	if err := db.Create(&kv.ConfigItem{Key: "sitename", Value: `"Komari"`}).Error; err != nil {
 		t.Fatalf("seed retained config: %v", err)
 	}
 
@@ -119,7 +119,7 @@ func TestRunRemovesCompatibilityConfig(t *testing.T) {
 	}
 
 	var count int64
-	if err := db.Model(&appconfig.ConfigItem{}).Where("key IN ?", []string{
+	if err := db.Model(&kv.ConfigItem{}).Where("key IN ?", []string{
 		"nezha_compat_enabled",
 		"nezha_compat_listen",
 		"low_resource_mode",
@@ -129,7 +129,7 @@ func TestRunRemovesCompatibilityConfig(t *testing.T) {
 	if count != 0 {
 		t.Fatalf("removed compatibility config remains: %d", count)
 	}
-	if err := db.First(&appconfig.ConfigItem{}, "key = ?", "sitename").Error; err != nil {
+	if err := db.First(&kv.ConfigItem{}, "key = ?", "sitename").Error; err != nil {
 		t.Fatalf("unrelated config was removed: %v", err)
 	}
 }
@@ -137,7 +137,7 @@ func TestRunRemovesCompatibilityConfig(t *testing.T) {
 func TestRunPreservesVersion120RuntimeShape(t *testing.T) {
 	db := openTestDB(t, "migrations_v120_runtime_shape")
 	if err := db.AutoMigrate(
-		&appconfig.ConfigItem{},
+		&kv.ConfigItem{},
 		&models.OidcProvider{},
 		&models.MessageSenderProvider{},
 		&models.Client{},
@@ -159,7 +159,7 @@ func TestRunPreservesVersion120RuntimeShape(t *testing.T) {
 	}).Error; err != nil {
 		t.Fatalf("seed ping task: %v", err)
 	}
-	if err := db.Create(&appconfig.ConfigItem{Key: settings.OAuthProviderKey, Value: `"github"`}).Error; err != nil {
+	if err := db.Create(&kv.ConfigItem{Key: settings.OAuthProviderKey, Value: `"github"`}).Error; err != nil {
 		t.Fatalf("seed config item: %v", err)
 	}
 	if err := db.Create(&models.OidcProvider{Name: "github", Addition: `{"client_id":"old","client_secret":"secret"}`}).Error; err != nil {
@@ -177,7 +177,7 @@ func TestRunPreservesVersion120RuntimeShape(t *testing.T) {
 		t.Fatal("current config item table was treated as legacy wide config")
 	}
 
-	var configItem appconfig.ConfigItem
+	var configItem kv.ConfigItem
 	if err := db.First(&configItem, "key = ?", settings.OAuthProviderKey).Error; err != nil {
 		t.Fatalf("find config item: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestRunMigratesLegacyConfigTableToConfigItems(t *testing.T) {
 		t.Fatal("legacy config columns were not removed")
 	}
 
-	var sitename appconfig.ConfigItem
+	var sitename kv.ConfigItem
 	if err := db.First(&sitename, "key = ?", settings.SitenameKey).Error; err != nil {
 		t.Fatalf("find migrated sitename: %v", err)
 	}
@@ -246,7 +246,7 @@ func TestRunMigratesLegacyConfigTableToConfigItems(t *testing.T) {
 		t.Fatalf("unexpected sitename value: %s", sitename.Value)
 	}
 
-	var corsOriginCheck appconfig.ConfigItem
+	var corsOriginCheck kv.ConfigItem
 	if err := db.First(&corsOriginCheck, "key = ?", settings.CorsOriginCheckEnabledKey).Error; err == nil {
 		t.Fatalf("unexpected migrated cors_origin_check_enabled value: %s", corsOriginCheck.Value)
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	geoipprovider "github.com/komari-monitor/komari/pkg/geoip"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 func getClientIPType(ip net.IP) int {
@@ -53,7 +53,7 @@ func hasClientIP(info map[string]any) bool {
 }
 
 func appendClientRegionFromGeoIP(info map[string]any) {
-	cfg, err := config.GetAs[bool](settings.GeoIpEnabledKey)
+	cfg, err := kv.GetAs[bool](settings.GeoIpEnabledKey)
 	if err != nil || !cfg {
 		return
 	}

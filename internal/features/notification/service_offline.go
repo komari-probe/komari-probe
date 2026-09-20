@@ -11,7 +11,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 // notificationState 保存单个客户端的通知状态。
@@ -31,7 +31,7 @@ var clientStates sync.Map
 // getNotificationConfig 获取指定客户端的通知配置。
 // 返回配置对象和一个布尔值，指示全局和该客户端是否启用通知。
 func getNotificationConfig(clientID string) (*models.OfflineNotification, bool) {
-	conf, err := config.GetAs[bool](settings.NotificationEnabledKey, false)
+	conf, err := kv.GetAs[bool](settings.NotificationEnabledKey, false)
 	if err != nil || !conf {
 		return nil, false
 	}

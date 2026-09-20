@@ -9,7 +9,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/auth/oauth/factory"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 var (
@@ -85,7 +85,7 @@ func Initialize() error {
 			}
 		}
 	})
-	cfg, _ := config.GetAs[string](settings.OAuthProviderKey, "github")
+	cfg, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
 	if cfg == "" || cfg == "none" {
 		return LoadProvider("github", "{}")
 	}
@@ -107,9 +107,9 @@ func cleanupRemovedProviders() {
 		logger.Errorf("oauth", "Failed to delete removed OIDC provider %s: %v", removedCloudflareAccessProvider, err)
 	}
 
-	cfg, _ := config.GetAs[string](settings.OAuthProviderKey, "github")
+	cfg, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
 	if cfg == removedCloudflareAccessProvider {
-		if err := config.Set(settings.OAuthProviderKey, "github"); err != nil {
+		if err := kv.Set(settings.OAuthProviderKey, "github"); err != nil {
 			logger.Errorf("oauth", "Failed to reset removed OIDC provider %s: %v", removedCloudflareAccessProvider, err)
 		}
 	}

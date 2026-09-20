@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/platform/api"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
@@ -198,11 +198,11 @@ func hasTempShareAccess(c *gin.Context) bool {
 	if err != nil || tempKey == "" {
 		return false
 	}
-	expireAt, err := config.GetAs[int64]("tempory_share_token_expire_at", 0)
+	expireAt, err := kv.GetAs[int64]("tempory_share_token_expire_at", 0)
 	if err != nil {
 		return false
 	}
-	allowKey, err := config.GetAs[string]("tempory_share_token", "")
+	allowKey, err := kv.GetAs[string]("tempory_share_token", "")
 	if err != nil || allowKey == "" || tempKey != allowKey {
 		return false
 	}

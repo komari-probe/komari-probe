@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -211,10 +211,10 @@ func legacyTimestampLocation() *time.Location {
 }
 
 func timestampMigrationDone(db *gorm.DB) bool {
-	if !db.Migrator().HasTable(&appconfig.ConfigItem{}) || hasLegacyConfigTable(db) {
+	if !db.Migrator().HasTable(&kv.ConfigItem{}) || hasLegacyConfigTable(db) {
 		return false
 	}
-	var item appconfig.ConfigItem
+	var item kv.ConfigItem
 	if err := db.Where("key = ?", timestampUTCMigrationKey).First(&item).Error; err != nil {
 		return false
 	}
@@ -225,12 +225,12 @@ func markTimestampMigrationDone(db *gorm.DB) error {
 	if hasLegacyConfigTable(db) {
 		return fmt.Errorf("new config item table is unavailable")
 	}
-	if !db.Migrator().HasTable(&appconfig.ConfigItem{}) {
-		if err := db.AutoMigrate(&appconfig.ConfigItem{}); err != nil {
+	if !db.Migrator().HasTable(&kv.ConfigItem{}) {
+		if err := db.AutoMigrate(&kv.ConfigItem{}); err != nil {
 			return fmt.Errorf("create config item table: %w", err)
 		}
 	}
-	item := appconfig.ConfigItem{Key: timestampUTCMigrationKey, Value: "true"}
+	item := kv.ConfigItem{Key: timestampUTCMigrationKey, Value: "true"}
 	return db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "key"}},
 		DoUpdates: clause.AssignmentColumns([]string{"value"}),

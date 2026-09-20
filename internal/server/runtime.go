@@ -21,7 +21,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/web/router"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/lifecycle"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"github.com/komari-monitor/komari/pkg/scheduler"
@@ -50,8 +50,8 @@ func (a *App) StartBackground() error {
 }
 
 func (a *App) registerReloadHandlers(cors *security.CorsController) {
-	a.reload.Register("oauth-provider", func(event config.ConfigEvent) {
-		if ok, providerName := config.IsChangedT[string](event, settings.OAuthProviderKey); ok {
+	a.reload.Register("oauth-provider", func(event kv.ConfigEvent) {
+		if ok, providerName := kv.IsChangedT[string](event, settings.OAuthProviderKey); ok {
 			if providerName == "" || providerName == "none" {
 				providerName = "github"
 			}
@@ -66,17 +66,17 @@ func (a *App) registerReloadHandlers(cors *security.CorsController) {
 			}
 		}
 	})
-	a.reload.Register("geoip-provider", func(event config.ConfigEvent) {
+	a.reload.Register("geoip-provider", func(event kv.ConfigEvent) {
 		if event.IsChanged(settings.GeoIpProviderKey) {
 			go geoip.InitGeoIp()
 		}
 	})
-	a.reload.Register("message-sender", func(event config.ConfigEvent) {
+	a.reload.Register("message-sender", func(event kv.ConfigEvent) {
 		if event.IsChanged(settings.NotificationMethodKey) {
 			go messagesender.Initialize()
 		}
 	})
-	a.reload.Register("cors", func(event config.ConfigEvent) { cors.Update(event) })
+	a.reload.Register("cors", func(event kv.ConfigEvent) { cors.Update(event) })
 }
 
 // BuildRouter constructs the normal application router and starts reloads.

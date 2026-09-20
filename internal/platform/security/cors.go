@@ -7,12 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 // CorsController 保存 CORS 中间件的可热更新状态。
 //
-// 相比过去把 config.Subscribe 直接埋在中间件闭包里，这里把「当前配置」抽成显式对象：
+// 相比过去把 kv.Subscribe 直接埋在中间件闭包里，这里把「当前配置」抽成显式对象：
 //   - 需要热更新的状态集中在 controller 上，由外部（启动生命周期里的 reload 管理器）
 //     统一调用 Update，避免订阅逻辑散落在中间件内部。
 //   - Middleware() 只负责读取当前状态并执行 CORS 校验，不再自行订阅配置事件。
@@ -31,15 +31,15 @@ func NewCorsController(enabled bool, allowedOrigins string) *CorsController {
 }
 
 // Update 根据配置事件刷新 CORS 相关状态。返回是否有字段发生变化。
-func (ctrl *CorsController) Update(event config.ConfigEvent) bool {
+func (ctrl *CorsController) Update(event kv.ConfigEvent) bool {
 	ctrl.mu.Lock()
 	defer ctrl.mu.Unlock()
 	changed := false
-	if ok, t := config.IsChangedT[bool](event, settings.CorsOriginCheckEnabledKey); ok {
+	if ok, t := kv.IsChangedT[bool](event, settings.CorsOriginCheckEnabledKey); ok {
 		ctrl.enabled = t
 		changed = true
 	}
-	if ok, t := config.IsChangedT[string](event, settings.CorsAllowedOriginsKey); ok {
+	if ok, t := kv.IsChangedT[string](event, settings.CorsAllowedOriginsKey); ok {
 		ctrl.allowedOrigins = t
 		changed = true
 	}

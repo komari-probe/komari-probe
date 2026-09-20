@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
 
@@ -86,7 +86,7 @@ func CheckWebSocketOrigin(r *http.Request) bool {
 	if origin == "" && r.URL.Query().Get("token") != "" {
 		return true
 	}
-	enabled, _ := config.GetAs[bool](settings.WsOriginCheckEnabledKey, true)
+	enabled, _ := kv.GetAs[bool](settings.WsOriginCheckEnabledKey, true)
 	if !enabled {
 		return true
 	}
@@ -96,6 +96,6 @@ func CheckWebSocketOrigin(r *http.Request) bool {
 	if security.OriginMatchesHost(origin, r.Host) {
 		return true
 	}
-	allowlist, _ := config.GetAs[string](settings.WsAllowedOriginsKey, "")
+	allowlist, _ := kv.GetAs[string](settings.WsAllowedOriginsKey, "")
 	return security.OriginInAllowlist(origin, allowlist)
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	jsonrpc "github.com/komari-monitor/komari/internal/web/rpc/jsonrpc"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 const (
@@ -65,7 +65,7 @@ func NewController(initialErr error, failures int) *Controller {
 	if initialErr != nil {
 		status.Error = metricstore.RedactConnectionError(initialErr.Error(), "")
 	}
-	if cfg, err := appconfig.GetManyAs[metricstore.MetricStoreConfig](); err == nil {
+	if cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig](); err == nil {
 		status.DSN = strings.TrimSpace(cfg.DSN)
 		status.Error = metricstore.RedactConnectionError(status.Error, status.DSN)
 	}
@@ -107,9 +107,9 @@ func (c *Controller) requireActive(ctx *gin.Context) {
 }
 
 func (c *Controller) authStatus(ctx *gin.Context) {
-	oauthEnabled, _ := appconfig.GetAs[bool](settings.OAuthEnabledKey, false)
-	oauthProvider, _ := appconfig.GetAs[string](settings.OAuthProviderKey, "github")
-	disablePassword, _ := appconfig.GetAs[bool](settings.DisablePasswordLoginKey, false)
+	oauthEnabled, _ := kv.GetAs[bool](settings.OAuthEnabledKey, false)
+	oauthProvider, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
+	disablePassword, _ := kv.GetAs[bool](settings.DisablePasswordLoginKey, false)
 	api.RespondSuccess(ctx, gin.H{
 		"oauth_enabled":          oauthEnabled,
 		"oauth_provider":         oauthProvider,
@@ -145,7 +145,7 @@ func (c *Controller) updateDSN(ctx *gin.Context) {
 		api.RespondError(ctx, http.StatusConflict, "monitoring database recovery is already running or completed")
 		return
 	}
-	cfg, err := appconfig.GetManyAs[metricstore.MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig]()
 	if err != nil {
 		c.setFailure(err, request.DSN)
 		api.RespondError(ctx, http.StatusInternalServerError, "failed to load monitoring database settings")

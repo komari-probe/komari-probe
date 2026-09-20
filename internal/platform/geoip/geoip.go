@@ -6,7 +6,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	provider "github.com/komari-monitor/komari/pkg/geoip"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	"github.com/patrickmn/go-cache"
 )
@@ -24,7 +24,7 @@ func init() {
 }
 
 func InitGeoIp() {
-	conf, err := config.GetMany(map[string]any{
+	conf, err := kv.GetMany(map[string]any{
 		settings.GeoIpEnabledKey:  true,
 		settings.GeoIpProviderKey: "ipinfo",
 	})

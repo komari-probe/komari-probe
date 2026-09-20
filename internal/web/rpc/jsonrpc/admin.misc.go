@@ -13,7 +13,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/records"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/lifecycle"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
@@ -46,7 +46,7 @@ func init() {
 }
 
 func adminGetSettings(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	cst, err := config.GetAll()
+	cst, err := kv.GetAll()
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get settings: "+err.Error(), nil)
 	}
@@ -118,7 +118,7 @@ func adminEditSettings(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 		cancel()
 	}
 
-	if err := config.SetMany(cfg); err != nil {
+	if err := kv.SetMany(cfg); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to update settings: "+err.Error(), nil)
 	}
 
@@ -167,7 +167,7 @@ func removeRetiredLowResourceMode(cfg map[string]any) {
 // mergedMetricConfig 读取当前持久化的 metric store 配置，并把本次请求中涉及的
 // metrics 相关键覆盖上去，得到「即将生效」的目标配置，用于落库前的连接测试。
 func mergedMetricConfig(cfg map[string]any) (*metricstore.MetricStoreConfig, error) {
-	merged, err := config.GetManyAs[metricstore.MetricStoreConfig]()
+	merged, err := kv.GetManyAs[metricstore.MetricStoreConfig]()
 	if err != nil {
 		return nil, err
 	}

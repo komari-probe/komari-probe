@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -102,8 +102,8 @@ func TestStaticRestrictedDoesNotServeCustomAssetOverride(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open config db: %v", err)
 	}
-	config.SetDb(db)
-	if err := config.Set(settings.ThemeKey, "custom"); err != nil {
+	kv.SetDb(db)
+	if err := kv.Set(settings.ThemeKey, "custom"); err != nil {
 		t.Fatalf("set custom theme: %v", err)
 	}
 

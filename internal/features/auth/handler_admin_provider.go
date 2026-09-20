@@ -7,7 +7,7 @@ import (
 	oauthfactory "github.com/komari-monitor/komari/internal/features/auth/oauth/factory"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
@@ -48,7 +48,7 @@ func AdminSetOidc(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 	if err := oauth.SaveOidcConfig(&oidcConfig); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to save OIDC provider configuration: "+err.Error(), nil)
 	}
-	provider, _ := config.GetAs[string](settings.OAuthProviderKey, "github")
+	provider, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
 	if provider == oidcConfig.Name { // 正在使用，重载
 		if err := oauth.LoadProvider(oidcConfig.Name, oidcConfig.Addition); err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to load OIDC provider: "+err.Error(), nil)

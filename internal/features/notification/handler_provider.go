@@ -7,7 +7,7 @@ import (
 	msfactory "github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
@@ -48,7 +48,7 @@ func AdminSetMessageSender(_ context.Context, req *rpc.JsonRpcRequest) (any, *rp
 	if err := messagesender.SaveConfig(&senderConfig); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to save message sender provider configuration: "+err.Error(), nil)
 	}
-	method, _ := config.GetAs[string](settings.NotificationMethodKey, "none")
+	method, _ := kv.GetAs[string](settings.NotificationMethodKey, "none")
 	if method == senderConfig.Name { // 正在使用，重载
 		if err := messagesender.LoadProvider(senderConfig.Name, senderConfig.Addition); err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to load message sender provider: "+err.Error(), nil)

@@ -12,7 +12,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/random"
 )
 
@@ -41,7 +41,7 @@ func CreateSession(uuid string, expires int, userAgent, ip, loginMethod string) 
 		LatestOnline: time.Now().UTC(),
 	}
 	go func() {
-		LoginNotification, _ := config.GetAs[bool](settings.LoginNotificationKey, false)
+		LoginNotification, _ := kv.GetAs[bool](settings.LoginNotificationKey, false)
 		if LoginNotification {
 			ipAddr := net.ParseIP(ip)
 			ipinfo, _ := geoip.GetGeoInfo(ipAddr)

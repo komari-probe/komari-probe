@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -19,7 +19,7 @@ func prepareRecoveryTest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open config db: %v", err)
 	}
-	config.SetDb(configDB)
+	kv.SetDb(configDB)
 
 	storeInitMu.Lock()
 	storeMigMu.Lock()
@@ -48,7 +48,7 @@ func prepareRecoveryTest(t *testing.T) {
 
 func TestRecoverStoreFailureKeepsCurrentConfig(t *testing.T) {
 	prepareRecoveryTest(t)
-	if err := config.SetMany(map[string]any{
+	if err := kv.SetMany(map[string]any{
 		MetricDBDriverKey: "sqlite",
 		MetricDBDSNKey:    "old.db",
 	}); err != nil {
@@ -60,7 +60,7 @@ func TestRecoverStoreFailureKeepsCurrentConfig(t *testing.T) {
 	if err == nil {
 		t.Fatal("recovery unexpectedly opened a missing read-only database")
 	}
-	if got, _ := config.GetAs[string](MetricDBDSNKey, ""); got != "old.db" {
+	if got, _ := kv.GetAs[string](MetricDBDSNKey, ""); got != "old.db" {
 		t.Fatalf("DSN changed after failed recovery: %q", got)
 	}
 	if GetStore() != nil {
@@ -80,7 +80,7 @@ func TestRecoverStoreRecordsManualMigrationSource(t *testing.T) {
 		t.Fatal("successful recovery did not install a store")
 	}
 	wantTarget := targetFingerprint(cfg)
-	if got, _ := config.GetAs[string](MigrationTargetKey, ""); got != wantTarget {
+	if got, _ := kv.GetAs[string](MigrationTargetKey, ""); got != wantTarget {
 		t.Fatalf("migration target = %q, want %q", got, wantTarget)
 	}
 }
@@ -111,7 +111,7 @@ func TestRecoverStorePersistsLegacyStoreForStructureGuide(t *testing.T) {
 	if GetStore() != nil {
 		t.Fatal("legacy recovery installed the store before structure upgrade")
 	}
-	if got, _ := config.GetAs[string](MetricDBDSNKey, ""); got != dsn {
+	if got, _ := kv.GetAs[string](MetricDBDSNKey, ""); got != dsn {
 		t.Fatalf("saved legacy DSN = %q, want %q", got, dsn)
 	}
 	required, err := StructureUpgradeRequired(context.Background())
@@ -147,7 +147,7 @@ func TestReloadRejectsLegacyStoreForStructureUpgrade(t *testing.T) {
 	if err := db.Close(); err != nil {
 		t.Fatalf("close legacy store: %v", err)
 	}
-	if err := config.SetMany(map[string]any{
+	if err := kv.SetMany(map[string]any{
 		MetricDBDriverKey: "sqlite",
 		MetricDBDSNKey:    dsn,
 	}); err != nil {

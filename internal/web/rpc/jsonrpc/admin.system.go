@@ -11,7 +11,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"gorm.io/gorm"
 )
@@ -95,7 +95,7 @@ func adminTestGeoip(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 			ip = meta.RemoteIP
 		}
 	}
-	cfg, err := config.GetAs[bool](settings.GeoIpEnabledKey, false)
+	cfg, err := kv.GetAs[bool](settings.GeoIpEnabledKey, false)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get configuration: "+err.Error(), nil)
 	}

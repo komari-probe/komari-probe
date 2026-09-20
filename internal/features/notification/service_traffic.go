@@ -12,7 +12,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 	cache "github.com/patrickmn/go-cache"
 )
@@ -29,7 +29,7 @@ func CheckTraffic() {
 	if len(reports) == 0 {
 		return
 	}
-	cfg, err := config.GetAs[float64](settings.TrafficLimitPercentageKey, 80.0)
+	cfg, err := kv.GetAs[float64](settings.TrafficLimitPercentageKey, 80.0)
 	if err != nil {
 		logger.Error("notifier", "failed to get traffic limit percentage", "error", err)
 	}

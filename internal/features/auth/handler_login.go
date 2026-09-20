@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +34,7 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 }
 
 func Login(c *gin.Context) {
-	DisablePasswordLogin, _ := config.GetAs[bool](settings.DisablePasswordLoginKey, false)
+	DisablePasswordLogin, _ := kv.GetAs[bool](settings.DisablePasswordLoginKey, false)
 	if DisablePasswordLogin {
 		api.RespondError(c, http.StatusForbidden, "Password login is disabled")
 		return

@@ -6,7 +6,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
@@ -33,7 +33,7 @@ func redactMetricStoreError(err error) string {
 		return ""
 	}
 	dsn := ""
-	if cfg, cfgErr := config.GetManyAs[metricstore.MetricStoreConfig](); cfgErr == nil {
+	if cfg, cfgErr := kv.GetManyAs[metricstore.MetricStoreConfig](); cfgErr == nil {
 		dsn = cfg.DSN
 	}
 	return metricstore.RedactConnectionError(err.Error(), dsn)

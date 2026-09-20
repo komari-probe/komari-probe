@@ -12,7 +12,7 @@ import (
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	geoipprovider "github.com/komari-monitor/komari/pkg/geoip"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 type staticGeoIPProvider struct {
@@ -41,7 +41,7 @@ func TestV2BasicInfoFillsRegionFromGeoIP(t *testing.T) {
 	flags.DatabaseFile = "file:v2_basic_info_geoip?mode=memory&cache=shared"
 
 	db := dbcore.GetDBInstance()
-	if err := config.Set(settings.GeoIpEnabledKey, true); err != nil {
+	if err := kv.Set(settings.GeoIpEnabledKey, true); err != nil {
 		t.Fatalf("enable geoip: %v", err)
 	}
 

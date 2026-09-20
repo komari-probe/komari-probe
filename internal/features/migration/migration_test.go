@@ -11,7 +11,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -27,7 +27,7 @@ func setupConfigDB(t *testing.T) *gorm.DB {
 		t.Fatalf("get migration sql database: %v", err)
 	}
 	t.Cleanup(func() { _ = sqlDB.Close() })
-	appconfig.SetDb(db)
+	kv.SetDb(db)
 	return db
 }
 

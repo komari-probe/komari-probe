@@ -19,7 +19,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	jsonrpc "github.com/komari-monitor/komari/internal/web/rpc/jsonrpc"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/gorm"
 )
@@ -138,9 +138,9 @@ func (c *Controller) requireActive(ctx *gin.Context) {
 }
 
 func (c *Controller) authStatus(ctx *gin.Context) {
-	oauthEnabled, _ := appconfig.GetAs[bool](settings.OAuthEnabledKey, false)
-	oauthProvider, _ := appconfig.GetAs[string](settings.OAuthProviderKey, "github")
-	disablePassword, _ := appconfig.GetAs[bool](settings.DisablePasswordLoginKey, false)
+	oauthEnabled, _ := kv.GetAs[bool](settings.OAuthEnabledKey, false)
+	oauthProvider, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
+	disablePassword, _ := kv.GetAs[bool](settings.DisablePasswordLoginKey, false)
 	api.RespondSuccess(ctx, gin.H{
 		"oauth_enabled":          oauthEnabled,
 		"oauth_provider":         oauthProvider,
@@ -270,7 +270,7 @@ func (c *Controller) runLegacy(cfg metricstore.MetricStoreConfig, legacyRetentio
 		return
 	}
 
-	if err := appconfig.SetMany(map[string]any{
+	if err := kv.SetMany(map[string]any{
 		metricstore.MetricDBDriverKey: cfg.Driver,
 		metricstore.MetricDBDSNKey:    cfg.DSN,
 	}); err != nil {
@@ -506,7 +506,7 @@ func metricConfig(requestedDriver, requestedDSN string) (*metricstore.MetricStor
 	if string(resolved) != requestedDriver {
 		return nil, fmt.Errorf("dsn does not match the selected database type")
 	}
-	cfg, err := appconfig.GetManyAs[metricstore.MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig]()
 	if err != nil {
 		return nil, fmt.Errorf("load metric store defaults: %w", err)
 	}

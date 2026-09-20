@@ -14,7 +14,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 var (
@@ -66,7 +66,7 @@ func Initialize() {
 			}
 		})
 	}()
-	NotificationMethod, _ := config.GetAs[string](settings.NotificationMethodKey, "none")
+	NotificationMethod, _ := kv.GetAs[string](settings.NotificationMethodKey, "none")
 
 	if NotificationMethod == "" || NotificationMethod == "none" {
 		if err := LoadProvider("empty", "{}"); err != nil {
@@ -94,7 +94,7 @@ func SendTextMessage(message string, title string) error {
 		return fmt.Errorf("message sender provider is not initialized")
 	}
 	var err error
-	NotificationEnabled, err := config.GetAs[bool](settings.NotificationEnabledKey, false)
+	NotificationEnabled, err := kv.GetAs[bool](settings.NotificationEnabledKey, false)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func SendEvent(event models.EventMessage) error {
 		event.Time = event.Time.UTC()
 	}
 	var err error
-	cfg, err := config.GetMany(map[string]any{
+	cfg, err := kv.GetMany(map[string]any{
 		settings.NotificationEnabledKey:  false,
 		settings.NotificationTemplateKey: "{{emoji}}{{emoji}}{{emoji}}\nEvent: {{event}}\nClients: {{client}}\nMessage: {{message}}\nTime: {{time}}",
 	})

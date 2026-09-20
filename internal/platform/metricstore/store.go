@@ -10,7 +10,7 @@ import (
 
 	logger "github.com/komari-monitor/komari/pkg/log"
 
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
@@ -95,7 +95,7 @@ func InitializeStore() error {
 		return nil
 	}
 
-	cfg, err := config.GetManyAs[MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[MetricStoreConfig]()
 	if err != nil {
 		return fmt.Errorf("failed to load metric store config: %w", err)
 	}
@@ -146,7 +146,7 @@ func RecoverStore(ctx context.Context, cfg *MetricStoreConfig) error {
 	}
 	if restructureRequired {
 		target := targetFingerprint(&recovered)
-		if err := config.SetMany(map[string]any{
+		if err := kv.SetMany(map[string]any{
 			MetricDBDriverKey:  recovered.Driver,
 			MetricDBDSNKey:     recovered.DSN,
 			MigrationTargetKey: target,
@@ -162,7 +162,7 @@ func RecoverStore(ctx context.Context, cfg *MetricStoreConfig) error {
 	}
 
 	target := targetFingerprint(&recovered)
-	if err := config.SetMany(map[string]any{
+	if err := kv.SetMany(map[string]any{
 		MetricDBDriverKey:  recovered.Driver,
 		MetricDBDSNKey:     recovered.DSN,
 		MigrationTargetKey: target,
@@ -202,7 +202,7 @@ func Reload(ctx context.Context) error {
 		return ErrStoreBusy
 	}
 
-	cfg, err := config.GetManyAs[MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[MetricStoreConfig]()
 	if err != nil {
 		return fmt.Errorf("failed to load metric store config: %w", err)
 	}

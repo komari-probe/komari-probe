@@ -11,7 +11,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	appconfig "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -247,11 +247,11 @@ func TestCompleteLegacyMonitoringMigrationFinalizesBeforeMarkingDone(t *testing.
 	} else {
 		t.Fatalf("finalization sql db: %v", err)
 	}
-	appconfig.SetDb(db)
+	kv.SetDb(db)
 	if err := db.AutoMigrate(&models.Record{}); err != nil {
 		t.Fatalf("migrate legacy table: %v", err)
 	}
-	if err := appconfig.Set(legacyMonitoringMigrationDoneKey, false); err != nil {
+	if err := kv.Set(legacyMonitoringMigrationDoneKey, false); err != nil {
 		t.Fatalf("reset completion marker: %v", err)
 	}
 
@@ -261,7 +261,7 @@ func TestCompleteLegacyMonitoringMigrationFinalizesBeforeMarkingDone(t *testing.
 		if db.Migrator().HasTable(&models.Record{}) {
 			t.Fatal("legacy table still exists during finalization")
 		}
-		done, err := appconfig.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
+		done, err := kv.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
 		if err != nil {
 			return err
 		}
@@ -275,7 +275,7 @@ func TestCompleteLegacyMonitoringMigrationFinalizesBeforeMarkingDone(t *testing.
 	if !finalized {
 		t.Fatal("finalizer was not called")
 	}
-	done, err := appconfig.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
+	done, err := kv.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
 	if err != nil {
 		t.Fatalf("read completion marker: %v", err)
 	}
@@ -286,14 +286,14 @@ func TestCompleteLegacyMonitoringMigrationFinalizesBeforeMarkingDone(t *testing.
 	if err := db.AutoMigrate(&models.Record{}); err != nil {
 		t.Fatalf("restore legacy table: %v", err)
 	}
-	if err := appconfig.Set(legacyMonitoringMigrationDoneKey, false); err != nil {
+	if err := kv.Set(legacyMonitoringMigrationDoneKey, false); err != nil {
 		t.Fatalf("reset completion marker after success: %v", err)
 	}
 	finalizeErr := errors.New("vacuum failed")
 	if err := CompleteLegacyMonitoringMigration(db, func() error { return finalizeErr }); !errors.Is(err, finalizeErr) {
 		t.Fatalf("finalization error = %v, want %v", err, finalizeErr)
 	}
-	done, err = appconfig.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
+	done, err = kv.GetAs[bool](legacyMonitoringMigrationDoneKey, false)
 	if err != nil {
 		t.Fatalf("read completion marker after failure: %v", err)
 	}

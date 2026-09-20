@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 func SplitAllowlist(raw string) []string {
@@ -52,7 +52,7 @@ func OriginInAllowlist(origin, rawAllowlist string) bool {
 }
 
 func IsAPIKeyRequest(r *http.Request) bool {
-	apiKeyConfig, err := config.GetAs[string](settings.ApiKeyKey, "")
+	apiKeyConfig, err := kv.GetAs[string](settings.ApiKeyKey, "")
 	if err != nil || apiKeyConfig == "" || len(apiKeyConfig) < 12 {
 		return false
 	}

@@ -13,18 +13,18 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	config "github.com/komari-monitor/komari/pkg/kv"
+	"github.com/komari-monitor/komari/pkg/kv"
 	logger "github.com/komari-monitor/komari/pkg/log"
 )
 
 func GetPublicInfo() (map[string]any, error) {
-	cstPtr, err := config.GetManyAs[settings.Settings]()
+	cstPtr, err := kv.GetManyAs[settings.Settings]()
 	if err != nil {
 		return nil, err
 	}
 	cst := *cstPtr
 
-	all, allErr := config.GetAll()
+	all, allErr := kv.GetAll()
 	hasKey := func(k string) bool {
 		if allErr != nil {
 			return false
