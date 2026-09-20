@@ -47,7 +47,7 @@ func (b *BarkSender) SendTextMessage(message, title string) error {
 	}
 
 	// 准备请求数据
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"body":       message,
 		"device_key": b.Addition.DeviceKey,
 	}
@@ -96,9 +96,9 @@ func (b *BarkSender) SendTextMessage(message, title string) error {
 
 	// 解析响应
 	var result struct {
-		Code    int         `json:"code"`
-		Message string      `json:"message"`
-		Data    interface{} `json:"data"`
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+		Data    any    `json:"data"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {

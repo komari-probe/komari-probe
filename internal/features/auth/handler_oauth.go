@@ -71,7 +71,7 @@ func OAuthCallback(c *gin.Context) {
 	}
 
 	// ID作为SSO ID
-	sso_id := fmt.Sprintf("%s_%s", oauth.CurrentProvider().GetName(), oidcUser.UserId)
+	ssoID := fmt.Sprintf("%s_%s", oauth.CurrentProvider().GetName(), oidcUser.UserId)
 
 	// 如果cookie中有binding_external_account，说明是绑定外部账号
 	// 否则是登录
@@ -85,18 +85,18 @@ func OAuthCallback(c *gin.Context) {
 			c.JSON(500, gin.H{"status": "error", "message": "Binding failed"})
 			return
 		}
-		err = bindExternalAccount(user.UUID, sso_id)
+		err = bindExternalAccount(user.UUID, ssoID)
 		if err != nil {
 			c.JSON(500, gin.H{"status": "error", "message": "Binding failed"})
 			return
 		}
-		auditlog.Log(c.ClientIP(), user.UUID, "bound external account (OAuth)"+fmt.Sprintf(",sso_id: %s", sso_id), "login")
+		auditlog.Log(c.ClientIP(), user.UUID, "bound external account (OAuth)"+fmt.Sprintf(",sso_id: %s", ssoID), "login")
 		c.Redirect(302, "/admin/dashboard")
 		return
 	}
 
 	// 尝试获取用户
-	user, err := GetUserBySSO(sso_id)
+	user, err := GetUserBySSO(ssoID)
 	if err != nil {
 		c.JSON(401, gin.H{
 			"status":  "error",

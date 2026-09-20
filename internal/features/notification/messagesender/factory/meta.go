@@ -16,6 +16,6 @@ type IEventMessageSender interface {
 	SendEvent(event models.EventMessage) error
 }
 
-type Configuration interface{}
+type Configuration any
 
 type MessageSenderConstructor func() IMessageSender

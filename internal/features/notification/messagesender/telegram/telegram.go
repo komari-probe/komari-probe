@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
+	"github.com/komari-monitor/komari/internal/features/notification/messagesender/outboundhttp"
 )
 
 type TelegramSender struct {
@@ -54,7 +56,8 @@ func (t *TelegramSender) SendTextMessage(message, title string) error {
 		data.Set("message_thread_id", t.Addition.MessageThreadID)
 	}
 
-	resp, err := http.PostForm(endpoint, data)
+	client := outboundhttp.NewClient(30 * time.Second)
+	resp, err := client.PostForm(endpoint, data)
 	if err != nil {
 		return fmt.Errorf("failed to send message: %v", err)
 	}

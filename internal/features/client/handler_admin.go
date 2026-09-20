@@ -16,15 +16,6 @@ import (
 // handler_admin.go
 // client 资源的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在 web/rpc/jsonrpc。
 
-// auditActor 从上下文提取审计用的 actor UUID 与来源 IP。
-func auditActor(ctx context.Context) (uuid, ip string) {
-	if meta := rpc.MetaFromContext(ctx); meta != nil {
-		uuid = meta.UserUUID
-		ip = meta.RemoteIP
-	}
-	return uuid, ip
-}
-
 func AdminAddClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {
 		Name string `json:"name"`
@@ -36,14 +27,14 @@ func AdminAddClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
 	if params.Name != "" {
-		actor, ip := auditActor(ctx)
+		actor, ip := rpc.ActorFromContext(ctx)
 		auditlog.Log(ip, actor, "create client:"+uuid, "info")
 	}
 	return map[string]any{"uuid": uuid, "token": token}, nil
 }
 
 func AdminEditClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	var update map[string]interface{}
+	var update map[string]any
 	if err := req.BindParams(&update); err != nil || update == nil {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params", nil)
 	}
@@ -54,7 +45,7 @@ func AdminEditClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Js
 	if err := clients.SaveClient(update); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
-	actor, ip := auditActor(ctx)
+	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "edit client:"+uuid, "info")
 	return nil, nil
 }
@@ -71,7 +62,7 @@ func AdminRemoveClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete client"+err.Error(), nil)
 	}
 	metricstore.DeleteEntityAsync(params.UUID)
-	actor, ip := auditActor(ctx)
+	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "delete client:"+params.UUID, "warn")
 	agent_runtime.DeleteConnectedClients(params.UUID)
 	agent_runtime.DeleteLatestReport(params.UUID)
@@ -120,7 +111,7 @@ func AdminClearRecords(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.Js
 	if err := records.DeleteAll(); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete Record"+err.Error(), nil)
 	}
-	actor, ip := auditActor(ctx)
+	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "clear records", "warn")
 	return nil, nil
 }
@@ -136,7 +127,7 @@ func AdminOrderClients(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to update client weight: "+err.Error(), nil)
 		}
 	}
-	actor, ip := auditActor(ctx)
+	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "order clients", "info")
 	return nil, nil
 }

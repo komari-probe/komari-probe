@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -183,7 +184,7 @@ func extractClientToken(c *gin.Context) string {
 		}
 		c.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
-		var bodyMap map[string]interface{}
+		var bodyMap map[string]any
 		if len(bodyBytes) > 0 {
 			if err := json.Unmarshal(bodyBytes, &bodyMap); err == nil {
 				if tokenVal, exists := bodyMap["token"]; exists {
@@ -201,10 +202,7 @@ func extractClientToken(c *gin.Context) string {
 func checkTokenAndGetUUID(token string) (string, error) {
 	uuid, err := clients.GetClientUUIDByToken(token)
 
-	if err == sql.ErrNoRows {
-		return "", nil
-	}
-	if err == gorm.ErrRecordNotFound {
+	if errors.Is(err, sql.ErrNoRows) || errors.Is(err, gorm.ErrRecordNotFound) {
 		return "", nil
 	}
 	if err != nil {

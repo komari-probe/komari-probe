@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
+	"github.com/komari-monitor/komari/internal/features/notification/messagesender/outboundhttp"
 )
 
 // ServerChan3Sender 为 Server酱³ 推送实现
@@ -72,7 +73,7 @@ func (s *ServerChan3Sender) SendTextMessage(message, title string) error {
 		return fmt.Errorf("组装 JSON 失败: %v", err)
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := outboundhttp.NewClient(30 * time.Second)
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return fmt.Errorf("创建请求失败: %v", err)

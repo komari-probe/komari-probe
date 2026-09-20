@@ -208,8 +208,8 @@ func DeletePluginMarketSource(c *gin.Context) {
 	var deleted *PluginMarketSource
 	for i := range sources {
 		if sources[i].ID == id {
-			copy := sources[i]
-			deleted = &copy
+			removed := sources[i]
+			deleted = &removed
 			continue
 		}
 		next = append(next, sources[i])

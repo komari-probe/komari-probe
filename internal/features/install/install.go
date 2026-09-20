@@ -2,7 +2,6 @@ package install
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -237,11 +236,5 @@ func metricConfig(request completeRequest) (*metricstore.MetricStoreConfig, erro
 }
 
 func decodeJSON(ctx *gin.Context, target any) error {
-	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 1<<20)
-	decoder := json.NewDecoder(ctx.Request.Body)
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(target); err != nil {
-		return fmt.Errorf("invalid request body: %w", err)
-	}
-	return nil
+	return api.DecodeJSONBody(ctx, target, 1<<20)
 }

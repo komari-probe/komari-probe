@@ -194,95 +194,66 @@ func (e *EmailSender) SendTextMessage(message, title string) error {
 
 	addr := e.Addition.Host + ":" + strconv.Itoa(e.Addition.Port)
 
-	if e.Addition.UseSSL {
-		// Use TLS. If port is 465, prefer implicit TLS. Otherwise, use STARTTLS.
-		if e.Addition.Port == 465 {
-			// Implicit TLS (SMTPS)
-			tlsCfg := &tls.Config{ServerName: e.Addition.Host}
-			conn, err := tls.Dial("tcp", addr, tlsCfg)
-			if err != nil {
-				return fmt.Errorf("failed to establish implicit TLS connection: %w", err)
-			}
-			defer conn.Close()
-
-			c, err := smtp.NewClient(conn, e.Addition.Host)
-			if err != nil {
-				return fmt.Errorf("failed to create SMTP client over TLS: %w", err)
-			}
-			defer c.Close()
-
-			if err = c.Auth(auth); err != nil {
-				return fmt.Errorf("failed to authenticate: %w", err)
-			}
-
-			if err = c.Mail(senderAddr); err != nil {
-				return fmt.Errorf("failed to set sender: %w", err)
-			}
-			for _, rcpt := range rcptList {
-				if err = c.Rcpt(rcpt); err != nil {
-					return fmt.Errorf("failed to add recipient %s: %w", rcpt, err)
-				}
-			}
-
-			w, err := c.Data()
-			if err != nil {
-				return fmt.Errorf("failed to get data writer: %w", err)
-			}
-			if _, err = w.Write(fullMsg); err != nil {
-				return fmt.Errorf("failed to write message: %w", err)
-			}
-			if err = w.Close(); err != nil {
-				return fmt.Errorf("failed to close data writer: %w", err)
-			}
-			return c.Quit()
-		} else {
-			// STARTTLS
-			c, err := smtp.Dial(addr)
-			if err != nil {
-				return fmt.Errorf("failed to dial SMTP server: %w", err)
-			}
-			defer c.Close()
-
-			if err = c.StartTLS(&tls.Config{ServerName: e.Addition.Host}); err != nil {
-				return fmt.Errorf("failed to start TLS: %w", err)
-			}
-
-			if err = c.Auth(auth); err != nil {
-				return fmt.Errorf("failed to authenticate: %w", err)
-			}
-
-			if err = c.Mail(senderAddr); err != nil {
-				return fmt.Errorf("failed to set sender: %w", err)
-			}
-			for _, rcpt := range rcptList {
-				if err = c.Rcpt(rcpt); err != nil {
-					return fmt.Errorf("failed to add recipient %s: %w", rcpt, err)
-				}
-			}
-
-			w, err := c.Data()
-			if err != nil {
-				return fmt.Errorf("failed to get data writer: %w", err)
-			}
-			if _, err = w.Write(fullMsg); err != nil {
-				return fmt.Errorf("failed to write message: %w", err)
-			}
-			if err = w.Close(); err != nil {
-				return fmt.Errorf("failed to close data writer: %w", err)
-			}
-
-			return c.Quit()
-		}
-	} else {
+	if !e.Addition.UseSSL {
 		// Send without SSL/TLS (less secure). We still reuse the composed message and parsed addresses.
-		return smtp.SendMail(
-			addr,
-			auth,
-			senderAddr,
-			rcptList,
-			fullMsg,
-		)
+		return smtp.SendMail(addr, auth, senderAddr, rcptList, fullMsg)
 	}
+
+	// Use TLS. If port is 465, prefer implicit TLS. Otherwise, use STARTTLS.
+	if e.Addition.Port == 465 {
+		// Implicit TLS (SMTPS)
+		conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: e.Addition.Host})
+		if err != nil {
+			return fmt.Errorf("failed to establish implicit TLS connection: %w", err)
+		}
+		defer conn.Close()
+
+		c, err := smtp.NewClient(conn, e.Addition.Host)
+		if err != nil {
+			return fmt.Errorf("failed to create SMTP client over TLS: %w", err)
+		}
+		defer c.Close()
+		return deliverOverClient(c, auth, senderAddr, rcptList, fullMsg)
+	}
+
+	// STARTTLS
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		return fmt.Errorf("failed to dial SMTP server: %w", err)
+	}
+	defer c.Close()
+	if err := c.StartTLS(&tls.Config{ServerName: e.Addition.Host}); err != nil {
+		return fmt.Errorf("failed to start TLS: %w", err)
+	}
+	return deliverOverClient(c, auth, senderAddr, rcptList, fullMsg)
+}
+
+// deliverOverClient authenticates and delivers one message over an already
+// connected (and, when required, TLS-wrapped) SMTP client. Shared by the
+// implicit-TLS and STARTTLS paths so both stay identical after the handshake.
+func deliverOverClient(c *smtp.Client, auth smtp.Auth, senderAddr string, rcptList []string, fullMsg []byte) error {
+	if err := c.Auth(auth); err != nil {
+		return fmt.Errorf("failed to authenticate: %w", err)
+	}
+	if err := c.Mail(senderAddr); err != nil {
+		return fmt.Errorf("failed to set sender: %w", err)
+	}
+	for _, rcpt := range rcptList {
+		if err := c.Rcpt(rcpt); err != nil {
+			return fmt.Errorf("failed to add recipient %s: %w", rcpt, err)
+		}
+	}
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("failed to get data writer: %w", err)
+	}
+	if _, err := w.Write(fullMsg); err != nil {
+		return fmt.Errorf("failed to write message: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("failed to close data writer: %w", err)
+	}
+	return c.Quit()
 }
 
 // 确保实现了 IMessageSender 接口

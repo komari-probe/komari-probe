@@ -73,3 +73,13 @@ func MetaFromContext(ctx context.Context) *ContextMeta {
 	}
 	return nil
 }
+
+// ActorFromContext 从上下文提取审计日志常用的 actor UUID 与来源 IP；
+// 无 meta 时返回空字符串。
+func ActorFromContext(ctx context.Context) (uuid, ip string) {
+	if meta := MetaFromContext(ctx); meta != nil {
+		uuid = meta.UserUUID
+		ip = meta.RemoteIP
+	}
+	return uuid, ip
+}

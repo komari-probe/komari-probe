@@ -2,6 +2,8 @@ package theme
 
 import (
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,7 +22,7 @@ func ListThemes(c *gin.Context) {
 	dataDir := "./data/theme"
 
 	// 确保主题目录存在
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+	if _, err := os.Stat(dataDir); errors.Is(err, fs.ErrNotExist) {
 		api.RespondSuccess(c, []models.Theme{})
 		return
 	}
@@ -78,7 +80,7 @@ func DeleteTheme(c *gin.Context) {
 	themeDir := filepath.Join("./data/theme", req.Short)
 
 	// 检查主题是否存在
-	if _, err := os.Stat(themeDir); os.IsNotExist(err) {
+	if _, err := os.Stat(themeDir); errors.Is(err, fs.ErrNotExist) {
 		api.RespondError(c, http.StatusNotFound, "主题不存在")
 		return
 	}
@@ -110,7 +112,7 @@ func SetTheme(c *gin.Context) {
 		themeDir := filepath.Join("./data/theme", themeName)
 		themeConfigPath := filepath.Join(themeDir, "komari-theme.json")
 
-		if _, err := os.Stat(themeConfigPath); os.IsNotExist(err) {
+		if _, err := os.Stat(themeConfigPath); errors.Is(err, fs.ErrNotExist) {
 			api.RespondError(c, http.StatusNotFound, "主题不存在")
 			return
 		}
@@ -153,7 +155,7 @@ func UpdateTheme(c *gin.Context) {
 	themeDir := filepath.Join("./data/theme", req.Short)
 	themeConfigPath := filepath.Join(themeDir, "komari-theme.json")
 
-	if _, err := os.Stat(themeConfigPath); os.IsNotExist(err) {
+	if _, err := os.Stat(themeConfigPath); errors.Is(err, fs.ErrNotExist) {
 		api.RespondError(c, http.StatusNotFound, "主题不存在")
 		return
 	}
@@ -167,10 +169,8 @@ func UpdateTheme(c *gin.Context) {
 
 	// 方式1和方式4: 尝试从原始URL下载主题
 	// 如果原始URL是GitHub仓库地址，则自动获取最新release
-	var themeData []byte
 	// 不保存下载链接，更新后由主题覆盖
-	//var downloadURL string
-	// var err2 error
+	var themeData []byte
 
 	if themeInfo.URL != "" {
 		// 检查原始URL是否是GitHub仓库地址
@@ -183,19 +183,10 @@ func UpdateTheme(c *gin.Context) {
 			if err == nil {
 				// 使用获取到的GitHub release下载链接下载主题
 				themeData, _ = downloadThemeFromURL(gitHubURL)
-				//if err2 == nil {
-				// 注意：这里我们保存的是release的下载链接，而不是GitHub仓库地址
-				// 这样做是为了在下载成功后，将这个具体的release下载链接保存到主题配置中
-				// 但在下次更新时，我们仍然会检测到这是一个GitHub仓库，并获取最新的release
-				// downloadURL = gitHubURL
-				//}
 			}
 		} else {
 			// 原始URL不是GitHub仓库地址，直接尝试下载（方式1）
 			themeData, _ = downloadThemeFromURL(themeInfo.URL)
-			//if err2 == nil {
-			// downloadURL = themeInfo.URL
-			//}
 		}
 	}
 
@@ -218,8 +209,6 @@ func UpdateTheme(c *gin.Context) {
 				api.RespondError(c, http.StatusBadRequest, "从GitHub下载主题失败: "+err.Error())
 				return
 			}
-			// 保存下载链接，稍后更新到主题配置中
-			// downloadURL = gitHubURL
 		} else if req.URL != "" {
 			// 方式2: 如果提供了新URL，尝试从新URL下载
 			// 检查新URL是否是GitHub仓库地址
@@ -239,10 +228,6 @@ func UpdateTheme(c *gin.Context) {
 					api.RespondError(c, http.StatusBadRequest, "从GitHub下载主题失败: "+err.Error())
 					return
 				}
-				// 保存GitHub仓库URL，而不是release下载链接，以便将来可以获取最新版本
-				// 这是一个重要的设计决策：我们保存的是GitHub仓库URL，而不是具体的release下载链接
-				// 这样在下次更新时，系统会再次检测到这是GitHub仓库，并自动获取最新的release
-				// downloadURL = req.URL
 			} else {
 				// 新URL不是GitHub仓库地址，直接尝试下载
 				themeData, err = downloadThemeFromURL(req.URL)
@@ -250,7 +235,6 @@ func UpdateTheme(c *gin.Context) {
 					api.RespondError(c, http.StatusBadRequest, "从新URL下载主题失败: "+err.Error())
 					return
 				}
-				// downloadURL = req.URL
 			}
 		}
 	}
@@ -400,8 +384,11 @@ func UpdateThemeSettings(c *gin.Context) {
 	}
 
 	var themeCfg models.ThemeConfiguration
-	db.Where("short = ?", theme).
+	if err := db.Where("short = ?", theme).
 		Assign(models.ThemeConfiguration{Short: theme, Data: string(data)}).
-		FirstOrCreate(&themeCfg)
+		FirstOrCreate(&themeCfg).Error; err != nil {
+		api.RespondError(c, http.StatusInternalServerError, "保存主题配置失败: "+err.Error())
+		return
+	}
 	api.RespondSuccess(c, nil)
 }

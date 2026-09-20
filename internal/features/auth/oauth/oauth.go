@@ -87,14 +87,12 @@ func Initialize() error {
 	})
 	cfg, _ := config.GetAs[string](settings.OAuthProviderKey, "github")
 	if cfg == "" || cfg == "none" {
-		LoadProvider("github", "{}")
-		return nil
+		return LoadProvider("github", "{}")
 	}
 	provider, err := GetOidcConfigByName(cfg)
 	if err != nil {
 		// 如果没有找到配置，使用github provider
-		LoadProvider("github", "{}")
-		return nil
+		return LoadProvider("github", "{}")
 	}
 	err = LoadProvider(provider.Name, provider.Addition)
 	if err != nil {

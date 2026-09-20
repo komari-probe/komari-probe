@@ -69,7 +69,9 @@ func Initialize() {
 	NotificationMethod, _ := config.GetAs[string](settings.NotificationMethodKey, "none")
 
 	if NotificationMethod == "" || NotificationMethod == "none" {
-		LoadProvider("empty", "{}")
+		if err := LoadProvider("empty", "{}"); err != nil {
+			logger.Errorf("message-sender", "Failed to load empty message sender provider: %v", err)
+		}
 		return
 	}
 
@@ -77,10 +79,14 @@ func Initialize() {
 	senderConfig, err := GetConfigByName(NotificationMethod)
 	if err != nil {
 		// 如果没有找到配置，使用empty provider
-		LoadProvider("empty", "{}")
+		if err := LoadProvider("empty", "{}"); err != nil {
+			logger.Errorf("message-sender", "Failed to load empty message sender provider: %v", err)
+		}
 		return
 	}
-	LoadProvider(NotificationMethod, senderConfig.Addition)
+	if err := LoadProvider(NotificationMethod, senderConfig.Addition); err != nil {
+		logger.Errorf("message-sender", "Failed to load message sender provider %s: %v", NotificationMethod, err)
+	}
 }
 
 func SendTextMessage(message string, title string) error {

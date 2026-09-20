@@ -12,14 +12,14 @@ import (
 )
 
 // AddPingTask 创建延迟监测任务。defaultOn 表示新加入的服务器是否自动开启此监测。
-func AddPingTask(clients []string, defaultOn bool, name string, target, task_type string, interval int) (uint, error) {
+func AddPingTask(clients []string, defaultOn bool, name string, target, taskType string, interval int) (uint, error) {
 	db := dbcore.GetDBInstance()
 	normalizedClients := normalizePingClients(models.StringArray(clients))
 	task := models.PingTask{
 		Clients:   normalizedClients,
 		DefaultOn: defaultOn,
 		Name:      name,
-		Type:      task_type,
+		Type:      taskType,
 		Target:    target,
 		Interval:  interval,
 	}
@@ -42,8 +42,7 @@ func AddPingTask(clients []string, defaultOn bool, name string, target, task_typ
 	if err != nil {
 		return 0, err
 	}
-	ReloadPingSchedule()
-	return task.Id, nil
+	return task.Id, ReloadPingSchedule()
 }
 
 func DeletePingTask(id []uint) error {
@@ -58,8 +57,10 @@ func DeletePingTask(id []uint) error {
 	if result.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
-	ReloadPingSchedule()
-	return result.Error
+	if result.Error != nil {
+		return result.Error
+	}
+	return ReloadPingSchedule()
 }
 
 // EditPingTask 批量更新延迟监测任务配置。
@@ -68,7 +69,7 @@ func EditPingTask(tasks []*models.PingTask) error {
 	for _, task := range tasks {
 		task.Clients = normalizePingClients(task.Clients)
 		// 使用 map 显式更新，避免 GORM struct Updates 跳过 false/0/空切片等零值。
-		updates := map[string]interface{}{
+		updates := map[string]any{
 			"name":        task.Name,
 			"clients":     task.Clients,
 			"all_clients": task.DefaultOn,
@@ -80,9 +81,11 @@ func EditPingTask(tasks []*models.PingTask) error {
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
 		}
+		if result.Error != nil {
+			return result.Error
+		}
 	}
-	ReloadPingSchedule()
-	return nil
+	return ReloadPingSchedule()
 }
 
 // normalizePingClients 保持 clients 字段序列化为 JSON 数组，避免空值变成 null。
@@ -148,8 +151,7 @@ func UpdatePingTaskOrder(order map[uint]int) error {
 	if err != nil {
 		return err
 	}
-	ReloadPingSchedule()
-	return nil
+	return ReloadPingSchedule()
 }
 
 // ping 记录已完全迁移到 metric store（指标 ping.latency_ms），运行期读写全部走

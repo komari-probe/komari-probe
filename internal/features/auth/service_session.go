@@ -27,7 +27,7 @@ func GetAllSessions() (sessions []models.Session, err error) {
 }
 
 // CreateSession 创建新会话
-func CreateSession(uuid string, expires int, userAgent, ip, login_method string) (string, error) {
+func CreateSession(uuid string, expires int, userAgent, ip, loginMethod string) (string, error) {
 	db := dbcore.GetDBInstance()
 	session := random.String(32)
 
@@ -37,7 +37,7 @@ func CreateSession(uuid string, expires int, userAgent, ip, login_method string)
 		Expires:      time.Now().UTC().Add(time.Duration(expires) * time.Second),
 		UserAgent:    userAgent,
 		Ip:           ip,
-		LoginMethod:  login_method,
+		LoginMethod:  loginMethod,
 		LatestOnline: time.Now().UTC(),
 	}
 	go func() {
@@ -52,7 +52,7 @@ func CreateSession(uuid string, expires int, userAgent, ip, login_method string)
 			_ = messagesender.SendNotification(models.EventMessage{
 				Event:   messageevent.Login,
 				Time:    time.Now().UTC(),
-				Message: fmt.Sprintf("%s: %s (%s)\n%s", login_method, ip, loc, userAgent),
+				Message: fmt.Sprintf("%s: %s (%s)\n%s", loginMethod, ip, loc, userAgent),
 				Emoji:   "🔑",
 			})
 		}
@@ -114,7 +114,7 @@ func DeleteAllSessions() error {
 
 func UpdateLatest(session, useragent, ip string) error {
 	db := dbcore.GetDBInstance()
-	return db.Model(&models.Session{}).Where("session = ?", session).Updates(map[string]interface{}{
+	return db.Model(&models.Session{}).Where("session = ?", session).Updates(map[string]any{
 		"latest_online":     time.Now().UTC(),
 		"latest_user_agent": useragent,
 		"latest_ip":         ip,

@@ -14,10 +14,10 @@ var (
 
 func RegisterMessageSender(constructor MessageSenderConstructor) {
 	sender := constructor()
-	senderConstructor[sender.GetName()] = constructor
 	if sender == nil {
 		panic("Message sender constructor returned nil")
 	}
+	senderConstructor[sender.GetName()] = constructor
 	if _, exists := senders[sender.GetName()]; exists {
 		logger.InfoArgs("message-sender", "Message sender already registered: "+sender.GetName())
 	}

@@ -89,7 +89,7 @@ func get2FACode(c *gin.Context) string {
 	if len(bodyBytes) == 0 {
 		return ""
 	}
-	var body map[string]interface{}
+	var body map[string]any
 	if err := json.Unmarshal(bodyBytes, &body); err != nil {
 		return ""
 	}

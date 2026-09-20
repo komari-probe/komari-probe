@@ -70,7 +70,7 @@ func (j *JavaScriptSender) SendEvent(event models.EventMessage) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %v", err)
 	}
-	var eventMap map[string]interface{}
+	var eventMap map[string]any
 	if err := json.Unmarshal(eventJSON, &eventMap); err != nil {
 		return fmt.Errorf("failed to unmarshal event: %v", err)
 	}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
+	"github.com/komari-monitor/komari/internal/features/notification/messagesender/outboundhttp"
 )
 
 // ServerChanTurboSender 为 Server酱 Turbo 推送实现
@@ -46,7 +47,7 @@ func (s *ServerChanTurboSender) SendTextMessage(message, title string) error {
 		return fmt.Errorf("serverchanturbo: 标题与正文均为空")
 	}
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"title": finalTitle,
 		"desp":  finalMessage,
 	}
@@ -65,7 +66,7 @@ func (s *ServerChanTurboSender) SendTextMessage(message, title string) error {
 		return fmt.Errorf("serverchanturbo: 组装 JSON 失败: %v", err)
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := outboundhttp.NewClient(30 * time.Second)
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return fmt.Errorf("serverchanturbo: 创建请求失败: %v", err)

@@ -14,10 +14,6 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-func init() {
-
-}
-
 func (g *Github) GetName() string {
 	return "github"
 }

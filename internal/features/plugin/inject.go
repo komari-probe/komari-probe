@@ -66,9 +66,11 @@ func injectHTMLContent(body []byte, fragments []*injectEntry) []byte {
 	if tailHTML != "" {
 		switch {
 		case indexFold(text, "</body>") >= 0:
-			text = text[:indexFold(text, "</body>")] + tailHTML + text[indexFold(text, "</body>"):]
+			idx := indexFold(text, "</body>")
+			text = text[:idx] + tailHTML + text[idx:]
 		case indexFold(text, "</html>") >= 0:
-			text = text[:indexFold(text, "</html>")] + tailHTML + text[indexFold(text, "</html>"):]
+			idx := indexFold(text, "</html>")
+			text = text[:idx] + tailHTML + text[idx:]
 		default:
 			text += tailHTML
 		}

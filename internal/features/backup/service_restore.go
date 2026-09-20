@@ -3,8 +3,10 @@ package backup
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -82,7 +84,7 @@ func (l *RestoreLock) SaveUploadedBackup(file io.Reader, filename string) error 
 	}
 
 	finalPath := filepath.Join(".", "data", "backup.zip")
-	if err := os.Remove(finalPath); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(finalPath); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("remove previous backup: %w", err)
 	}
 	if err := os.Rename(tempPath, finalPath); err == nil {

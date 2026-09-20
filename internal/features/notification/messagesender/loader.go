@@ -20,7 +20,9 @@ func LoadProvider(name string, addition string) error {
 	if err != nil {
 		return fmt.Errorf("failed to load config for provider %s: %w", name, err)
 	}
-	provider.Init()
+	if err := provider.Init(); err != nil {
+		return fmt.Errorf("failed to initialize provider %s: %w", name, err)
+	}
 	if currentProvider != nil {
 		currentProvider.Destroy()
 	}

@@ -65,7 +65,10 @@ func (g *Generic) OnCallback(ctx *gin.Context, state string, query map[string]st
 		"grant_type":    {"authorization_code"},
 	}
 
-	req, _ := http.NewRequest("POST", g.Addition.TokenURL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", g.Addition.TokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return factory.OidcCallback{}, fmt.Errorf("invalid token url: %w", err)
+	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -84,7 +87,10 @@ func (g *Generic) OnCallback(ctx *gin.Context, state string, query map[string]st
 	}
 
 	// 获取用户信息
-	userReq, _ := http.NewRequest("GET", g.Addition.UserInfoURL, nil)
+	userReq, err := http.NewRequest("GET", g.Addition.UserInfoURL, nil)
+	if err != nil {
+		return factory.OidcCallback{}, fmt.Errorf("invalid user info url: %w", err)
+	}
 	userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
 	userReq.Header.Set("Accept", "application/json")
 
@@ -94,7 +100,7 @@ func (g *Generic) OnCallback(ctx *gin.Context, state string, query map[string]st
 	}
 	defer userResp.Body.Close()
 
-	var user map[string]interface{}
+	var user map[string]any
 	if err := json.NewDecoder(userResp.Body).Decode(&user); err != nil {
 		return factory.OidcCallback{}, fmt.Errorf("failed to parse user info response: %v", err)
 	}

@@ -26,7 +26,7 @@ func CheckExpire() {
 		return
 	}
 
-	clients_all, err := clients.GetAllClientBasicInfo()
+	allClients, err := clients.GetAllClientBasicInfo()
 	if err != nil {
 		return
 	}
@@ -44,7 +44,7 @@ func CheckExpire() {
 
 		var clientLeadToExpire []clientToExpireInfo
 
-		for _, client := range clients_all {
+		for _, client := range allClients {
 			if client.ExpiredAt == nil {
 				continue
 			}
@@ -80,7 +80,7 @@ func CheckExpire() {
 		}
 	}
 
-	for _, client := range clients_all {
+	for _, client := range allClients {
 		CheckAndAutoRenewal(client)
 	}
 }

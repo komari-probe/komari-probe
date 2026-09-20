@@ -37,9 +37,9 @@ func ingestReport(uuid string, report v2.Report, markPresence bool) error {
 }
 
 // ingestBasicInfo 保存客户端基础信息。fallbackIP 在上报未携带 IP 时用作兜底。
-func ingestBasicInfo(uuid string, info map[string]interface{}, fallbackIP string) error {
+func ingestBasicInfo(uuid string, info map[string]any, fallbackIP string) error {
 	if info == nil {
-		info = map[string]interface{}{}
+		info = map[string]any{}
 	}
 	return saveClientBasicInfo(info, uuid, fallbackIP)
 }

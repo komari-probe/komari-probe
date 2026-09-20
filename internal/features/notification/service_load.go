@@ -138,39 +138,15 @@ func getMetricValue(record models.Record, metric string) float32 {
 	case "net_out", "netout":
 		return bytesPerSecondToMbps(record.NetOut)
 	case "ram":
-		client, err := clients.GetClientByUUID(record.Client) // 确保客户端信息已加载
-		if err != nil {
-			logger.Errorf("notifier", "Failed to get client info for %s: %v", record.Client, err)
-			return 0
-		}
-		if client.MemTotal > 0 {
-			return float32(record.Ram) / float32(client.MemTotal) * 100
-		}
-		return 0
+		return usagePercentOfClientTotal(record, record.Ram, func(c models.Client) int64 { return c.MemTotal })
 	case "swap":
-		client, err := clients.GetClientByUUID(record.Client) // 确保客户端信息已加载
-		if err != nil {
-			logger.Errorf("notifier", "Failed to get client info for %s: %v", record.Client, err)
-			return 0
-		}
-		if client.SwapTotal > 0 {
-			return float32(record.Swap) / float32(client.SwapTotal) * 100
-		}
-		return 0
+		return usagePercentOfClientTotal(record, record.Swap, func(c models.Client) int64 { return c.SwapTotal })
 	case "load":
 		return record.Load
 	case "temp":
 		return record.Temp
 	case "disk":
-		client, err := clients.GetClientByUUID(record.Client) // 确保客户端信息已加载
-		if err != nil {
-			logger.Errorf("notifier", "Failed to get client info for %s: %v", record.Client, err)
-			return 0
-		}
-		if client.DiskTotal > 0 {
-			return float32(record.Disk) / float32(client.DiskTotal) * 100
-		}
-		return 0
+		return usagePercentOfClientTotal(record, record.Disk, func(c models.Client) int64 { return c.DiskTotal })
 	default:
 		// 尝试通过反射获取字段值
 		v := reflect.ValueOf(record)
@@ -187,6 +163,21 @@ func getMetricValue(record models.Record, metric string) float32 {
 		}
 		return 0
 	}
+}
+
+// usagePercentOfClientTotal 用客户端总量字段（如 MemTotal/SwapTotal/DiskTotal）
+// 把一个绝对使用量换算成百分比；查不到客户端或总量为 0 时返回 0。
+func usagePercentOfClientTotal(record models.Record, used int64, total func(models.Client) int64) float32 {
+	client, err := clients.GetClientByUUID(record.Client)
+	if err != nil {
+		logger.Errorf("notifier", "Failed to get client info for %s: %v", record.Client, err)
+		return 0
+	}
+	clientTotal := total(client)
+	if clientTotal <= 0 {
+		return 0
+	}
+	return float32(used) / float32(clientTotal) * 100
 }
 
 func bytesPerSecondToMbps(bytesPerSecond int64) float32 {

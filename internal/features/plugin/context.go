@@ -10,8 +10,8 @@ import (
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
-// principalContextKey stays in sync with web/api/principal.go:
-// IdentityMiddleware stores the resolved principal under this gin key.
+// principalContextKey stays in sync with internal/features/auth/service_principal.go:
+// SetPrincipal stores the resolved principal under this gin key.
 const principalContextKey = "principal"
 
 // routeRequestContext builds the JS request context with the caller identity

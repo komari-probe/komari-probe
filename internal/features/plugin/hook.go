@@ -145,9 +145,7 @@ func filterHooks(hooks []*hookEntry, r *http.Request) []*hookEntry {
 func maxHookBodyLimit(hooks []*hookEntry) int64 {
 	var limit int64
 	for _, hook := range hooks {
-		if hook.bodyLimit > limit {
-			limit = hook.bodyLimit
-		}
+		limit = max(limit, hook.bodyLimit)
 	}
 	if limit < 1 {
 		return defaultMaxHTTPBodyBytes

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -476,7 +477,7 @@ func (m *Manager) setEnabled(short string, enabled, approved bool) error {
 func (m *Manager) loadAll() error {
 	entries, err := os.ReadDir(DataDir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 		return err
@@ -589,7 +590,7 @@ func (m *Manager) delete(short string) error {
 	}
 	dir := filepath.Join(DataDir, short)
 	if _, err := os.Stat(dir); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("%w: %q", ErrNotInstalled, short)
 		}
 		return err

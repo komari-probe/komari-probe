@@ -14,10 +14,10 @@ var (
 
 func RegisterOidcProvider(constructor OidcConstructor) {
 	provider := constructor()
-	providerConstructor[provider.GetName()] = constructor
 	if provider == nil {
 		panic("OIDC provider constructor returned nil")
 	}
+	providerConstructor[provider.GetName()] = constructor
 	if _, exists := providers[provider.GetName()]; exists {
 		logger.InfoArgs("oauth", "OIDC provider already registered: "+provider.GetName())
 	}

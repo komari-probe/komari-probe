@@ -79,9 +79,6 @@ func CheckTraffic() {
 		if curStep < baseStep {
 			curStep = baseStep
 		}
-		// if curStep > 100 {
-		// 	curStep = 100
-		// }
 
 		key := "traffic:" + c.UUID
 		last, _ := trafficCache.Get(key)

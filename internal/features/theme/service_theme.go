@@ -26,54 +26,11 @@ const (
 
 // InstallZip 解压并验证主题
 func InstallZip(zipPath string) (models.Theme, error) {
-	var themeInfo models.Theme
-
-	// 打开ZIP文件
-	r, err := zip.OpenReader(zipPath)
+	r, themeInfo, err := readThemeManifestFromZip(zipPath)
 	if err != nil {
-		return themeInfo, fmt.Errorf("无法打开ZIP文件: %v", err)
+		return themeInfo, err
 	}
 	defer r.Close()
-
-	if err := validateThemeArchive(r.File); err != nil {
-		return themeInfo, err
-	}
-
-	// 查找komari-theme.json文件
-	var themeConfigFile *zip.File
-	for _, f := range r.File {
-		if f.Name == "komari-theme.json" {
-			themeConfigFile = f
-			break
-		}
-	}
-
-	if themeConfigFile == nil {
-		return themeInfo, fmt.Errorf("主题配置文件 komari-theme.json 不存在")
-	}
-
-	// 读取主题配置
-	rc, err := themeConfigFile.Open()
-	if err != nil {
-		return themeInfo, fmt.Errorf("无法读取主题配置文件: %v", err)
-	}
-	defer rc.Close()
-
-	configData, err := io.ReadAll(io.LimitReader(rc, maxThemeManifestSize+1))
-	if err != nil {
-		return themeInfo, fmt.Errorf("读取主题配置失败: %v", err)
-	}
-	if len(configData) > maxThemeManifestSize {
-		return themeInfo, fmt.Errorf("主题配置文件超过 %d 字节限制", maxThemeManifestSize)
-	}
-
-	if err := json.Unmarshal(configData, &themeInfo); err != nil {
-		return themeInfo, fmt.Errorf("主题配置格式错误: %v", err)
-	}
-
-	if err := validateThemeManifest(themeInfo); err != nil {
-		return themeInfo, err
-	}
 
 	// 创建主题目录
 	themeDir := filepath.Join("./data/theme", themeInfo.Short)
@@ -99,7 +56,9 @@ func InstallZip(zipPath string) (models.Theme, error) {
 		}
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(path, f.FileInfo().Mode())
+			if err := os.MkdirAll(path, f.FileInfo().Mode()); err != nil {
+				return themeInfo, fmt.Errorf("创建目录失败: %v", err)
+			}
 			continue
 		}
 
@@ -288,16 +247,30 @@ func isGitHubRepoURL(urlStr string) (bool, string, string) {
 // peekThemeFromZip 仅从ZIP文件中读取komari-theme.json并解析主题信息
 // 不执行解压安装，用于preview模式
 func peekThemeFromZip(zipPath string) (models.Theme, error) {
+	r, themeInfo, err := readThemeManifestFromZip(zipPath)
+	if err != nil {
+		return themeInfo, err
+	}
+	defer r.Close()
+	return themeInfo, nil
+}
+
+// readThemeManifestFromZip opens a theme ZIP, validates the archive limits,
+// and reads/validates its komari-theme.json. The caller is responsible for
+// closing the returned reader (even on a non-nil error, when it is non-nil).
+// Shared by InstallZip (which also extracts the archive) and peekThemeFromZip
+// (which only inspects the manifest).
+func readThemeManifestFromZip(zipPath string) (*zip.ReadCloser, models.Theme, error) {
 	var themeInfo models.Theme
 
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
-		return themeInfo, fmt.Errorf("无法打开ZIP文件: %v", err)
+		return nil, themeInfo, fmt.Errorf("无法打开ZIP文件: %v", err)
 	}
-	defer r.Close()
 
 	if err := validateThemeArchive(r.File); err != nil {
-		return themeInfo, err
+		_ = r.Close()
+		return nil, themeInfo, err
 	}
 
 	var themeConfigFile *zip.File
@@ -309,30 +282,35 @@ func peekThemeFromZip(zipPath string) (models.Theme, error) {
 	}
 
 	if themeConfigFile == nil {
-		return themeInfo, fmt.Errorf("主题配置文件 komari-theme.json 不存在，不是合法的主题包")
+		_ = r.Close()
+		return nil, themeInfo, fmt.Errorf("主题配置文件 komari-theme.json 不存在，不是合法的主题包")
 	}
 
 	rc, err := themeConfigFile.Open()
 	if err != nil {
-		return themeInfo, fmt.Errorf("无法读取主题配置文件: %v", err)
+		_ = r.Close()
+		return nil, themeInfo, fmt.Errorf("无法读取主题配置文件: %v", err)
 	}
-	defer rc.Close()
-
 	configData, err := io.ReadAll(io.LimitReader(rc, maxThemeManifestSize+1))
+	_ = rc.Close()
 	if err != nil {
-		return themeInfo, fmt.Errorf("读取主题配置失败: %v", err)
+		_ = r.Close()
+		return nil, themeInfo, fmt.Errorf("读取主题配置失败: %v", err)
 	}
 	if len(configData) > maxThemeManifestSize {
-		return themeInfo, fmt.Errorf("主题配置文件超过 %d 字节限制", maxThemeManifestSize)
+		_ = r.Close()
+		return nil, themeInfo, fmt.Errorf("主题配置文件超过 %d 字节限制", maxThemeManifestSize)
 	}
 
 	if err := json.Unmarshal(configData, &themeInfo); err != nil {
-		return themeInfo, fmt.Errorf("主题配置格式错误: %v", err)
+		_ = r.Close()
+		return nil, themeInfo, fmt.Errorf("主题配置格式错误: %v", err)
 	}
 
 	if err := validateThemeManifest(themeInfo); err != nil {
-		return themeInfo, err
+		_ = r.Close()
+		return nil, themeInfo, err
 	}
 
-	return themeInfo, nil
+	return r, themeInfo, nil
 }

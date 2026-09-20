@@ -119,9 +119,9 @@ func GetUserBySSO(ssoID string) (user models.User, err error) {
 // bindExternalAccount 把 sso_id 写入用户记录。导出的 BindingExternalAccount
 // 是处理绑定重定向流程的 gin handler（见 handler_oauth_binding.go），二者同名会冲突，
 // 故这里保持未导出。
-func bindExternalAccount(uuid string, sso_id string) error {
+func bindExternalAccount(uuid string, ssoID string) error {
 	db := dbcore.GetDBInstance()
-	err := db.Model(&models.User{}).Where("uuid = ?", uuid).Update("sso_id", sso_id).Error
+	err := db.Model(&models.User{}).Where("uuid = ?", uuid).Update("sso_id", ssoID).Error
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func unbindExternalAccount(uuid string) error {
 
 // updateUserRecord 落库用户名/密码/SSO 类型更新。导出的 UpdateUser 是处理该请求的
 // gin handler（见 handler_update_user.go），二者同名会冲突，故这里保持未导出。
-func updateUserRecord(uuid string, name, password, sso_type *string) error {
+func updateUserRecord(uuid string, name, password, ssoType *string) error {
 	db := dbcore.GetDBInstance()
 	// Check if user exists
 	var existingUser models.User
@@ -147,15 +147,15 @@ func updateUserRecord(uuid string, name, password, sso_type *string) error {
 	if result.Error != nil {
 		return fmt.Errorf("user not found: %s", uuid)
 	}
-	updates := make(map[string]interface{})
+	updates := make(map[string]any)
 	if name != nil {
 		updates["username"] = *name
 	}
 	if password != nil {
 		updates["passwd"] = hashPasswd(*password)
 	}
-	if sso_type != nil {
-		updates["sso_type"] = *sso_type
+	if ssoType != nil {
+		updates["sso_type"] = *ssoType
 	}
 	updates["updated_at"] = time.Now().UTC()
 	err := db.Model(&models.User{}).Where("uuid = ?", uuid).Updates(updates).Error

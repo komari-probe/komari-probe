@@ -10,15 +10,6 @@ import (
 // handler_admin_session.go
 // 会话管理的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在 web/rpc/jsonrpc。
 
-// auditActor 从上下文提取审计用的 actor UUID 与来源 IP。
-func auditActor(ctx context.Context) (uuid, ip string) {
-	if meta := rpc.MetaFromContext(ctx); meta != nil {
-		uuid = meta.UserUUID
-		ip = meta.RemoteIP
-	}
-	return uuid, ip
-}
-
 func AdminGetSessions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	ss, err := GetAllSessions()
 	if err != nil {
@@ -42,7 +33,7 @@ func AdminDeleteSession(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 	if err := DeleteSession(params.Session); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete session: "+err.Error(), nil)
 	}
-	actor, ip := auditActor(ctx)
+	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "delete session", "info")
 	return nil, nil
 }
@@ -51,7 +42,7 @@ func AdminDeleteAllSessions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *r
 	if err := DeleteAllSessions(); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete all sessions: "+err.Error(), nil)
 	}
-	actor, ip := auditActor(ctx)
+	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "delete all sessions", "warn")
 	return nil, nil
 }

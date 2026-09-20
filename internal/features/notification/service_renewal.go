@@ -14,13 +14,6 @@ import (
 )
 
 func CheckAndAutoRenewal(client models.Client) {
-	// 自动续费检查
-	//type renewedClient struct {
-	//	Name          string
-	//	NewExpireTime time.Time
-	//}
-	//var renewedClients []renewedClient
-
 	if !client.AutoRenewal {
 		return
 	}
@@ -91,7 +84,7 @@ func CheckAndAutoRenewal(client models.Client) {
 			}
 
 			// 更新客户端过期时间
-			updates := map[string]interface{}{
+			updates := map[string]any{
 				"uuid":       client.UUID,
 				"expired_at": newExpireTime.UTC(),
 			}
@@ -101,11 +94,6 @@ func CheckAndAutoRenewal(client models.Client) {
 				auditlog.EventLog("renewal", fmt.Sprintf("Failed to renew client %s (%s): %v", client.Name, client.UUID, err))
 				return
 			}
-
-			//renewedClients = append(renewedClients, renewedClient{
-			//	Name:          client.Name,
-			//	NewExpireTime: newExpireTime,
-			//})
 
 			auditlog.EventLog("renewal", fmt.Sprintf("Auto-renewed client: %s until %s",
 				client.Name, timeutil.FormatSystemDate(newExpireTime)))
@@ -119,19 +107,4 @@ func CheckAndAutoRenewal(client models.Client) {
 			})
 		}
 	}
-
-	// 发送续费通知
-	// if len(renewedClients) > 0 {
-	// 	message := ""
-	// 	for _, clientInfo := range renewedClients {
-	// 		message += fmt.Sprintf("• %s until %s\n", clientInfo.Name, clientInfo.NewExpireTime.Format("2006-01-02"))
-	// 	}
-	// 	messagesender.SendEvent(models.EventMessage{
-	// 		Event:   messageevent.Renew,
-	// 		Clients: []models.Client{client},
-	// 		Time:    time.Now(),
-	// 		Emoji:   "🔄",
-	// 		Message: message,
-	// 	})
-	// }
 }

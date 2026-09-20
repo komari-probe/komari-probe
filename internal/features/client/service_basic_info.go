@@ -17,19 +17,18 @@ func getClientIPType(ip net.IP) int {
 	}
 	if ip.To4() == nil {
 		return 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
-func saveClientBasicInfo(info map[string]interface{}, uuid string, fallbackIP string) error {
+func saveClientBasicInfo(info map[string]any, uuid string, fallbackIP string) error {
 	info["uuid"] = uuid
 	applyFallbackClientIP(info, fallbackIP)
 	appendClientRegionFromGeoIP(info)
 	return clients.SaveClientInfo(info)
 }
 
-func applyFallbackClientIP(info map[string]interface{}, fallbackIP string) {
+func applyFallbackClientIP(info map[string]any, fallbackIP string) {
 	if hasClientIP(info) {
 		return
 	}
@@ -43,7 +42,7 @@ func applyFallbackClientIP(info map[string]interface{}, fallbackIP string) {
 	}
 }
 
-func hasClientIP(info map[string]interface{}) bool {
+func hasClientIP(info map[string]any) bool {
 	if ipv4, ok := info["ipv4"].(string); ok && ipv4 != "" {
 		return true
 	}
@@ -53,7 +52,7 @@ func hasClientIP(info map[string]interface{}) bool {
 	return false
 }
 
-func appendClientRegionFromGeoIP(info map[string]interface{}) {
+func appendClientRegionFromGeoIP(info map[string]any) {
 	cfg, err := config.GetAs[bool](settings.GeoIpEnabledKey)
 	if err != nil || !cfg {
 		return

@@ -17,6 +17,6 @@ type OidcCallback struct {
 	UserId string
 }
 
-type Configuration interface{}
+type Configuration any
 
 type OidcConstructor func() IOidcProvider

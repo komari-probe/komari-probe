@@ -1,7 +1,9 @@
 package backup
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -16,7 +18,7 @@ var backupWhitelist = []string{
 	"font.ttf",
 	"theme/",
 	"plugin/",
-	"plguin-data/",
+	"plugin-data/",
 	"metrics.db",
 }
 
@@ -31,7 +33,7 @@ func copyWhitelistedFilesFrom(dataDir, tempDir string) error {
 		src := filepath.Join(dataDir, relPath)
 		info, err := os.Stat(src)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 			return fmt.Errorf("stat whitelist entry %s: %v", relPath, err)
