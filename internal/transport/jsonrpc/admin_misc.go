@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/internal/platform/recordquery"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
@@ -110,7 +110,7 @@ func removeRetiredLowResourceMode(cfg map[string]any) {
 }
 
 func adminClearAllRecords(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	loadErr := records.DeleteAll()
+	loadErr := recordquery.DeleteAll()
 	pingErr := ping.DeleteAllPingRecords()
 	if err := errors.Join(loadErr, pingErr); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to clear all records: "+err.Error(), nil)

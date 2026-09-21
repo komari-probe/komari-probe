@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/internal/platform/recordquery"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/version"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -154,7 +154,7 @@ func publicGetRecordsByUUID(ctx context.Context, req *rpc.JsonRpcRequest) (any, 
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid load_type parameter", nil)
 	}
 	now := time.Now().UTC()
-	clientRecords, err := records.GetRecordsByClientAndTime(params.UUID, now.Add(-time.Duration(hoursInt)*time.Hour), now)
+	clientRecords, err := recordquery.GetRecordsByClientAndTime(params.UUID, now.Add(-time.Duration(hoursInt)*time.Hour), now)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch records: "+err.Error(), nil)
 	}
@@ -171,7 +171,7 @@ func publicGetRecordsByUUID(ctx context.Context, req *rpc.JsonRpcRequest) (any, 
 		}
 	}
 	if params.LoadType == "" || params.LoadType == "all" || params.LoadType == "gpu" {
-		gpuRecords, err := records.GetGPURecordsByClientAndTime(params.UUID, now.Add(-time.Duration(hoursInt)*time.Hour), now)
+		gpuRecords, err := recordquery.GetGPURecordsByClientAndTime(params.UUID, now.Add(-time.Duration(hoursInt)*time.Hour), now)
 		if err == nil && len(gpuRecords) > 0 {
 			gpuDevices := make(map[string]any)
 			for _, record := range gpuRecords {

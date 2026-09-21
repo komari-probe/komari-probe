@@ -8,7 +8,8 @@ import (
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	recordsdb "github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/internal/platform/recordquery"
+	"github.com/komari-monitor/komari/pkg/downsample"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
@@ -112,21 +113,21 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			}
 			// sort and count
 			total := 0
-			groupsMeta := make([]recordsdb.AllocationGroup[string], 0, len(grouped))
+			groupsMeta := make([]downsample.AllocationGroup[string], 0, len(grouped))
 			for name := range grouped {
 				arr := grouped[name]
 				sort.Slice(arr, func(i, j int) bool { return arr[i].Time.Before(arr[j].Time) })
 				grouped[name] = arr
 				l := len(arr)
 				total += l
-				groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[string]{Key: name, Length: l})
+				groupsMeta = append(groupsMeta, downsample.AllocationGroup[string]{Key: name, Length: l})
 			}
 			// downsample across all clients proportionally
 			if maxCount != -1 && total > maxCount {
-				targets := recordsdb.AllocateTargets(groupsMeta, maxCount)
+				targets := downsample.AllocateTargets(groupsMeta, maxCount)
 				total = 0
 				for name, k := range targets {
-					grouped[name] = recordsdb.SampleEvenly(grouped[name], k)
+					grouped[name] = downsample.SampleEvenly(grouped[name], k)
 					total += len(grouped[name])
 				}
 			}
@@ -144,20 +145,20 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			grouped[r.Client] = append(grouped[r.Client], r)
 		}
 		total := 0
-		groupsMeta := make([]recordsdb.AllocationGroup[string], 0, len(grouped))
+		groupsMeta := make([]downsample.AllocationGroup[string], 0, len(grouped))
 		for name := range grouped {
 			arr := grouped[name]
 			sort.Slice(arr, func(i, j int) bool { return arr[i].Time.Before(arr[j].Time) })
 			grouped[name] = arr
 			l := len(arr)
 			total += l
-			groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[string]{Key: name, Length: l})
+			groupsMeta = append(groupsMeta, downsample.AllocationGroup[string]{Key: name, Length: l})
 		}
 		if maxCount != -1 && total > maxCount {
-			targets := recordsdb.AllocateTargets(groupsMeta, maxCount)
+			targets := downsample.AllocateTargets(groupsMeta, maxCount)
 			total = 0
 			for name, k := range targets {
-				grouped[name] = recordsdb.SampleEvenly(grouped[name], k)
+				grouped[name] = downsample.SampleEvenly(grouped[name], k)
 				total += len(grouped[name])
 			}
 		}
@@ -376,20 +377,20 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 				})
 			}
 
-			groupsMeta := make([]recordsdb.AllocationGroup[uint], 0, len(taskGroups))
+			groupsMeta := make([]downsample.AllocationGroup[uint], 0, len(taskGroups))
 			for taskID, records := range taskGroups {
-				groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[uint]{
+				groupsMeta = append(groupsMeta, downsample.AllocationGroup[uint]{
 					Key:    taskID,
 					Length: len(records),
 				})
 			}
-			targets := recordsdb.AllocateTargets(groupsMeta, maxCount)
+			targets := downsample.AllocateTargets(groupsMeta, maxCount)
 
 			// downsample each task group
 			downsampledRecords := make([]RecordsResp, 0, maxCount)
 			for taskID, records := range taskGroups {
 				targetCount := targets[taskID]
-				sampled := recordsdb.SampleEvenly(records, targetCount)
+				sampled := downsample.SampleEvenly(records, targetCount)
 				downsampledRecords = append(downsampledRecords, sampled...)
 			}
 
@@ -413,10 +414,10 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 func getLoadRecordsCombined(uuid string, start, end time.Time) ([]models.Record, error) {
 	// prefer the existing function when uuid provided
 	if uuid != "" {
-		return recordsdb.GetRecordsByClientAndTime(uuid, start, end)
+		return recordquery.GetRecordsByClientAndTime(uuid, start, end)
 	}
 	// 所有客户端：统一通过 records 包查询，启用 metric store 时自动走 metric store
-	return recordsdb.GetRecordsByTime(start, end)
+	return recordquery.GetRecordsByTime(start, end)
 }
 
 // flatRecord is a projection used when load_type is specified.

@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/internal/platform/recordquery"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
@@ -107,7 +107,7 @@ func AdminGetClientToken(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 }
 
 func AdminClearRecords(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	if err := records.DeleteAll(); err != nil {
+	if err := recordquery.DeleteAll(); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to delete Record"+err.Error(), nil)
 	}
 	actor, ip := rpc.ActorFromContext(ctx)

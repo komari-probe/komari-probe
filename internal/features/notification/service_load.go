@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/internal/platform/recordquery"
 	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/scheduler"
 )
@@ -98,7 +98,7 @@ func shouldSkipNotification(task models.LoadNotification) bool {
 
 // getMetricRecordsForClient 获取指定客户端在时间窗口内的单项指标最大值。
 func getMetricRecordsForClient(clientUUID, metricName string, start, end time.Time) ([]models.Record, error) {
-	return records.GetRecordMetricMaxByClientAndTime(clientUUID, metricName, start, end)
+	return recordquery.GetRecordMetricMaxByClientAndTime(clientUUID, metricName, start, end)
 }
 
 // checkMetricThreshold 检查指标是否达到阈值
