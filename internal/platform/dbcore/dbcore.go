@@ -30,13 +30,6 @@ var (
 // 也避免额外的裸文件依赖。
 const SystemVersionKey = "system_version"
 
-const (
-	mainSQLiteBusyTimeout       = 5 * time.Second
-	mainSQLiteCacheSizeKB       = 8 * 1024
-	mainSQLiteWALAutoCheckpoint = 256
-	mainSQLiteJournalSizeLimit  = 1 << 20
-)
-
 // versionID 是当前构建的版本标识，由 SetVersionID 在 Initialize 前注入。
 var versionID string
 
@@ -127,41 +120,6 @@ func writeVersionMarker() {
 	}
 }
 
-func buildSQLiteDSN(databaseFile string) string {
-	if databaseFile == "" {
-		databaseFile = "./data/komari.db"
-	}
-
-	params := fmt.Sprintf("_busy_timeout=%d&_txlock=immediate", mainSQLiteBusyTimeout.Milliseconds())
-	separator := "?"
-	if strings.Contains(databaseFile, "?") {
-		separator = "&"
-	}
-
-	if strings.HasPrefix(databaseFile, "file:") {
-		return databaseFile + separator + params
-	}
-
-	if databaseFile == ":memory:" {
-		return "file::memory:?cache=shared&" + params
-	}
-
-	return "file:" + filepath.ToSlash(databaseFile) + separator + params
-}
-
-func mainSQLiteOptions() sqlitetune.Options {
-	return sqlitetune.Options{
-		BusyTimeout:           mainSQLiteBusyTimeout,
-		CacheSizeKB:           mainSQLiteCacheSizeKB,
-		MMapSizeBytes:         0,
-		TempStoreMemory:       false,
-		CacheSpill:            true,
-		WALAutoCheckpoint:     mainSQLiteWALAutoCheckpoint,
-		JournalSizeLimitBytes: mainSQLiteJournalSizeLimit,
-		Synchronous:           sqlitetune.SynchronousNormal,
-	}
-}
-
 // Initialize 显式初始化数据库连接与表结构，仅执行一次。
 // 与 GetDBInstance 不同，Initialize 返回错误而非直接退出进程，
 // 便于启动生命周期统一处理错误、以及在测试/CLI 命令中做隔离。
@@ -192,6 +150,20 @@ func Close() error {
 		return err
 	}
 	return sqlDB.Close()
+}
+
+// closeFailedInstance closes and discards a successfully opened instance
+// after a later startup step fails, so doInitialize doesn't return an error
+// while leaking an open connection (and, for SQLite, its file locks) that
+// once.Do guarantees nothing will ever retry or close.
+func closeFailedInstance() {
+	if instance == nil {
+		return
+	}
+	if sqlDB, err := instance.DB(); err == nil {
+		_ = sqlDB.Close()
+	}
+	instance = nil
 }
 
 func doInitialize() error {
@@ -284,6 +256,7 @@ func doInitialize() error {
 		return fmt.Errorf("unsupported database type: %s (supported: %s)", flags.DatabaseType, flags.SupportedDatabaseTypes())
 	}
 	if err := migrations.Run(migrations.Context{DB: instance}); err != nil {
+		closeFailedInstance()
 		return fmt.Errorf("failed to run startup migrations: %w", err)
 	}
 	kv.SetDb(instance)
