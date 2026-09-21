@@ -32,7 +32,7 @@ func finalizePluginUpload(session upload.Session) (upload.Result, error) {
 	if err != nil {
 		return upload.Result{}, err
 	}
-	return upload.Result{Message: "插件上传成功", Data: info}, nil
+	return upload.Result{Message: "Plugin uploaded successfully.", Data: info}, nil
 }
 
 func finalizeThemeUpload(session upload.Session) (upload.Result, error) {
@@ -40,5 +40,5 @@ func finalizeThemeUpload(session upload.Session) (upload.Result, error) {
 	if err != nil {
 		return upload.Result{}, err
 	}
-	return upload.Result{Message: "主题上传成功", Data: info}, nil
+	return upload.Result{Message: "Theme uploaded successfully.", Data: info}, nil
 }

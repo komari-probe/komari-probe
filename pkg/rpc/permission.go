@@ -15,7 +15,7 @@ import (
 	"sync"
 )
 
-// 角色常量。与 web/api 中的角色保持一致（guest/client/admin）。
+// 角色常量。与 transport 中的角色保持一致（guest/client/admin）。
 const (
 	RoleGuest  = "guest"
 	RoleClient = "client"

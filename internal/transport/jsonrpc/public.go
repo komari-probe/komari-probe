@@ -97,7 +97,9 @@ func publicGetClientRecentRecords(ctx context.Context, req *rpc.JsonRpcRequest) 
 	var params struct {
 		UUID string `json:"uuid"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	if params.UUID == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "UUID is required", nil)
 	}
@@ -126,7 +128,9 @@ func publicGetRecordsByUUID(ctx context.Context, req *rpc.JsonRpcRequest) (any, 
 		LoadType string `json:"load_type"`
 		Hours    string `json:"hours"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	isLogin := isLoginFromCtx(ctx)
 	if !isLogin && params.UUID != "" && isHiddenClient(params.UUID) {
 		return nil, rpc.MakeError(rpc.InvalidParams, "UUID is required", nil)
@@ -200,7 +204,7 @@ func publicGetPublicPingTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *r
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
 	type publicPingTask struct {
-		Id        uint     `json:"id"`
+		ID        uint     `json:"id"`
 		Weight    int      `json:"weight"`
 		Name      string   `json:"name"`
 		Clients   []string `json:"clients"`
@@ -211,7 +215,7 @@ func publicGetPublicPingTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *r
 	out := make([]publicPingTask, len(pingTasks))
 	for i, task := range pingTasks {
 		out[i] = publicPingTask{
-			Id:        task.Id,
+			ID:        task.Id,
 			Weight:    task.Weight,
 			Name:      task.Name,
 			Clients:   task.Clients,
@@ -272,22 +276,22 @@ func filterPublicRecordsByLoadType(recs []models.Record, loadType string) []map[
 	return out
 }
 
-// PUBLIC_PING_RECORDS_PLACEHOLDER
-
 func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {
 		UUID   string `json:"uuid"`
 		TaskID string `json:"task_id"`
 		Hours  string `json:"hours"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	if params.UUID == "" && params.TaskID == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "UUID or task_id is required", nil)
 	}
 	isLogin := isLoginFromCtx(ctx)
 
 	type recordsResp struct {
-		TaskId uint      `json:"task_id,omitempty"`
+		TaskID uint      `json:"task_id,omitempty"`
 		Time   time.Time `json:"time"`
 		Value  int       `json:"value"`
 		Client string    `json:"client,omitempty"`
@@ -331,15 +335,15 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 	endTime := time.Now().UTC()
 	startTime := endTime.Add(-time.Duration(hoursInt) * time.Hour)
 
-	taskId := -1
+	taskID := -1
 	if params.TaskID != "" {
-		taskId, err = strconv.Atoi(params.TaskID)
+		taskID, err = strconv.Atoi(params.TaskID)
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InvalidParams, "Invalid task_id parameter", nil)
 		}
 	}
 
-	recs, err := ping.GetPingRecords(params.UUID, taskId, startTime, endTime)
+	recs, err := ping.GetPingRecords(params.UUID, taskID, startTime, endTime)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping records: "+err.Error(), nil)
 	}
@@ -351,7 +355,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		if r.Client != "" && !isLogin && hiddenMap[r.Client] {
 			continue
 		}
-		rec := recordsResp{Time: r.Time.UTC(), Value: r.Value, Client: r.Client, TaskId: r.TaskId}
+		rec := recordsResp{Time: r.Time.UTC(), Value: r.Value, Client: r.Client, TaskID: r.TaskId}
 		stats := clientStats[r.Client]
 		stats.total++
 		if r.Value < 0 {
@@ -382,14 +386,14 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		}
 	}
 
-	if params.UUID != "" || taskId != -1 {
+	if params.UUID != "" || taskID != -1 {
 		pingTasks, err := ping.GetAllPingTasks()
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping tasks: "+err.Error(), nil)
 		}
 		tasksList := make([]map[string]any, 0, len(pingTasks))
 		for _, t := range pingTasks {
-			if taskId != -1 && t.Id != uint(taskId) {
+			if taskID != -1 && t.Id != uint(taskID) {
 				continue
 			}
 			if params.UUID != "" && !t.AppliesToClient(params.UUID) {
@@ -430,7 +434,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 				"default_on": t.DefaultOn, "loss": lossRate, "min": minLatency,
 				"max": maxLatency, "avg": avgLatency, "total": totalCount,
 			}
-			if params.UUID == "" && taskId != -1 {
+			if params.UUID == "" && taskID != -1 {
 				taskInfo["clients"] = t.Clients
 			}
 			tasksList = append(tasksList, taskInfo)

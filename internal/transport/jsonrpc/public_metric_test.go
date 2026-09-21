@@ -1,10 +1,8 @@
 package jsonrpc
 
 import (
-	"context"
 	"encoding/json"
 	"math"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -365,69 +363,6 @@ func TestMetricDownsampleIntervalCeilsToStandardInterval(t *testing.T) {
 	}
 }
 
-func TestLoadPublicMetricPointsReturnsAllRecentRawSamples(t *testing.T) {
-	ctx := context.Background()
-	store, err := tsdb.Open(ctx, tsdb.SQLite(":memory:",
-		tsdb.WithMaxOpenConns(1),
-		tsdb.WithRollupPolicy(tsdb.RollupPolicy{
-			RawRetention: metricstore.DefaultRollupRawRetention,
-			Tiers: []tsdb.RollupTier{
-				{Interval: time.Minute, Retention: 10 * time.Hour},
-			},
-			Compression: 30,
-		}),
-	))
-	if err != nil {
-		t.Fatalf("open metric store: %v", err)
-	}
-	defer store.Close()
-
-	const metricName = "query.raw"
-	if err := store.CreateMetric(ctx, tsdb.Definition{
-		Name:          metricName,
-		Type:          tsdb.TypeGauge,
-		RetentionDays: 1,
-	}); err != nil {
-		t.Fatalf("create metric: %v", err)
-	}
-	now := time.Now().UTC().Truncate(time.Millisecond)
-	input := []tsdb.Point{
-		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-9 * time.Minute), Value: 1, Tags: map[string]string{"core": "0"}, Labels: map[string]string{"source": "oldest"}},
-		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-5 * time.Minute), Value: 2, Tags: map[string]string{"core": "0"}},
-		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-90 * time.Second), Value: 3, Tags: map[string]string{"core": "0"}},
-		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-10 * time.Second), Value: 4, Tags: map[string]string{"core": "0"}},
-	}
-	if err := store.WriteBatch(ctx, input); err != nil {
-		t.Fatalf("write raw points: %v", err)
-	}
-
-	queryEnd := now.Add(-3 * time.Second)
-	got, err := loadPublicMetricPoints(ctx, store, tsdb.Query{
-		MetricName: metricName,
-		EntityID:   "node-a",
-		Start:      queryEnd.Add(-10 * time.Minute),
-		End:        queryEnd,
-		Order:      tsdb.OrderAsc,
-	}, tsdb.AggAvg, 1, false, now)
-	if err != nil {
-		t.Fatalf("load public metric points: %v", err)
-	}
-	if got.downsampled || got.interval != 0 {
-		t.Fatalf("recent raw query was marked downsampled: %#v", got)
-	}
-	if len(got.points) != len(input) {
-		t.Fatalf("recent query returned %d points, want all %d: %#v", len(got.points), len(input), got.points)
-	}
-	for i, point := range got.points {
-		if !point.Time.Equal(input[i].Timestamp) || point.Value == nil || *point.Value != input[i].Value || point.Count != 1 {
-			t.Fatalf("point %d = %#v, want %#v", i, point, input[i])
-		}
-	}
-	if got.points[0].Labels["source"] != "oldest" {
-		t.Fatalf("compressed raw point lost labels: %#v", got.points[0])
-	}
-}
-
 func TestPublicMetricUsesRawWindowOnlyForCurrentlyRetainedRange(t *testing.T) {
 	now := time.Date(2026, 7, 27, 12, 0, 0, 0, time.UTC)
 	if !publicMetricUsesRawWindow(now.Add(-10*time.Minute), now, now) {
@@ -447,81 +382,5 @@ func TestPublicMetricUsesRawWindowOnlyForCurrentlyRetainedRange(t *testing.T) {
 	}
 	if publicMetricUsesRawWindow(now.Add(-10*time.Minute-time.Millisecond), now, now) {
 		t.Fatal("range longer than ten minutes should use rollups")
-	}
-}
-
-func TestLoadPublicMetricPointsReturnsOnlyRawAfterRestart(t *testing.T) {
-	ctx := context.Background()
-	dsn := filepath.Join(t.TempDir(), "metrics.db")
-	policy := tsdb.RollupPolicy{
-		RawRetention: metricstore.DefaultRollupRawRetention,
-		Tiers: []tsdb.RollupTier{
-			{Interval: time.Minute, Retention: 10 * time.Hour},
-		},
-		Compression: 30,
-	}
-	open := func() *tsdb.Store {
-		store, err := tsdb.Open(ctx, tsdb.SQLite(dsn,
-			tsdb.WithMaxOpenConns(1),
-			tsdb.WithRollupPolicy(policy),
-		))
-		if err != nil {
-			t.Fatalf("open metric store: %v", err)
-		}
-		return store
-	}
-
-	const metricName = "query.restart"
-	now := time.Now().UTC().Truncate(time.Millisecond)
-	store := open()
-	if err := store.CreateMetric(ctx, tsdb.Definition{Name: metricName, Type: tsdb.TypeGauge, RetentionDays: 1}); err != nil {
-		t.Fatalf("create metric: %v", err)
-	}
-	beforeRestart := []tsdb.Point{
-		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-8 * time.Minute), Value: 1, Tags: map[string]string{"core": "0"}},
-		{MetricName: metricName, EntityID: "node-a", Timestamp: now.Add(-90 * time.Second), Value: 2, Tags: map[string]string{"core": "0"}},
-	}
-	if err := store.WriteBatch(ctx, beforeRestart); err != nil {
-		t.Fatalf("write pre-restart points: %v", err)
-	}
-	if err := store.Close(); err != nil {
-		t.Fatalf("close pre-restart store: %v", err)
-	}
-
-	store = open()
-	defer store.Close()
-	afterRestart := tsdb.Point{
-		MetricName: metricName,
-		EntityID:   "node-a",
-		Timestamp:  now.Add(-5 * time.Second),
-		Value:      3,
-		Tags:       map[string]string{"core": "0"},
-		Labels:     map[string]string{"source": "raw"},
-	}
-	if err := store.Write(ctx, afterRestart); err != nil {
-		t.Fatalf("write post-restart point: %v", err)
-	}
-
-	got, err := loadPublicMetricPoints(ctx, store, tsdb.Query{
-		MetricName: metricName,
-		EntityID:   "node-a",
-		Start:      now.Add(-10 * time.Minute),
-		End:        now,
-		Order:      tsdb.OrderAsc,
-	}, tsdb.AggAvg, 500, false, now)
-	if err != nil {
-		t.Fatalf("load mixed restart window: %v", err)
-	}
-	if got.downsampled || got.interval != 0 {
-		t.Fatalf("raw query metadata = %#v", got)
-	}
-	if len(got.points) != 1 {
-		t.Fatalf("restart window returned %d points, want one raw point: %#v", len(got.points), got.points)
-	}
-	if got.points[0].Value == nil || *got.points[0].Value != 3 {
-		t.Fatalf("raw point = %#v, want value 3", got.points[0])
-	}
-	if got.points[0].Count != 1 || got.points[0].Labels["source"] != "raw" {
-		t.Fatalf("post-restart exact point changed: %#v", got.points[0])
 	}
 }

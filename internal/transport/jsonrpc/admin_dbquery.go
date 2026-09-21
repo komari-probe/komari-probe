@@ -244,9 +244,9 @@ func listDatabaseTables(ctx context.Context, target string) (databaseTablesRespo
 	)
 	switch target {
 	case databaseTargetMain:
-		statement, err := tableListSQL(tsdb.DriverSQLite)
-		if err != nil {
-			return databaseTablesResponse{}, err
+		statement, stmtErr := tableListSQL(tsdb.DriverSQLite)
+		if stmtErr != nil {
+			return databaseTablesResponse{}, stmtErr
 		}
 		rows, actualDriver, release, err = openDatabaseRows(ctx, target, statement)
 	case databaseTargetMetrics:

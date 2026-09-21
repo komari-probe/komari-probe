@@ -81,7 +81,7 @@ func getPingStatsForNode(uuid string, pingTasks []models.PingTask) map[string]pi
 			continue
 		}
 		latest := -1
-		var latestTs time.Time
+		var latestTS time.Time
 		values := make([]int, 0, len(records))
 		sum := 0
 		valid := 0
@@ -105,8 +105,8 @@ func getPingStatsForNode(uuid string, pingTasks []models.PingTask) map[string]pi
 				maxLat = r.Value
 			}
 			ts := r.Time
-			if latestTs.IsZero() || ts.After(latestTs) {
-				latestTs = ts
+			if latestTS.IsZero() || ts.After(latestTS) {
+				latestTS = ts
 				latest = r.Value
 			}
 		}
@@ -193,7 +193,9 @@ func getNodes(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcEr
 	var params struct {
 		UUID string `json:"uuid"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	cinfo, err := clients.GetAllClientBasicInfo()
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get client info", cinfo)
@@ -240,7 +242,9 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		UUID  string   `json:"uuid"`
 		UUIDs []string `json:"uuids"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 
 	meta := rpc.MetaFromContext(ctx)
 	latest := agent_runtime.GetLatestReport()
@@ -279,13 +283,13 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 	type recordLike struct {
 		Client          string              `json:"client"`
 		Time            time.Time           `json:"time"`
-		Cpu             float32             `json:"cpu"`
+		CPU             float32             `json:"cpu"`
 		Gpu             float32             `json:"gpu"`
 		GpuCount        int                 `json:"gpu_count,omitempty"`
 		GpuAverageUsage float64             `json:"gpu_average_usage,omitempty"`
 		GpuDetailedInfo []v2.GPUDeviceInfo  `json:"gpu_detailed_info,omitempty"`
-		Ram             int64               `json:"ram"`
-		RamTotal        int64               `json:"ram_total"`
+		RAM             int64               `json:"ram"`
+		RAMTotal        int64               `json:"ram_total"`
 		Swap            int64               `json:"swap"`
 		SwapTotal       int64               `json:"swap_total"`
 		Load            float32             `json:"load"`
@@ -300,7 +304,7 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		NetTotalDown    int64               `json:"net_total_down"`
 		Process         int                 `json:"process"`
 		Connections     int                 `json:"connections"`
-		ConnectionsUdp  int                 `json:"connections_udp"`
+		ConnectionsUDP  int                 `json:"connections_udp"`
 		Online          bool                `json:"online"`
 		Uptime          int64               `json:"uptime"`
 		Ping            map[string]pingStat `json:"ping"`
@@ -319,10 +323,10 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		rl := recordLike{
 			Client:         uuid,
 			Time:           rep.UpdatedAt,
-			Cpu:            float32(rep.CPU.Usage),
+			CPU:            float32(rep.CPU.Usage),
 			Gpu:            gpuUsageFromReport(rep),
-			Ram:            rep.Ram.Used,
-			RamTotal:       rep.Ram.Total,
+			RAM:            rep.Ram.Used,
+			RAMTotal:       rep.Ram.Total,
 			Swap:           rep.Swap.Used,
 			SwapTotal:      rep.Swap.Total,
 			Load:           float32(rep.Load.Load1),
@@ -337,7 +341,7 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 			NetTotalDown:   rep.Network.TotalDown,
 			Process:        rep.Process,
 			Connections:    rep.Connections.TCP + rep.Connections.UDP,
-			ConnectionsUdp: rep.Connections.UDP,
+			ConnectionsUDP: rep.Connections.UDP,
 			Online:         onlineSet[uuid],
 			Uptime:         rep.Uptime,
 			Ping:           stats,
@@ -433,7 +437,9 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 	var params struct {
 		UUID string `json:"uuid"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	if params.UUID == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "UUID is required", params)
 	}
@@ -462,13 +468,15 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 	reports := agent_runtime.GetRecentReports(params.UUID)
 
 	// 扁平化为 { count, records: [] }
-	type flatRecord struct {
+	// Named nodeStatusRecord, not flatRecord, so it doesn't shadow the
+	// unrelated package-level flatRecord type in common_record.go.
+	type nodeStatusRecord struct {
 		Client         string    `json:"client"`
 		Time           time.Time `json:"time"`
-		Cpu            float32   `json:"cpu"`
+		CPU            float32   `json:"cpu"`
 		Gpu            float32   `json:"gpu"`
-		Ram            int64     `json:"ram"`
-		RamTotal       int64     `json:"ram_total"`
+		RAM            int64     `json:"ram"`
+		RAMTotal       int64     `json:"ram_total"`
 		Swap           int64     `json:"swap"`
 		SwapTotal      int64     `json:"swap_total"`
 		Load           float32   `json:"load"`
@@ -481,30 +489,30 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 		NetTotalDown   int64     `json:"net_total_down"`
 		Process        int       `json:"process"`
 		Connections    int       `json:"connections"`
-		ConnectionsUdp int       `json:"connections_udp"`
+		ConnectionsUDP int       `json:"connections_udp"`
 	}
 
 	resp := struct {
-		Count   int          `json:"count"`
-		Records []flatRecord `json:"records"`
+		Count   int                `json:"count"`
+		Records []nodeStatusRecord `json:"records"`
 	}{
 		Count:   0,
-		Records: []flatRecord{},
+		Records: []nodeStatusRecord{},
 	}
 
 	if len(reports) == 0 {
 		return resp, nil
 	}
 
-	resp.Records = make([]flatRecord, 0, len(reports))
+	resp.Records = make([]nodeStatusRecord, 0, len(reports))
 	for _, r := range reports {
-		fr := flatRecord{
+		fr := nodeStatusRecord{
 			Client:         params.UUID,
 			Time:           r.UpdatedAt,
-			Cpu:            float32(r.CPU.Usage),
+			CPU:            float32(r.CPU.Usage),
 			Gpu:            gpuUsageFromReport(&r),
-			Ram:            r.Ram.Used,
-			RamTotal:       r.Ram.Total,
+			RAM:            r.Ram.Used,
+			RAMTotal:       r.Ram.Total,
 			Swap:           r.Swap.Used,
 			SwapTotal:      r.Swap.Total,
 			Load:           float32(r.Load.Load1),
@@ -517,7 +525,7 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 			NetTotalDown:   r.Network.TotalDown,
 			Process:        r.Process,
 			Connections:    r.Connections.TCP + r.Connections.UDP,
-			ConnectionsUdp: r.Connections.UDP,
+			ConnectionsUDP: r.Connections.UDP,
 		}
 		resp.Records = append(resp.Records, fr)
 	}

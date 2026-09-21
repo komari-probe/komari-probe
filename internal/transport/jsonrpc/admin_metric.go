@@ -178,7 +178,9 @@ func adminStartMetricMigration(ctx context.Context, req *rpc.JsonRpcRequest) (an
 		SourceDriver string `json:"source_driver"`
 		SourceDSN    string `json:"source_dsn"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 
 	if err := metricstore.StartStoreMigration(strings.TrimSpace(params.SourceDriver), strings.TrimSpace(params.SourceDSN)); err != nil {
 		return nil, rpc.MakeError(rpc.InvalidRequest, err.Error(), nil)

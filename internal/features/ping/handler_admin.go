@@ -10,7 +10,7 @@ import (
 
 // handler_admin.go
 // 延迟监测任务（ping task）RPC2 方法的处理逻辑（admin 命名空间）。
-// 方法注册（RegisterWithGroupAndMeta）留在 web/jsonrpc 里，
+// 方法注册（RegisterWithGroupAndMeta）留在 transport/jsonrpc 里，
 // 因为注册中心本身在那边；这里只暴露纯逻辑函数，避免 ping 反过来
 // 依赖 jsonrpc 造成循环 import。
 

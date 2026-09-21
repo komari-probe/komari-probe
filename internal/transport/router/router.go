@@ -8,8 +8,8 @@ import (
 	"github.com/komari-monitor/komari/internal/features/plugin"
 	"github.com/komari-monitor/komari/internal/features/theme"
 	"github.com/komari-monitor/komari/internal/platform/public"
-	"github.com/komari-monitor/komari/internal/web/api/admin"
-	jsonRpc "github.com/komari-monitor/komari/internal/web/jsonrpc"
+	"github.com/komari-monitor/komari/internal/transport/admin"
+	jsonRpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
 )
 
 // Register binds all HTTP, WebSocket, JSON-RPC and static frontend routes.
@@ -54,8 +54,8 @@ func registerPublicRoutes(r *gin.Engine) {
 	r.GET("/api/task/ping", jsonRpc.Bind("public:getPublicPingTasks"))
 
 	// JSON-RPC 直连入口。
-	r.GET("/api/rpc2", jsonRpc.OnRpcRequest)
-	r.POST("/api/rpc2", jsonRpc.OnRpcRequest)
+	r.GET("/api/rpc2", jsonRpc.OnRPCRequest)
+	r.POST("/api/rpc2", jsonRpc.OnRPCRequest)
 }
 
 // registerAgentRoutes agent（客户端）上报与拉取路由。

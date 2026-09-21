@@ -14,7 +14,7 @@ import (
 
 // handler_admin.go
 // 通知相关 RPC2 方法的处理逻辑（admin 命名空间）：负载告警、离线通知。
-// 方法注册留在 web/jsonrpc（注册中心在那边），这里只暴露纯逻辑函数。
+// 方法注册留在 transport/jsonrpc（注册中心在那边），这里只暴露纯逻辑函数。
 
 // AdminSendNotification 发送一条通知。仅供外部（插件/脚本）通过 RPC 调用，
 // 内部通知逻辑（offline/renewal/session 等）直接调用 SendNotification。

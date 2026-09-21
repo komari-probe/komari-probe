@@ -13,7 +13,7 @@ import (
 
 // handler_provider.go
 // 消息发送器 provider 配置的 RPC2 方法处理逻辑（admin 命名空间）。
-// OIDC provider 配置是 auth 的事，留在 web/jsonrpc 里没有跟着搬。
+// OIDC provider 配置是 auth 的事，留在 transport/jsonrpc 里没有跟着搬。
 
 func AdminGetMessageSender(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {

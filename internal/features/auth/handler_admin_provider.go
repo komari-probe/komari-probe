@@ -13,7 +13,7 @@ import (
 
 // handler_admin_provider.go
 // OIDC provider 配置的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在
-// web/jsonrpc/admin_provider.go。
+// transport/jsonrpc/admin_provider.go。
 
 func AdminGetOidc(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {

@@ -200,7 +200,7 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 
 	metricFillEmpty := resolveMetricFillEmpty(params)
 	useRaw := publicMetricUsesRawWindow(start, end, queryNow)
-	definitions := make(map[string]tsdb.Definition, len(metricKeys))
+	var definitions map[string]tsdb.Definition
 	rawValues := make(map[string][]tsdb.Point)
 	rollupValues := make(map[string]map[tsdb.Aggregation][]tsdb.AggregatePoint)
 	if len(entityIDs) > 0 && useRaw {
@@ -342,68 +342,6 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 		"series":                    series,
 		"count":                     len(series),
 	}, nil
-}
-
-type publicMetricPointResult struct {
-	points      []publicMetricPoint
-	downsampled bool
-	interval    time.Duration
-}
-
-func loadPublicMetricPoints(
-	ctx context.Context,
-	store *tsdb.Store,
-	query tsdb.Query,
-	algorithm tsdb.Aggregation,
-	maxPoints int,
-	fillEmpty bool,
-	now time.Time,
-) (publicMetricPointResult, error) {
-	if publicMetricUsesRawWindow(query.Start, query.End, now) {
-		points, err := store.Query(ctx, query)
-		if err != nil {
-			return publicMetricPointResult{}, err
-		}
-		result := publicMetricPointResult{points: make([]publicMetricPoint, 0, len(points))}
-		for _, point := range points {
-			result.points = append(result.points, publicMetricPoint{
-				entityID: point.EntityID,
-				Time:     point.Timestamp.UTC(),
-				Value:    publicRawMetricValue(point.MetricName, point.Value, fillEmpty),
-				Count:    1,
-				Tags:     point.Tags,
-				Labels:   point.Labels,
-			})
-		}
-		return result, nil
-	}
-
-	interval := metricDownsampleInterval(query.End.Sub(query.Start), maxPoints)
-	interval = store.CompatibleSeriesInterval(query.Start, now, interval)
-	points, err := store.Series(ctx, tsdb.AggregateQuery{
-		Query:          query,
-		Aggregation:    algorithm,
-		Interval:       interval,
-		PreserveSeries: true,
-	}, now)
-	if err != nil {
-		return publicMetricPointResult{}, err
-	}
-	result := publicMetricPointResult{
-		points:      make([]publicMetricPoint, 0, len(points)),
-		downsampled: true,
-		interval:    interval,
-	}
-	for _, point := range points {
-		result.points = append(result.points, publicMetricPoint{
-			entityID: point.EntityID,
-			Time:     point.Bucket.UTC(),
-			Value:    publicRawMetricValue(point.MetricName, point.Value, fillEmpty),
-			Count:    point.Count,
-			Tags:     point.Tags,
-		})
-	}
-	return result, nil
 }
 
 func publicMetricUsesRawWindow(start, end, now time.Time) bool {

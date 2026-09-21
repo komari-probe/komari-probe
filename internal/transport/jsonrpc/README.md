@@ -18,10 +18,10 @@
 | --- | --- |
 | `pkg/rpc/*` | 协议内核：请求/响应类型、注册表、调用 (`Call`/`Invoke`)、权限模型 (`permission.go`) |
 | `transport.go` | 传输适配：`/api/rpc2` 的 HTTP POST 与 WebSocket，身份识别，`CallFromGin` |
-| `dispatch.go` | 统一分发入口 `Dispatch`，内部调用入口 `OnInternalRequest` |
-| `register.go` | 注册便捷函数 `Register` / `RegisterWithGroupAndMeta` |
+| `dispatch.go` | 统一分发入口 `Dispatch` |
+| `register.go` | 注册便捷函数 `Register` / `RegisterWithGroupAndMeta`（只应在 `init()` 调用，注册失败直接 panic，不返回 error） |
 | `common*.go` | `common` 命名空间业务方法 |
-| `admin.*.go` | `admin` 命名空间业务方法 |
+| `admin_*.go` | `admin` 命名空间业务方法 |
 
 ## 命名空间与权限（声明式 ACL + 通配符）
 
@@ -119,7 +119,7 @@ handler 退化为薄适配层：解析 gin 参数 → 调 RPC → 把响应映�
 
 ### 声明式路由桥 `Bind`
 
-`web/jsonrpc/bridge.go` 提供：
+`transport/jsonrpc/bridge.go` 提供：
 
 ```go
 r.GET("/api/admin/client/:uuid", jsonRpc.Bind("admin:getClient", jsonRpc.WithPath("uuid"), jsonRpc.WithRaw()))
@@ -130,12 +130,14 @@ r.GET("/api/admin/client/:uuid", jsonRpc.Bind("admin:getClient", jsonRpc.WithPat
   - 默认 `renderStandard` → `{status:"success", message, data}`（data 为空时省略，对齐 `api.Response`）。
   - `WithFlat()` → 把 result(map) 平铺到顶层 + `{status:"success"}`（addClient/getClientToken/getSessions/provider set）。
   - `WithRaw()` → 直接输出 result（agent 裸 JSON / me / listClients / getClient）。
-  - `WithMessage(msg)` → 成功带固定 message（xtermjs 保存）。
 - 错误：统一 `{status:"error", message}` + JSON-RPC 错误码到 HTTP 码映射。
 
 ### 保留为 REST 的接口（不走 RPC 桥）
 
-二进制/流/重定向/特殊鉴权类，集中在 `web/api/admin`（2fa/theme/backup/update/oauth 绑定）、
-`web/api/public`（login/logout/oauth/plugin）、`web/api/client`（v2 RPC、terminal、AutoDiscovery 注册）。
+二进制/流/重定向/特殊鉴权类不走 `Bind`，按各自归属拆开：
 
-agent v2 上报的核心逻辑统一在 `web/api/client/ingest.go`。
+- `transport/admin`：只剩两类——运行时性能采样（pprof）、GeoIP 数据库/favicon 文件上传更新。
+- 2FA（含二维码 PNG）、theme/backup 的分片上传安装、oauth2 绑定重定向、登录/登出/OAuth 回调、
+  agent v2 上报（WebSocket/HTTP 二选一）——这些各自的 REST handler 都定义在对应的
+  `internal/features/*`（`auth`、`theme`、`backup`、`client` 等）包里，由
+  `transport/router` 直接注册路由、不经过 `transport/admin` 这层。

@@ -10,6 +10,7 @@ import (
 	"runtime"
 	runtimepprof "runtime/pprof"
 	"runtime/trace"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -293,12 +294,7 @@ func singlePprofQuery(c *gin.Context, key string) (string, bool, bool) {
 }
 
 func isRuntimeProfile(name string) bool {
-	for _, profile := range runtimeProfileNames {
-		if name == profile {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(runtimeProfileNames, name)
 }
 
 func pprofFilename(target pprofTarget) string {

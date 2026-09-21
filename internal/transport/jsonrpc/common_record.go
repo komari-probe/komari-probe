@@ -169,11 +169,11 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		}{Count: total, Records: grouped, From: startTime.UTC(), To: endTime.UTC()}, nil
 
 	case "ping":
-		taskId := params.TaskID
-		if taskId == 0 {
-			taskId = -1
+		taskID := params.TaskID
+		if taskID == 0 {
+			taskID = -1
 		}
-		recs, err := ping.GetPingRecords(params.UUID, taskId, startTime, endTime)
+		recs, err := ping.GetPingRecords(params.UUID, taskID, startTime, endTime)
 		if err != nil {
 			return nil, rpc.MakeError(rpc.InternalError, "Failed to fetch ping records", err.Error())
 		}
@@ -190,7 +190,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		}
 
 		type RecordsResp struct {
-			TaskId uint      `json:"task_id,omitempty"`
+			TaskID uint      `json:"task_id,omitempty"`
 			Time   time.Time `json:"time"`
 			Value  int       `json:"value"`
 			Client string    `json:"client,omitempty"`
@@ -222,7 +222,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 
 		for _, r := range recs {
 			rr := RecordsResp{
-				TaskId: r.TaskId,
+				TaskID: r.TaskId,
 				Time:   r.Time,
 				Value:  r.Value,
 				Client: r.Client,
@@ -269,7 +269,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		}
 		toList := make([]map[string]any, 0, len(pingTasks))
 		for _, t := range pingTasks {
-			if taskId != -1 && t.Id != uint(taskId) {
+			if taskID != -1 && t.Id != uint(taskID) {
 				continue
 			}
 			if params.UUID != "" { // ensure task assigned to specific client when filtering by uuid
@@ -284,7 +284,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			sum := 0
 			valid := 0
 			latestVal := -1
-			var latestTs time.Time
+			var latestTS time.Time
 			// 收集该任务的所有有效(非丢包)延迟值以计算百分位
 			latencies := make([]int, 0, 64)
 			for _, r := range recs {
@@ -310,8 +310,8 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 				}
 				// track latest non-negative value
 				ts := r.Time
-				if latestTs.IsZero() || ts.After(latestTs) {
-					latestTs = ts
+				if latestTS.IsZero() || ts.After(latestTS) {
+					latestTS = ts
 					latestVal = r.Value
 				}
 			}
@@ -351,7 +351,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 				"p99":           p99,
 				"p99_p50_ratio": ratio,
 			}
-			if params.UUID == "" && taskId != -1 { // retain existing behavior of exposing clients only when filtering by task
+			if params.UUID == "" && taskID != -1 { // retain existing behavior of exposing clients only when filtering by task
 				info["clients"] = t.Clients
 			}
 			toList = append(toList, info)
@@ -363,23 +363,23 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			maxCount = 4000
 		}
 		if maxCount != -1 && len(response.Records) > maxCount {
-			// group records by TaskId for proportional downsampling
+			// group records by TaskID for proportional downsampling
 			taskGroups := make(map[uint][]RecordsResp)
 			for _, r := range response.Records {
-				taskGroups[r.TaskId] = append(taskGroups[r.TaskId], r)
+				taskGroups[r.TaskID] = append(taskGroups[r.TaskID], r)
 			}
 
 			// sort each group by time
-			for taskId := range taskGroups {
-				sort.Slice(taskGroups[taskId], func(i, j int) bool {
-					return taskGroups[taskId][i].Time.Before(taskGroups[taskId][j].Time)
+			for taskID := range taskGroups {
+				sort.Slice(taskGroups[taskID], func(i, j int) bool {
+					return taskGroups[taskID][i].Time.Before(taskGroups[taskID][j].Time)
 				})
 			}
 
 			groupsMeta := make([]recordsdb.AllocationGroup[uint], 0, len(taskGroups))
-			for taskId, records := range taskGroups {
+			for taskID, records := range taskGroups {
 				groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[uint]{
-					Key:    taskId,
+					Key:    taskID,
 					Length: len(records),
 				})
 			}
@@ -387,8 +387,8 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 
 			// downsample each task group
 			downsampledRecords := make([]RecordsResp, 0, maxCount)
-			for taskId, records := range taskGroups {
-				targetCount := targets[taskId]
+			for taskID, records := range taskGroups {
+				targetCount := targets[taskID]
 				sampled := recordsdb.SampleEvenly(records, targetCount)
 				downsampledRecords = append(downsampledRecords, sampled...)
 			}
@@ -423,10 +423,10 @@ func getLoadRecordsCombined(uuid string, start, end time.Time) ([]models.Record,
 type flatRecord struct {
 	Client         string    `json:"client"`
 	Time           time.Time `json:"time"`
-	Cpu            *float32  `json:"cpu,omitempty"`
+	CPU            *float32  `json:"cpu,omitempty"`
 	Gpu            *float32  `json:"gpu,omitempty"`
-	Ram            *int64    `json:"ram,omitempty"`
-	RamTotal       *int64    `json:"ram_total,omitempty"`
+	RAM            *int64    `json:"ram,omitempty"`
+	RAMTotal       *int64    `json:"ram_total,omitempty"`
 	Swap           *int64    `json:"swap,omitempty"`
 	SwapTotal      *int64    `json:"swap_total,omitempty"`
 	Load           *float32  `json:"load,omitempty"`
@@ -439,7 +439,7 @@ type flatRecord struct {
 	NetTotalDown   *int64    `json:"net_total_down,omitempty"`
 	Process        *int      `json:"process,omitempty"`
 	Connections    *int      `json:"connections,omitempty"`
-	ConnectionsUdp *int      `json:"connections_udp,omitempty"`
+	ConnectionsUDP *int      `json:"connections_udp,omitempty"`
 	Uptime         *int64    `json:"uptime,omitempty"`
 }
 
@@ -450,15 +450,15 @@ func filterRecordsByLoadType(recs []models.Record, loadType string) []flatRecord
 		switch loadType {
 		case "cpu":
 			v := r.Cpu
-			fr.Cpu = &v
+			fr.CPU = &v
 		case "gpu":
 			v := r.Gpu
 			fr.Gpu = &v
 		case "ram":
 			v := r.Ram
-			fr.Ram = &v
+			fr.RAM = &v
 			vt := r.RamTotal
-			fr.RamTotal = &vt
+			fr.RAMTotal = &vt
 		case "swap":
 			v := r.Swap
 			fr.Swap = &v
@@ -491,11 +491,11 @@ func filterRecordsByLoadType(recs []models.Record, loadType string) []flatRecord
 			v := r.Connections
 			fr.Connections = &v
 			vu := r.ConnectionsUdp
-			fr.ConnectionsUdp = &vu
+			fr.ConnectionsUDP = &vu
 		default:
 			// unknown type: fallback to all fields as a full record would be returned elsewhere
 			v := r.Cpu
-			fr.Cpu = &v
+			fr.CPU = &v
 		}
 		out = append(out, fr)
 	}

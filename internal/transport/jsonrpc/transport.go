@@ -15,8 +15,8 @@ import (
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
-// OnRpcRequest 是 /api/rpc2 的统一入口：GET 升级为 WebSocket，POST 处理单条/批量 JSON-RPC。
-func OnRpcRequest(c *gin.Context) {
+// OnRPCRequest 是 /api/rpc2 的统一入口：GET 升级为 WebSocket，POST 处理单条/批量 JSON-RPC。
+func OnRPCRequest(c *gin.Context) {
 	// GET -> WebSocket
 	if c.Request.Method == http.MethodGet {
 		serveWebSocket(c)

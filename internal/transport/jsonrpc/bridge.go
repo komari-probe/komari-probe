@@ -41,11 +41,6 @@ func WithFlat() BindOption { return func(c *bindConfig) { c.render = renderFlat 
 // WithRaw 使成功响应直接输出 result，无包装（用于 agent 裸 JSON 接口）。
 func WithRaw() BindOption { return func(c *bindConfig) { c.render = renderRaw } }
 
-// WithMessage 使成功响应带固定 message（standard 渲染）。
-func WithMessage(msg string) BindOption {
-	return func(c *bindConfig) { c.successMsg = msg }
-}
-
 // WithPath 声明要合并进参数对象的路径参数（gin c.Param）。
 func WithPath(names ...string) BindOption {
 	return func(c *bindConfig) { c.pathParams = append(c.pathParams, names...) }

@@ -554,7 +554,7 @@ func TestRouteRequestContextCarriesIdentity(t *testing.T) {
 	withTempDataDir(t)
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	// 模拟 IdentityMiddleware：写入 principal/role/uuid（与 web/api 一致）
+	// 模拟 IdentityMiddleware：写入 principal/role/uuid（与 transport/admin 一致）
 	engine.Use(func(c *gin.Context) {
 		c.Set("principal", rpc.NewUserPrincipal("user-1"))
 		c.Set("role", "admin")

@@ -7,7 +7,7 @@ import (
 )
 
 // handler_update_user.go
-// 更新用户名/密码/SSO 类型，从原 web/api/admin/update.go 中拆出（该文件其余的
+// 更新用户名/密码/SSO 类型，从原 transport/admin/update.go 中拆出（该文件其余的
 // GeoIP/favicon 更新接口与 auth 无关，留在原处）。
 
 func UpdateUser(c *gin.Context) {

@@ -18,7 +18,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	jsonrpc "github.com/komari-monitor/komari/internal/web/jsonrpc"
+	jsonrpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 	"gorm.io/gorm"

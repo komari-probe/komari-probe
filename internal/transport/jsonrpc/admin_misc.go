@@ -2,7 +2,7 @@ package jsonrpc
 
 import (
 	"context"
-	"strconv"
+	"errors"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/ping"
@@ -16,11 +16,6 @@ import (
 // admin_misc.go
 // 杂项 admin RPC2 方法：设置、客户端排序相关的记录清理。会话管理已迁移到
 // internal/features/auth（见 admin_session.go）。
-
-func parseUintKey(s string) (uint, error) {
-	v, err := strconv.ParseUint(s, 10, 64)
-	return uint(v), err
-}
 
 func init() {
 	RegisterWithGroupAndMeta("getSettings", rpc.RoleAdmin, adminGetSettings, &rpc.MethodMeta{
@@ -115,9 +110,11 @@ func removeRetiredLowResourceMode(cfg map[string]any) {
 }
 
 func adminClearAllRecords(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-
-	records.DeleteAll()
-	ping.DeleteAllPingRecords()
+	loadErr := records.DeleteAll()
+	pingErr := ping.DeleteAllPingRecords()
+	if err := errors.Join(loadErr, pingErr); err != nil {
+		return nil, rpc.MakeError(rpc.InternalError, "Failed to clear all records: "+err.Error(), nil)
+	}
 	actor, ip := auditActor(ctx)
 	auditlog.Log(ip, actor, "clear all records", "info")
 	return nil, nil

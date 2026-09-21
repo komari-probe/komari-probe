@@ -18,7 +18,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/internal/web/router"
+	"github.com/komari-monitor/komari/internal/transport/router"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/lifecycle"
 	"github.com/komari-monitor/komari/pkg/logger"

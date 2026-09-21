@@ -35,7 +35,9 @@ func adminGetLogs(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		Page    string `json:"page"`
 		MsgType string `json:"msg_type"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	if params.Limit == "" {
 		params.Limit = "100"
 	}
@@ -61,7 +63,9 @@ func adminTestGeoip(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 	var params struct {
 		IP string `json:"ip"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
+	}
 	ip := params.IP
 	if ip == "" {
 		if meta := rpc.MetaFromContext(ctx); meta != nil {
