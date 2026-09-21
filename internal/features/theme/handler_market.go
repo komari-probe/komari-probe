@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
@@ -34,7 +34,7 @@ func CreateThemeMarketSource(c *gin.Context) {
 		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	source.ID, err = market.NewSourceID()
+	source.ID, err = marketutil.NewSourceID()
 	if err != nil {
 		respond.Error(c, http.StatusInternalServerError, "Failed to create source ID")
 		return
@@ -214,7 +214,7 @@ func InstallThemeFromMarket(c *gin.Context) {
 		respond.Error(c, http.StatusBadRequest, "This theme does not provide an installable package")
 		return
 	}
-	data, err := market.DownloadMarketURL(selected.Download, market.PackageMaxSize)
+	data, err := marketutil.DownloadMarketURL(selected.Download, marketutil.PackageMaxSize)
 	if err != nil {
 		respond.Error(c, http.StatusBadRequest, "Failed to download theme: "+err.Error())
 		return

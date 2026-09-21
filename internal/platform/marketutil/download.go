@@ -1,4 +1,4 @@
-package market
+package marketutil
 
 import (
 	"context"
@@ -14,9 +14,6 @@ import (
 	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/gorm"
 )
-
-// MaxBytes limits the response size of a market download.
-const MaxBytes = 100 << 20
 
 const marketDownloadTimeout = 45 * time.Second
 
@@ -37,14 +34,6 @@ var blockedMarketIPPrefixes = []netip.Prefix{
 // checks every result, and dials the validated IP directly. Proxies are
 // disabled so the destination checked here is the destination actually used.
 var protectedMarketDownloadTransport = newSSRFProtectedTransport()
-
-// IsSSRFProtectionEnabled reports whether SSRF protection is enabled for
-// market downloads. An unreadable setting is treated as enabled so callers
-// using this status helper fail closed.
-func IsSSRFProtectionEnabled() bool {
-	enabled, err := ssrfProtectionEnabled()
-	return err != nil || enabled
-}
 
 // DownloadMarketURL performs a market download. When SSRF protection is
 // enabled, URLs resolving to private or internal addresses are rejected
@@ -102,8 +91,6 @@ func newSSRFProtectedTransport() *http.Transport {
 	}
 	transport := base.Clone()
 	transport.Proxy = nil
-	transport.Dial = nil
-	transport.DialTLS = nil
 	transport.DialTLSContext = nil
 	transport.DialContext = dialMarketAddress
 	return transport

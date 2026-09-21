@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/models"
 )
 
@@ -33,8 +33,8 @@ func TestIsValidThemeShort_PathTraversal(t *testing.T) {
 		"a$(id)",
 	}
 	for _, in := range deny {
-		if market.IsValidShort(in) {
-			t.Errorf("market.IsValidShort(%q) = true, want false (路径穿越/非法字符未被拦截)", in)
+		if marketutil.IsValidShort(in) {
+			t.Errorf("marketutil.IsValidShort(%q) = true, want false (路径穿越/非法字符未被拦截)", in)
 		}
 	}
 
@@ -48,8 +48,8 @@ func TestIsValidThemeShort_PathTraversal(t *testing.T) {
 		"a",
 	}
 	for _, in := range accept {
-		if !market.IsValidShort(in) {
-			t.Errorf("market.IsValidShort(%q) = false, want true (合法名称被误拒)", in)
+		if !marketutil.IsValidShort(in) {
+			t.Errorf("marketutil.IsValidShort(%q) = false, want true (合法名称被误拒)", in)
 		}
 	}
 }

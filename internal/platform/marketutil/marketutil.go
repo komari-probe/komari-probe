@@ -1,6 +1,8 @@
-// Package market holds the small validation/ID helpers shared by every
-// admin-managed marketplace (currently the theme and plugin markets).
-package market
+// Package marketutil holds the small validation/ID/safe-download helpers
+// shared by every admin-managed marketplace (currently the theme and plugin
+// markets). It isn't a marketplace implementation itself - see
+// internal/features/theme and internal/features/plugin for those.
+package marketutil
 
 import (
 	"crypto/rand"

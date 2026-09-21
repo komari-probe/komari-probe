@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 )
@@ -103,7 +103,7 @@ func fetchThemeMarketCatalog(source ThemeMarketSource, force bool) ([]ThemeMarke
 			return append([]ThemeMarketTheme(nil), cached.Themes...), nil
 		}
 	}
-	data, err := market.DownloadMarketURL(source.URL, market.CatalogMaxSize)
+	data, err := marketutil.DownloadMarketURL(source.URL, marketutil.CatalogMaxSize)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func fetchThemeMarketCatalog(source ThemeMarketSource, force bool) ([]ThemeMarke
 		themes[i].SourceName = source.Name
 	}
 	themeMarketCache.Lock()
-	themeMarketCache.items[source.URL] = cachedThemeMarketCatalog{Themes: themes, ExpiresAt: time.Now().Add(market.CacheTTL)}
+	themeMarketCache.items[source.URL] = cachedThemeMarketCatalog{Themes: themes, ExpiresAt: time.Now().Add(marketutil.CacheTTL)}
 	themeMarketCache.Unlock()
 	return append([]ThemeMarketTheme(nil), themes...), nil
 }
@@ -146,10 +146,10 @@ func parseThemeMarketCatalog(data []byte) ([]ThemeMarketTheme, error) {
 }
 
 func validateThemeMarketTheme(theme ThemeMarketTheme) error {
-	if !market.IsText(theme.Name) || theme.Short == "" || theme.Version == "" || !market.IsText(theme.Author) {
+	if !marketutil.IsText(theme.Name) || theme.Short == "" || theme.Version == "" || !marketutil.IsText(theme.Author) {
 		return errors.New("name, short, version and author are required")
 	}
-	if !market.IsValidShort(theme.Short) {
+	if !marketutil.IsValidShort(theme.Short) {
 		return errors.New("short contains invalid characters")
 	}
 	if (theme.Download == "") != (theme.SHA256 == "") {
@@ -164,7 +164,7 @@ func validateThemeMarketTheme(theme ThemeMarketTheme) error {
 		if value == "" && (field == "preview" || field == "download") {
 			continue
 		}
-		if err := market.ValidateURLSyntax(value); err != nil {
+		if err := marketutil.ValidateURLSyntax(value); err != nil {
 			return fmt.Errorf("%s: %w", field, err)
 		}
 	}

@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/respond"
@@ -72,7 +72,7 @@ func DeleteTheme(c *gin.Context) {
 	}
 
 	// 校验主题短名称，防止路径穿越（如 ../）导致删除工作目录外的任意文件
-	if !market.IsValidShort(req.Short) {
+	if !marketutil.IsValidShort(req.Short) {
 		respond.Error(c, http.StatusBadRequest, "无效的主题名称")
 		return
 	}
@@ -105,7 +105,7 @@ func SetTheme(c *gin.Context) {
 	// 如果不是default主题，检查主题是否存在
 	if themeName != "default" {
 		// 校验主题名称，防止路径穿越（如 ../）访问工作目录外的文件
-		if !market.IsValidShort(themeName) {
+		if !marketutil.IsValidShort(themeName) {
 			respond.Error(c, http.StatusBadRequest, "无效的主题名称")
 			return
 		}
@@ -146,7 +146,7 @@ func UpdateTheme(c *gin.Context) {
 	}
 
 	// 校验主题短名称，防止路径穿越（如 ../）访问工作目录外的文件
-	if !market.IsValidShort(req.Short) {
+	if !marketutil.IsValidShort(req.Short) {
 		respond.Error(c, http.StatusBadRequest, "无效的主题名称")
 		return
 	}

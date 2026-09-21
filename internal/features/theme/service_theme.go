@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/models"
 )
 
@@ -130,14 +130,14 @@ func validateThemeManifest(themeInfo models.Theme) error {
 	if !models.IsLocalizedText(themeInfo.Name) || themeInfo.Short == "" {
 		return fmt.Errorf("主题配置缺少必填字段（name、short）")
 	}
-	if !market.IsValidShort(themeInfo.Short) {
+	if !marketutil.IsValidShort(themeInfo.Short) {
 		return fmt.Errorf("主题short字段格式无效，只允许字母、数字、下划线和连字符")
 	}
 	return validateThemeConfiguration(themeInfo)
 }
 
 func downloadThemeFromURL(rawURL string) ([]byte, error) {
-	return market.DownloadMarketURL(rawURL, market.MaxBytes)
+	return marketutil.DownloadMarketURL(rawURL, marketutil.PackageMaxSize)
 }
 
 // getGitHubReleaseDownloadURL 从GitHub API获取最新release的下载链接
