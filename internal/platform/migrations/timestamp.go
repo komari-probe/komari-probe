@@ -3,12 +3,13 @@ package migrations
 import (
 	"database/sql"
 	"fmt"
-	"github.com/komari-monitor/komari/pkg/logger"
 	"math"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/komari-monitor/komari/pkg/logger"
 
 	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/gorm"
