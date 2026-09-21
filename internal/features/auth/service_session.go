@@ -10,7 +10,6 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/random"
@@ -50,7 +49,7 @@ func CreateSession(uuid string, expires int, userAgent, ip, loginMethod string) 
 				loc = ipinfo.Name
 			}
 			_ = messagesender.SendNotification(models.EventMessage{
-				Event:   messageevent.Login,
+				Event:   models.EventLogin,
 				Time:    time.Now().UTC(),
 				Message: fmt.Sprintf("%s: %s (%s)\n%s", loginMethod, ip, loc, userAgent),
 				Emoji:   "🔑",

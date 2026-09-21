@@ -10,7 +10,6 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/records"
 	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/scheduler"
@@ -200,7 +199,7 @@ func sendLoadNotification(clientUUIDs []string, task models.LoadNotification) {
 	}
 	go func() {
 		if err := messagesender.SendNotification(models.EventMessage{
-			Event:   messageevent.Alert,
+			Event:   models.EventAlert,
 			Clients: eventClients,
 			Time:    time.Now().UTC(),
 			Emoji:   "⚠️",

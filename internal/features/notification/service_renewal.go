@@ -9,7 +9,6 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/pkg/timeutil"
 )
 
@@ -99,7 +98,7 @@ func CheckAndAutoRenewal(client models.Client) {
 				client.Name, timeutil.FormatSystemDate(newExpireTime)))
 
 			_ = messagesender.SendNotification(models.EventMessage{
-				Event:   messageevent.Renew,
+				Event:   models.EventRenew,
 				Clients: []models.Client{client},
 				Time:    time.Now().UTC(),
 				Emoji:   "🔄",

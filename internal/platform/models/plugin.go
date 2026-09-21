@@ -82,5 +82,5 @@ type PluginPage struct {
 // mirroring ThemeConfiguration.
 type PluginConfiguration struct {
 	Short string `json:"short" gorm:"primaryKey;unique;not null"`
-	Data  string `json:"data" gorm:"type:longtext" default:"{}"`
+	Data  string `json:"data" gorm:"type:longtext;default:'{}'"`
 }

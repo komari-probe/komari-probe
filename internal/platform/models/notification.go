@@ -2,6 +2,17 @@ package models
 
 import "time"
 
+// Message event names carried by EventMessage.Event.
+const (
+	EventOffline = "Offline"
+	EventOnline  = "Online"
+	EventExpire  = "Expire"
+	EventRenew   = "Renew"
+	EventLogin   = "Login"
+	EventAlert   = "Alert"
+	EventTraffic = "Traffic"
+)
+
 // Notification 定义了通知相关的数据库模型
 type OfflineNotification struct {
 	Client     string `json:"client" gorm:"type:varchar(36);not null;index;unique;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;foreignKey:client;references:UUID"`

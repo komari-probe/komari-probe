@@ -1,16 +1,16 @@
 package notification
 
 import (
-	"github.com/komari-monitor/komari/pkg/logger"
 	"sync"
 	"time"
+
+	"github.com/komari-monitor/komari/pkg/logger"
 
 	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 )
@@ -113,7 +113,7 @@ func OfflineNotification(clientID string, endedConnectionID int64) {
 		// Send notification
 		go func() {
 			if err := messagesender.SendNotification(models.EventMessage{
-				Event:   messageevent.Offline,
+				Event:   models.EventOffline,
 				Clients: []models.Client{client},
 				Time:    time.Now().UTC(),
 				Emoji:   "🔴",
@@ -186,7 +186,7 @@ func OnlineNotification(clientID string, connectionID int64) {
 	// 规则4：客户端离线足够久已通知（或未待离线），现在重新上线，发送上线通知。
 	go func() {
 		if err := messagesender.SendNotification(models.EventMessage{
-			Event:   messageevent.Online,
+			Event:   models.EventOnline,
 			Clients: []models.Client{client},
 			Time:    time.Now().UTC(),
 			Emoji:   "🟢",
