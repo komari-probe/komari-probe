@@ -9,7 +9,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/theme"
 	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/web/api/admin"
-	jsonRpc "github.com/komari-monitor/komari/internal/web/rpc/jsonrpc"
+	jsonRpc "github.com/komari-monitor/komari/internal/web/jsonrpc"
 )
 
 // Register binds all HTTP, WebSocket, JSON-RPC and static frontend routes.

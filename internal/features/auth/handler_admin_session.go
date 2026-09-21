@@ -8,7 +8,7 @@ import (
 )
 
 // handler_admin_session.go
-// 会话管理的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在 web/rpc/jsonrpc。
+// 会话管理的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在 web/jsonrpc。
 
 func AdminGetSessions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	ss, err := GetAllSessions()

@@ -14,7 +14,7 @@ import (
 )
 
 // handler_admin.go
-// client 资源的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在 web/rpc/jsonrpc。
+// client 资源的 RPC2 方法处理逻辑（admin 命名空间）。方法注册留在 web/jsonrpc。
 
 func AdminAddClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {

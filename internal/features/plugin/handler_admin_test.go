@@ -11,7 +11,7 @@ import (
 )
 
 // handler_admin_test.go
-// 原来在 web/rpc/jsonrpc/admin.plugin_test.go，随 handler_admin.go 的逻辑一起
+// 原来在 web/jsonrpc/admin.plugin_test.go，随 handler_admin.go 的逻辑一起
 // 搬过来，改为调用导出的 AdminXxx 函数；DB/临时目录 fixture 复用 main_test.go
 // 已有的 withTempDataDir / writePluginZip。
 

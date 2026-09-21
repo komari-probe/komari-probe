@@ -12,7 +12,7 @@ import (
 
 // handler_admin.go
 // 插件相关 admin 接口：静态文件服务（REST）+ RPC2 方法处理逻辑。
-// RPC2 方法注册留在 web/rpc/jsonrpc/admin_plugin.go。
+// RPC2 方法注册留在 web/jsonrpc/admin_plugin.go。
 
 // ServeAdminPluginFile serves a static file from an installed plugin directory,
 // used by injected plugin admin pages. 与 ServePublicPluginFile（无需鉴权的公开

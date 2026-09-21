@@ -7,7 +7,7 @@ import (
 
 // handler_oauth_binding.go
 // 外部账号绑定/解绑：绑定走 302 重定向，保留为 REST handler（不走 RPC 桥）。
-// OIDC provider 配置的 get/set 是 RPC2 方法（见 web/rpc/jsonrpc/admin_provider.go）。
+// OIDC provider 配置的 get/set 是 RPC2 方法（见 web/jsonrpc/admin_provider.go）。
 
 func BindingExternalAccount(c *gin.Context) {
 	session, _ := c.Cookie("session_token")

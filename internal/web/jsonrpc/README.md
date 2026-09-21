@@ -119,7 +119,7 @@ handler 退化为薄适配层：解析 gin 参数 → 调 RPC → 把响应映�
 
 ### 声明式路由桥 `Bind`
 
-`web/rpc/jsonrpc/bridge.go` 提供：
+`web/jsonrpc/bridge.go` 提供：
 
 ```go
 r.GET("/api/admin/client/:uuid", jsonRpc.Bind("admin:getClient", jsonRpc.WithPath("uuid"), jsonRpc.WithRaw()))
