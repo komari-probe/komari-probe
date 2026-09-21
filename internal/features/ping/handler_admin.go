@@ -23,7 +23,9 @@ func AdminAddTask(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		TaskType  string   `json:"type"`
 		Interval  int      `json:"interval"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
 	if params.Name == "" || params.Target == "" || params.TaskType == "" || params.Interval == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "name, target, type and interval are required", nil)
 	}
@@ -41,7 +43,9 @@ func AdminDeleteTask(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Json
 	var params struct {
 		ID []uint `json:"id"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
 	if len(params.ID) == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "id is required", nil)
 	}
@@ -55,7 +59,9 @@ func AdminEditTask(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRp
 	var params struct {
 		Tasks []*models.PingTask `json:"tasks"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
 	if len(params.Tasks) == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data", nil)
 	}

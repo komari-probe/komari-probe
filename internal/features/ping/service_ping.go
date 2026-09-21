@@ -60,11 +60,11 @@ func DeletePingTask(id []uint) error {
 
 	db := dbcore.GetDBInstance()
 	result := db.Where("id IN ?", id).Delete(&models.PingTask{})
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
 	if result.Error != nil {
 		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
 	return ReloadPingSchedule()
 }
@@ -84,11 +84,11 @@ func EditPingTask(tasks []*models.PingTask) error {
 			"interval":    task.Interval,
 		}
 		result := db.Model(&models.PingTask{}).Where("id = ?", task.ID).Updates(updates)
-		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
-		}
 		if result.Error != nil {
 			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 	}
 	return ReloadPingSchedule()

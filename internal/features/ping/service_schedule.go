@@ -70,7 +70,8 @@ func executePingTask(ctx context.Context, task models.PingTask) {
 	}
 }
 
-// targetPingClientUUIDs 根据任务配置计算本次调度需要下发的在线服务器列表。
+// targetPingClientUUIDs 返回任务配置的目标服务器列表；在线与否的判断留给
+// DispatchPing（离线客户端会被静默跳过），这里不做过滤。
 func targetPingClientUUIDs(task models.PingTask) []string {
 	return task.Clients
 }
