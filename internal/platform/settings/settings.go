@@ -1,7 +1,5 @@
 package settings
 
-import "time"
-
 type Settings struct {
 	ID                     uint   `json:"id,omitempty"`                                        // 1
 	Sitename               string `json:"sitename" default:"Komari"`                           // 站点名称，默认 "Komari"
@@ -14,12 +12,9 @@ type Settings struct {
 	PrivateSite            bool   `json:"private_site" default:"false"`                        // 是否为私有站点，默认 false
 	APIKey                 string `json:"api_key" default:""`                                  // API 密钥，默认空字符串
 	AutoDiscoveryKey       string `json:"auto_discovery_key" default:""`                       // 自动发现密钥
-	ScriptDomain           string `json:"script_domain" default:""`                            // 自定义脚本域名
 	SendIPAddrToGuest      bool   `json:"send_ip_addr_to_guest" default:"false"`               // 是否向访客页面发送 IP 地址，默认 false
 	VisitorAuditEnabled    bool   `json:"visitor_audit_enabled" default:"false"`               // 是否允许公开访客事件写入审计日志，默认 false
 	SSRFProtectionEnabled  bool   `json:"ssrf_protection_enabled" default:"false"`             // 是否启用 SSRF 防护，默认关闭
-	EulaAccepted           bool   `json:"eula_accepted" default:"false"`
-	BaseScriptsURLKey      string `json:"base_scripts_url" default:""`
 	// GeoIP 配置
 	GeoIPEnabled  bool   `json:"geo_ip_enabled" default:"true"`
 	GeoIPProvider string `json:"geo_ip_provider" default:"ipinfo"` // empty, mmdb, ip-api, geojs
@@ -39,7 +34,6 @@ type Settings struct {
 	ExpireNotificationLeadDays int     `json:"expire_notification_lead_days" default:"7"`  // 过期前多少天通知，默认7天
 	LoginNotification          bool    `json:"login_notification" default:"true"`          // 登录通知
 	TrafficLimitPercentage     float64 `json:"traffic_limit_percentage" default:"80.00"`   // 流量限制百分比，默认80.00%
-	UpdatedAt                  time.Time
 }
 
 const (
@@ -53,12 +47,9 @@ const (
 	PrivateSiteKey            = "private_site"
 	APIKeyKey                 = "api_key"
 	AutoDiscoveryKeyKey       = "auto_discovery_key"
-	ScriptDomainKey           = "script_domain"
 	SendIPAddrToGuestKey      = "send_ip_addr_to_guest"
 	VisitorAuditEnabledKey    = "visitor_audit_enabled"
 	SSRFProtectionEnabledKey  = "ssrf_protection_enabled"
-	EulaAcceptedKey           = "eula_accepted"
-	BaseScriptsURLKey         = "base_scripts_url"
 	GeoIPEnabledKey           = "geo_ip_enabled"
 	GeoIPProviderKey          = "geo_ip_provider"
 	OAuthEnabledKey           = "o_auth_enabled"
@@ -74,7 +65,6 @@ const (
 	ExpireNotificationLeadDaysKey = "expire_notification_lead_days"
 	LoginNotificationKey          = "login_notification"
 	TrafficLimitPercentageKey     = "traffic_limit_percentage"
-	UpdatedAtKey                  = "updated_at"
 	ThemeMarketSourcesKey         = "theme_market_sources"
 	PluginMarketSourcesKey        = "plugin_market_sources"
 )
