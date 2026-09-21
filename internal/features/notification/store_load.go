@@ -25,6 +25,9 @@ func AddLoadNotification(clients []string, name string, metric string, threshold
 func DeleteLoadNotification(id []uint) error {
 	db := dbcore.GetDBInstance()
 	result := db.Where("id IN ?", id).Delete(&models.LoadNotification{})
+	if result.Error != nil {
+		return result.Error
+	}
 	if result.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
@@ -35,6 +38,9 @@ func EditLoadNotification(notifications []*models.LoadNotification) error {
 	db := dbcore.GetDBInstance()
 	for _, notification := range notifications {
 		result := db.Model(&models.LoadNotification{}).Where("id = ?", notification.ID).Updates(notification)
+		if result.Error != nil {
+			return result.Error
+		}
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
 		}

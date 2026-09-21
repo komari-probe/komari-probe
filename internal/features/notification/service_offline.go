@@ -8,6 +8,7 @@ import (
 
 	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
+	"github.com/komari-monitor/komari/internal/features/renewal"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
@@ -176,7 +177,7 @@ func OnlineNotification(clientID string, connectionID int64) {
 		return
 	}
 	// 上线时检测续费
-	CheckAndAutoRenewal(client)
+	renewal.CheckAndAutoRenewal(client)
 	shouldNotify := updateOnlineState(clientID, connectionID)
 	_, enabled := getNotificationConfig(clientID)
 	if !enabled || !shouldNotify {

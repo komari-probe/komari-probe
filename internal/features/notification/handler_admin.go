@@ -55,7 +55,9 @@ func AdminAddLoadNotification(_ context.Context, req *rpc.JsonRpcRequest) (any, 
 		Ratio     float32  `json:"ratio"`
 		Interval  int      `json:"interval"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
 	if len(params.Clients) == 0 || params.Metric == "" || params.Threshold == 0 || params.Ratio == 0 || params.Interval == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "clients, metric, threshold, ratio and interval are required", nil)
 	}
@@ -76,7 +78,9 @@ func AdminDeleteLoadNotification(_ context.Context, req *rpc.JsonRpcRequest) (an
 	var params struct {
 		ID []uint `json:"id"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
 	if len(params.ID) == 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "id is required", nil)
 	}

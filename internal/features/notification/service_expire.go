@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
+	"github.com/komari-monitor/komari/internal/features/renewal"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -80,6 +81,6 @@ func CheckExpire() {
 	}
 
 	for _, client := range allClients {
-		CheckAndAutoRenewal(client)
+		renewal.CheckAndAutoRenewal(client)
 	}
 }

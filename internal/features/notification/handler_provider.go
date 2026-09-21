@@ -19,7 +19,9 @@ func AdminGetMessageSender(_ context.Context, req *rpc.JsonRpcRequest) (any, *rp
 	var params struct {
 		Provider string `json:"provider"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
 	if params.Provider != "" {
 		cfg, err := messagesender.GetConfigByName(params.Provider)
 		if err != nil {
