@@ -1,4 +1,4 @@
-package api
+package respond
 
 import (
 	"errors"
@@ -11,16 +11,20 @@ import (
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
 
+// WebSocketUpgradeOption customizes the upgrader used by UpgradeWebSocket.
 type WebSocketUpgradeOption func(*websocket.Upgrader)
 
+// IsWebSocketUpgrade reports whether the request is a WebSocket upgrade request.
 func IsWebSocketUpgrade(c *gin.Context) bool {
 	return websocket.IsWebSocketUpgrade(c.Request)
 }
 
+// EnableWebSocketCompression turns on per-message compression on the upgrader.
 func EnableWebSocketCompression(upgrader *websocket.Upgrader) {
 	upgrader.EnableCompression = true
 }
 
+// UpgradeWebSocket upgrades an incoming HTTP request to a WebSocket connection.
 func UpgradeWebSocket(c *gin.Context, options ...WebSocketUpgradeOption) (*websocket.Conn, error) {
 	if !IsWebSocketUpgrade(c) {
 		return nil, fmt.Errorf("require websocket upgrade")

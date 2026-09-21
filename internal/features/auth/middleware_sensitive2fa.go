@@ -7,13 +7,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 func RequireSensitive2FA() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := VerifySensitive2FA(c); err != nil {
-			api.RespondError(c, http.StatusUnauthorized, err.Error())
+			respond.Error(c, http.StatusUnauthorized, err.Error())
 			c.Abort()
 			return
 		}

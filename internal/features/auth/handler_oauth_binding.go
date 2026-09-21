@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 // handler_oauth_binding.go
@@ -13,7 +13,7 @@ func BindingExternalAccount(c *gin.Context) {
 	session, _ := c.Cookie("session_token")
 	user, err := GetUserBySession(session)
 	if err != nil {
-		api.RespondError(c, 500, "No user found: "+err.Error())
+		respond.Error(c, 500, "No user found: "+err.Error())
 		return
 	}
 	c.SetCookie("binding_external_account", user.UUID, 3600, "/", "", false, true)
@@ -24,12 +24,12 @@ func UnbindExternalAccount(c *gin.Context) {
 	session, _ := c.Cookie("session_token")
 	user, err := GetUserBySession(session)
 	if err != nil {
-		api.RespondError(c, 500, "No user found: "+err.Error())
+		respond.Error(c, 500, "No user found: "+err.Error())
 		return
 	}
 	if err := unbindExternalAccount(user.UUID); err != nil {
-		api.RespondError(c, 500, "Failed to unbind external account: "+err.Error())
+		respond.Error(c, 500, "Failed to unbind external account: "+err.Error())
 		return
 	}
-	api.RespondSuccess(c, nil)
+	respond.Success(c, nil)
 }

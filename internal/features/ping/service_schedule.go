@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
+	clientfeature "github.com/komari-monitor/komari/internal/features/client"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
 	"github.com/komari-monitor/komari/pkg/scheduler"
@@ -66,7 +66,7 @@ func executePingTask(ctx context.Context, task models.PingTask) {
 			// Context is still active, continue.
 		}
 
-		agent_runtime.DispatchPing(clientUUID, v2.PingParams{TaskID: task.ID, Type: task.Type, Target: task.Target})
+		clientfeature.DispatchPing(clientUUID, v2.PingParams{TaskID: task.ID, Type: task.Type, Target: task.Target})
 	}
 }
 

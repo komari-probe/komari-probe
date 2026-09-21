@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
@@ -64,8 +63,8 @@ func AdminRemoveClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 	metricstore.DeleteEntityAsync(params.UUID)
 	actor, ip := rpc.ActorFromContext(ctx)
 	auditlog.Log(ip, actor, "delete client:"+params.UUID, "warn")
-	agent_runtime.DeleteConnectedClients(params.UUID)
-	agent_runtime.DeleteLatestReport(params.UUID)
+	DeleteConnectedClients(params.UUID)
+	DeleteLatestReport(params.UUID)
 	return nil, nil
 }
 

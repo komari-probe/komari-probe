@@ -2,10 +2,9 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/ping"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
@@ -28,8 +27,8 @@ func ingestReport(uuid string, report v2.Report, markPresence bool) error {
 	if err != nil {
 		return err
 	}
-	agent_runtime.RecordReport(savedReport)
-	agent_runtime.MarkV2Client(uuid)
+	RecordReport(savedReport)
+	MarkV2Client(uuid)
 	if markPresence {
 		refreshPostPresence(uuid)
 	}
@@ -46,7 +45,10 @@ func ingestBasicInfo(uuid string, info map[string]any, fallbackIP string) error 
 
 // ingestPingResult 保存一条 ping 探测结果。
 func ingestPingResult(uuid string, taskID uint, value int) error {
-	return ping.SavePingRecord(models.PingRecord{
+	if pingResultRecorder == nil {
+		return fmt.Errorf("ping result recorder is not registered")
+	}
+	return pingResultRecorder(models.PingRecord{
 		Client: uuid,
 		TaskID: taskID,
 		Value:  value,

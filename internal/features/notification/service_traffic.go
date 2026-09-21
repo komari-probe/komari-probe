@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	clientfeature "github.com/komari-monitor/komari/internal/features/client"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
@@ -25,7 +25,7 @@ var trafficCache = cache.New(30*24*time.Hour, time.Hour) // 30天缓存，1小�
 // 由外部协程每分钟调用一次
 func CheckTraffic() {
 	// 获取最新上报与客户端配置
-	reports := agent_runtime.GetLatestReport()
+	reports := clientfeature.GetLatestReport()
 	if len(reports) == 0 {
 		return
 	}

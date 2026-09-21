@@ -6,11 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 // handler_clients_ws.go
@@ -19,12 +18,12 @@ import (
 
 func GetClients(c *gin.Context) {
 	// 升级到ws
-	if !api.IsWebSocketUpgrade(c) {
+	if !respond.IsWebSocketUpgrade(c) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "Require WebSocket upgrade"})
 		return
 	}
 	// Upgrade the HTTP connection to a WebSocket connection
-	conn, err := api.UpgradeSafeConn(c)
+	conn, err := respond.UpgradeSafeConn(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "Failed to upgrade to WebSocket." + err.Error()})
 		return
@@ -81,7 +80,7 @@ func GetClients(c *gin.Context) {
 		}
 
 		// 在线客户端uuid列表（WebSocket 与非 WebSocket）
-		for _, key := range agent_runtime.GetAllOnlineUUIDs() {
+		for _, key := range GetAllOnlineUUIDs() {
 			if !isLogin && hiddenMap[key] {
 				continue
 			}
@@ -92,7 +91,7 @@ func GetClients(c *gin.Context) {
 		}
 
 		//过往节点数据信息
-		for key, report := range agent_runtime.GetLatestReport() {
+		for key, report := range GetLatestReport() {
 			if !isLogin && hiddenMap[key] {
 				continue
 			}

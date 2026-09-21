@@ -1,4 +1,4 @@
-package agent
+package client
 
 import (
 	"sort"
@@ -20,14 +20,14 @@ var (
 		id     int64
 		expire time.Time
 	})
-	mu = sync.RWMutex{}
+	connMu = sync.RWMutex{}
 )
 
 const recentReportRetention = time.Minute
 
 func GetConnectedClients() map[string]*wsconn.SafeConn {
-	mu.RLock()
-	defer mu.RUnlock()
+	connMu.RLock()
+	defer connMu.RUnlock()
 	clientsCopy := make(map[string]*wsconn.SafeConn)
 	for k, v := range connectedClients {
 		clientsCopy[k] = v
@@ -36,27 +36,27 @@ func GetConnectedClients() map[string]*wsconn.SafeConn {
 }
 
 func SetConnectedClients(uuid string, conn *wsconn.SafeConn) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	connectedClients[uuid] = conn
 }
 
 func MarkV2Client(uuid string) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	v2Clients[uuid] = struct{}{}
 }
 
 func IsV2Client(uuid string) bool {
-	mu.RLock()
-	defer mu.RUnlock()
+	connMu.RLock()
+	defer connMu.RUnlock()
 	_, ok := v2Clients[uuid]
 	return ok
 }
 
 func DeleteClientConditionally(uuid string, connToRemove *wsconn.SafeConn) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 
 	// 检查当前 map 里的 conn 是否就是要删除的这一个
 	if currentConn, exists := connectedClients[uuid]; exists && currentConn == connToRemove {
@@ -65,8 +65,8 @@ func DeleteClientConditionally(uuid string, connToRemove *wsconn.SafeConn) {
 	}
 }
 func DeleteConnectedClients(uuid string) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	// 只从 map 中删除，不再负责关闭连接
 	delete(connectedClients, uuid)
 	delete(v2Clients, uuid)
@@ -76,8 +76,8 @@ func DeleteConnectedClients(uuid string) {
 // When present=false, it only clears if the connectionID matches current one.
 // KeepAlivePresence sets presence with TTL for non-WebSocket agents.
 func KeepAlivePresence(uuid string, connectionID int64, ttl time.Duration) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	presenceOnly[uuid] = struct {
 		id     int64
 		expire time.Time
@@ -88,8 +88,8 @@ var defaultPresenceTTL = 20 * time.Second
 
 // SetPresence keeps compatibility with existing callers.
 func SetPresence(uuid string, connectionID int64, present bool) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	if present {
 		presenceOnly[uuid] = struct {
 			id     int64
@@ -104,8 +104,8 @@ func SetPresence(uuid string, connectionID int64, present bool) {
 
 // GetAllOnlineUUIDs returns a de-duplicated list of online UUIDs from both WebSocket and non-WebSocket agents.
 func GetAllOnlineUUIDs() []string {
-	mu.RLock()
-	defer mu.RUnlock()
+	connMu.RLock()
+	defer connMu.RUnlock()
 	set := make(map[string]struct{})
 	for k := range connectedClients {
 		set[k] = struct{}{}
@@ -123,8 +123,8 @@ func GetAllOnlineUUIDs() []string {
 	return res
 }
 func GetLatestReport() map[string]*v2.Report {
-	mu.RLock()
-	defer mu.RUnlock()
+	connMu.RLock()
+	defer connMu.RUnlock()
 	reportCopy := make(map[string]*v2.Report)
 	for k, v := range latestReport {
 		if v == nil {
@@ -147,8 +147,8 @@ func RecordReport(report v2.Report) {
 	} else {
 		report.UpdatedAt = report.UpdatedAt.UTC()
 	}
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	if latest := latestReport[report.UUID]; latest == nil || !report.UpdatedAt.Before(latest.UpdatedAt) {
 		item := report
 		latestReport[report.UUID] = &item
@@ -169,8 +169,8 @@ func RecordReport(report v2.Report) {
 }
 
 func GetRecentReports(uuid string) []v2.Report {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	reports := reportsAfter(recentReports[uuid], time.Now().UTC().Add(-recentReportRetention))
 	if len(reports) == 0 {
 		delete(recentReports, uuid)
@@ -191,8 +191,8 @@ func reportsAfter(reports []v2.Report, cutoff time.Time) []v2.Report {
 }
 
 func DeleteLatestReport(uuid string) {
-	mu.Lock()
-	defer mu.Unlock()
+	connMu.Lock()
+	defer connMu.Unlock()
 	delete(latestReport, uuid)
 	delete(recentReports, uuid)
 }

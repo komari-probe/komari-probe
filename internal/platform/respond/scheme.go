@@ -1,7 +1,9 @@
-package api
+package respond
 
 import "github.com/gin-gonic/gin"
 
+// GetScheme returns the request's original scheme (http/https), accounting
+// for TLS termination at a reverse proxy via the common forwarding headers.
 // https://github.com/labstack/echo/blob/98ca08e7dd64075b858e758d6693bf9799340756/context.go#L275-L294
 func GetScheme(c *gin.Context) string {
 	// Can't use `r.Request.URL.Scheme`

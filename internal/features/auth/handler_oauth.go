@@ -6,15 +6,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth/oauth"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 )
 
 // GetCallbackURL 构造 OIDC provider 回调地址（固定路径 /api/oauth_callback）。
 func GetCallbackURL(c *gin.Context) string {
-	return api.GetScheme(c) + "://" + c.Request.Host + "/api/oauth_callback"
+	return respond.GetScheme(c) + "://" + c.Request.Host + "/api/oauth_callback"
 }
 
 // /api/oauth

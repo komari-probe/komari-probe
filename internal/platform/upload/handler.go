@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 const maxChunkRequestSize = ChunkSize + 1*1024*1024
@@ -35,19 +35,19 @@ func (h *Handler) Init(c *gin.Context) {
 		Filename string  `json:"filename"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		api.RespondError(c, http.StatusBadRequest, fmt.Sprintf("invalid request: %v", err))
+		respond.Error(c, http.StatusBadRequest, fmt.Sprintf("invalid request: %v", err))
 		return
 	}
 	if _, ok := h.Finalizers[request.Purpose]; !ok {
-		api.RespondError(c, http.StatusBadRequest, "unsupported upload purpose")
+		respond.Error(c, http.StatusBadRequest, "unsupported upload purpose")
 		return
 	}
 	session, err := h.Store.Init(request.Purpose, request.Filename, request.Size)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	api.RespondSuccess(c, gin.H{
+	respond.Success(c, gin.H{
 		"upload_id":  session.ID,
 		"chunk_size": ChunkSize,
 	})
@@ -58,12 +58,12 @@ func (h *Handler) Chunk(c *gin.Context) {
 	uploadID := c.PostForm("upload_id")
 	index, err := strconv.ParseInt(c.PostForm("chunk_index"), 10, 64)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "chunk_index must be an integer")
+		respond.Error(c, http.StatusBadRequest, "chunk_index must be an integer")
 		return
 	}
 	chunk, _, err := c.Request.FormFile("chunk_data")
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, fmt.Sprintf("get chunk data: %v", err))
+		respond.Error(c, http.StatusBadRequest, fmt.Sprintf("get chunk data: %v", err))
 		return
 	}
 	defer chunk.Close()
@@ -71,7 +71,7 @@ func (h *Handler) Chunk(c *gin.Context) {
 		h.respondUploadError(c, err)
 		return
 	}
-	api.RespondSuccess(c, gin.H{"received": true, "chunk_index": index})
+	respond.Success(c, gin.H{"received": true, "chunk_index": index})
 }
 
 func (h *Handler) Merge(c *gin.Context) {
@@ -79,7 +79,7 @@ func (h *Handler) Merge(c *gin.Context) {
 		UploadID string `json:"upload_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		api.RespondError(c, http.StatusBadRequest, fmt.Sprintf("invalid request: %v", err))
+		respond.Error(c, http.StatusBadRequest, fmt.Sprintf("invalid request: %v", err))
 		return
 	}
 	session, err := h.Store.Merge(request.UploadID)
@@ -92,15 +92,15 @@ func (h *Handler) Merge(c *gin.Context) {
 
 	finalize, ok := h.Finalizers[session.Metadata.Purpose]
 	if !ok {
-		api.RespondError(c, http.StatusBadRequest, "unsupported upload purpose")
+		respond.Error(c, http.StatusBadRequest, "unsupported upload purpose")
 		return
 	}
 	result, err := finalize(session)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	api.RespondSuccessMessage(c, result.Message, result.Data)
+	respond.SuccessMessage(c, result.Message, result.Data)
 }
 
 func (h *Handler) Cancel(c *gin.Context) {
@@ -108,20 +108,20 @@ func (h *Handler) Cancel(c *gin.Context) {
 		UploadID string `json:"upload_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		api.RespondError(c, http.StatusBadRequest, fmt.Sprintf("invalid request: %v", err))
+		respond.Error(c, http.StatusBadRequest, fmt.Sprintf("invalid request: %v", err))
 		return
 	}
 	if err := h.Store.Cancel(request.UploadID); err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	api.RespondSuccess(c, gin.H{})
+	respond.Success(c, gin.H{})
 }
 
 func (h *Handler) respondUploadError(c *gin.Context, err error) {
 	if errors.Is(err, ErrNotFound) {
-		api.RespondError(c, http.StatusNotFound, "upload not found or expired")
+		respond.Error(c, http.StatusNotFound, "upload not found or expired")
 		return
 	}
-	api.RespondError(c, http.StatusBadRequest, err.Error())
+	respond.Error(c, http.StatusBadRequest, err.Error())
 }

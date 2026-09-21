@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/flags"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 // copyFile 复制单个文件到目标路径（会确保父目录存在）
@@ -135,20 +135,20 @@ func DownloadBackup(c *gin.Context) {
 	// 1) 创建临时目录，内容隔离到 content/ 子目录
 	tempDir, err := os.MkdirTemp("", "komari-backup-*")
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error creating temporary directory: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error creating temporary directory: %v", err))
 		return
 	}
 	defer os.RemoveAll(tempDir)
 
 	contentDir := filepath.Join(tempDir, "content")
 	if err := os.MkdirAll(contentDir, 0o755); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error creating content directory: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error creating content directory: %v", err))
 		return
 	}
 
 	// 2) 复制白名单文件到 content 目录
 	if err := copyWhitelistedFiles(contentDir); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error copying data to temp: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error copying data to temp: %v", err))
 		return
 	}
 
@@ -158,17 +158,17 @@ func DownloadBackup(c *gin.Context) {
 
 	if flags.IsSQLite() {
 		if err := backupSQLiteTo(destDB); err != nil {
-			api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error backing up sqlite database: %v", err))
+			respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error backing up sqlite database: %v", err))
 			return
 		}
 	} else if dbFilePath != "" {
 		if _, err := os.Stat(dbFilePath); err == nil {
 			if err := copyFile(dbFilePath, destDB); err != nil {
-				api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error copying database file: %v", err))
+				respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error copying database file: %v", err))
 				return
 			}
 		} else if !errors.Is(err, fs.ErrNotExist) {
-			api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error stating database file: %v", err))
+			respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error stating database file: %v", err))
 			return
 		}
 	}
@@ -177,7 +177,7 @@ func DownloadBackup(c *gin.Context) {
 	tempZipPath := filepath.Join(tempDir, "output.zip")
 	tempZip, err := os.Create(tempZipPath)
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error creating temp zip: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error creating temp zip: %v", err))
 		return
 	}
 	zipWriter := zip.NewWriter(tempZip)
@@ -186,20 +186,20 @@ func DownloadBackup(c *gin.Context) {
 	if err := walkDirToZip(zipWriter, contentDir); err != nil {
 		zipWriter.Close()
 		tempZip.Close()
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error archiving temp folder: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error archiving temp folder: %v", err))
 		return
 	}
 
 	if err := writeBackupMarkup(zipWriter); err != nil {
 		zipWriter.Close()
 		tempZip.Close()
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error writing backup markup: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error writing backup markup: %v", err))
 		return
 	}
 
 	if err := zipWriter.Close(); err != nil {
 		tempZip.Close()
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error finalizing zip: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error finalizing zip: %v", err))
 		return
 	}
 	tempZip.Close()
@@ -210,28 +210,28 @@ func DownloadBackup(c *gin.Context) {
 
 	archivePath := filepath.Join(backupDir, archiveName)
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error creating backup directory: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error creating backup directory: %v", err))
 		return
 	}
 
 	archiveTemp, err := os.CreateTemp(backupDir, ".backup-*.tmp")
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error creating archive temp file: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error creating archive temp file: %v", err))
 		return
 	}
 	archiveTempPath := archiveTemp.Name()
 	if err := archiveTemp.Close(); err != nil {
 		os.Remove(archiveTempPath)
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error closing archive temp file: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error closing archive temp file: %v", err))
 		return
 	}
 	defer os.Remove(archiveTempPath)
 	if err := copyFile(tempZipPath, archiveTempPath); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error archiving backup: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error archiving backup: %v", err))
 		return
 	}
 	if err := os.Rename(archiveTempPath, archivePath); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error publishing backup archive: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error publishing backup archive: %v", err))
 		return
 	}
 
@@ -241,7 +241,7 @@ func DownloadBackup(c *gin.Context) {
 
 	zipReader, err := os.Open(tempZipPath)
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, fmt.Sprintf("Error reading temp zip: %v", err))
+		respond.Error(c, http.StatusInternalServerError, fmt.Sprintf("Error reading temp zip: %v", err))
 		return
 	}
 	defer zipReader.Close()

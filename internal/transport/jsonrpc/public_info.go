@@ -1,4 +1,4 @@
-package publicinfo
+package jsonrpc
 
 import (
 	"context"
@@ -17,7 +17,9 @@ import (
 	"github.com/komari-monitor/komari/pkg/logger"
 )
 
-func GetPublicInfo() (map[string]any, error) {
+// assemblePublicInfo builds the payload shared by the getPublicInfo and
+// public:getPublicSettings RPC methods.
+func assemblePublicInfo() (map[string]any, error) {
 	cstPtr, err := kv.GetManyAs[settings.Settings]()
 	if err != nil {
 		return nil, err
@@ -71,7 +73,7 @@ func GetPublicInfo() (map[string]any, error) {
 	if err != nil {
 		logger.Infof("database", "%v", err)
 	}
-	items := themeConfigurationItems(cst.Theme)
+	items := publicThemeConfigurationItems(cst.Theme)
 	if cst.Theme != "default" {
 		for _, item := range items {
 			if item.Key == "" {
@@ -105,7 +107,7 @@ func GetPublicInfo() (map[string]any, error) {
 	}, nil
 }
 
-func themeConfigurationItems(short string) []models.ManagedThemeConfigurationItem {
+func publicThemeConfigurationItems(short string) []models.ManagedThemeConfigurationItem {
 	var manifest models.Theme
 	if short == "default" {
 		data, err := public.PublicFS.ReadFile("defaultTheme/komari-theme.json")

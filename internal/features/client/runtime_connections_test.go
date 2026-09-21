@@ -1,4 +1,4 @@
-package agent
+package client
 
 import (
 	"testing"
@@ -8,17 +8,17 @@ import (
 )
 
 func TestRecordReportKeepsLatestAndShortRecentWindow(t *testing.T) {
-	mu.Lock()
+	connMu.Lock()
 	previousLatest := latestReport
 	previousRecent := recentReports
 	latestReport = make(map[string]*v2.Report)
 	recentReports = make(map[string][]v2.Report)
-	mu.Unlock()
+	connMu.Unlock()
 	t.Cleanup(func() {
-		mu.Lock()
+		connMu.Lock()
 		latestReport = previousLatest
 		recentReports = previousRecent
-		mu.Unlock()
+		connMu.Unlock()
 	})
 
 	now := time.Now().UTC()

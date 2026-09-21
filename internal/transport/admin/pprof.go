@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 const (
@@ -155,7 +155,7 @@ func pprofSummaryHandler(c *gin.Context) {
 	response.Duration.MinSeconds = minPprofDurationSeconds
 	response.Duration.MaxSeconds = maxPprofDurationSeconds
 
-	api.RespondSuccess(c, response)
+	respond.Success(c, response)
 }
 
 // downloadCPUProfile records a bounded CPU profile. CPU profiling is process-
@@ -257,12 +257,12 @@ func collectPprof(ctx context.Context, target pprofTarget, writer io.Writer, deb
 func pprofRuntimeDebug(c *gin.Context) (int, bool) {
 	format, hasFormat, valid := singlePprofQuery(c, "format")
 	if !valid || (hasFormat && format != "text") {
-		api.RespondError(c, http.StatusBadRequest, "format must be text when provided")
+		respond.Error(c, http.StatusBadRequest, "format must be text when provided")
 		return 0, false
 	}
 	debug, hasDebug, valid := singlePprofQuery(c, "debug")
 	if !valid || (hasDebug && debug != "1") {
-		api.RespondError(c, http.StatusBadRequest, "debug must be 1 when provided")
+		respond.Error(c, http.StatusBadRequest, "debug must be 1 when provided")
 		return 0, false
 	}
 	if hasFormat || hasDebug {
@@ -275,7 +275,7 @@ func requireBinaryPprof(c *gin.Context) bool {
 	for _, key := range []string{"format", "debug"} {
 		_, present, valid := singlePprofQuery(c, key)
 		if !valid || present {
-			api.RespondError(c, http.StatusBadRequest, "CPU and trace profiles only support binary downloads")
+			respond.Error(c, http.StatusBadRequest, "CPU and trace profiles only support binary downloads")
 			return false
 		}
 	}
@@ -307,13 +307,13 @@ func pprofFilename(target pprofTarget) string {
 func respondPprofCollectionError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, errPprofBusy):
-		api.RespondError(c, http.StatusConflict, "profile collection is already in progress")
+		respond.Error(c, http.StatusConflict, "profile collection is already in progress")
 	case errors.Is(err, errPprofUnavailable):
-		api.RespondError(c, http.StatusNotFound, "profile is not available")
+		respond.Error(c, http.StatusNotFound, "profile is not available")
 	case errors.Is(err, errPprofPreviewTooLarge):
-		api.RespondError(c, http.StatusRequestEntityTooLarge, "profile text preview is too large; download the pprof file instead")
+		respond.Error(c, http.StatusRequestEntityTooLarge, "profile text preview is too large; download the pprof file instead")
 	default:
-		api.RespondError(c, http.StatusInternalServerError, "failed to collect profile")
+		respond.Error(c, http.StatusInternalServerError, "failed to collect profile")
 	}
 }
 
@@ -323,13 +323,13 @@ func pprofDuration(c *gin.Context) (time.Duration, bool) {
 		return time.Duration(defaultPprofDurationSeconds) * time.Second, true
 	}
 	if len(values) != 1 {
-		api.RespondError(c, http.StatusBadRequest, "seconds must be provided once")
+		respond.Error(c, http.StatusBadRequest, "seconds must be provided once")
 		return 0, false
 	}
 
 	seconds, err := strconv.Atoi(values[0])
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, fmt.Sprintf(
+		respond.Error(c, http.StatusBadRequest, fmt.Sprintf(
 			"seconds must be an integer between %d and %d",
 			minPprofDurationSeconds,
 			maxPprofDurationSeconds,
@@ -338,7 +338,7 @@ func pprofDuration(c *gin.Context) (time.Duration, bool) {
 	}
 	duration, err := pprofDurationFromSeconds(seconds)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return 0, false
 	}
 	return duration, true

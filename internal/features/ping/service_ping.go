@@ -5,11 +5,17 @@ import (
 	"sort"
 	"time"
 
+	clientfeature "github.com/komari-monitor/komari/internal/features/client"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"gorm.io/gorm"
 )
+
+func init() {
+	clientfeature.SetPingResultRecorder(SavePingRecord)
+	clientfeature.SetDefaultPingTaskApplier(AddDefaultOnClientUUID)
+}
 
 // AddPingTask 创建延迟监测任务。defaultOn 表示新加入的服务器是否自动开启此监测。
 func AddPingTask(clients []string, defaultOn bool, name string, target, taskType string, interval int) (uint, error) {

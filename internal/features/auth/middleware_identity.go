@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
@@ -66,7 +66,7 @@ func RequireRole(allowedRoles ...string) gin.HandlerFunc {
 				return
 			}
 		}
-		api.RespondError(c, http.StatusUnauthorized, "Unauthorized.")
+		respond.Error(c, http.StatusUnauthorized, "Unauthorized.")
 		c.Abort()
 	}
 }
@@ -128,7 +128,7 @@ func PrivateSiteMiddleware() gin.HandlerFunc {
 		// 非私有站点直接放行
 		privateSite, err := kv.GetAs[bool](settings.PrivateSiteKey, false)
 		if err != nil {
-			api.RespondError(c, http.StatusInternalServerError, "Failed to get configuration.")
+			respond.Error(c, http.StatusInternalServerError, "Failed to get configuration.")
 			c.Abort()
 			return
 		}
@@ -143,7 +143,7 @@ func PrivateSiteMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		api.RespondError(c, http.StatusUnauthorized, "Private site is enabled, please login first.")
+		respond.Error(c, http.StatusUnauthorized, "Private site is enabled, please login first.")
 		c.Abort()
 	}
 }

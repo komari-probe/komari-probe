@@ -5,12 +5,11 @@ import (
 	"strconv"
 	"time"
 
+	clientfeature "github.com/komari-monitor/komari/internal/features/client"
 	"github.com/komari-monitor/komari/internal/features/ping"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/publicinfo"
 	"github.com/komari-monitor/komari/internal/platform/records"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/version"
@@ -57,7 +56,7 @@ func publicGetNodesInformation(ctx context.Context, _ *rpc.JsonRpcRequest) (any,
 }
 
 func publicGetPublicSettings(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	p, e := publicinfo.GetPublicInfo()
+	p, e := assemblePublicInfo()
 	if e != nil {
 		return nil, rpc.MakeError(rpc.InternalError, e.Error(), nil)
 	}
@@ -106,7 +105,7 @@ func publicGetClientRecentRecords(ctx context.Context, req *rpc.JsonRpcRequest) 
 	if !isLoginFromCtx(ctx) && isHiddenClient(params.UUID) {
 		return nil, rpc.MakeError(rpc.InvalidParams, "UUID is required", nil) // 防止未登录获取隐藏客户端
 	}
-	return agent_runtime.GetRecentReports(params.UUID), nil
+	return clientfeature.GetRecentReports(params.UUID), nil
 }
 
 // isHiddenClient 查询指定 uuid 是否为隐藏节点。

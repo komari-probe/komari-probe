@@ -15,9 +15,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/features/backup"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/platform/upload"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -99,7 +99,7 @@ func (c *Controller) status(ctx *gin.Context) {
 	c.mu.Lock()
 	state := c.state
 	c.mu.Unlock()
-	api.RespondSuccess(ctx, Status{State: state, Required: state != "completed"})
+	respond.Success(ctx, Status{State: state, Required: state != "completed"})
 }
 
 func (c *Controller) finalizeBackupUpload(session upload.Session) (upload.Result, error) {
@@ -122,18 +122,18 @@ func (c *Controller) finalizeBackupUpload(session upload.Session) (upload.Result
 func (c *Controller) complete(ctx *gin.Context) {
 	var request completeRequest
 	if err := decodeJSON(ctx, &request); err != nil {
-		api.RespondError(ctx, http.StatusBadRequest, err.Error())
+		respond.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := validateRequest(&request); err != nil {
-		api.RespondError(ctx, http.StatusBadRequest, err.Error())
+		respond.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	c.mu.Lock()
 	if c.state != "ready" {
 		c.mu.Unlock()
-		api.RespondError(ctx, http.StatusConflict, "installation is already completed or running")
+		respond.Error(ctx, http.StatusConflict, "installation is already completed or running")
 		return
 	}
 	c.state = "completing"
@@ -147,13 +147,13 @@ func (c *Controller) complete(ctx *gin.Context) {
 	}
 	if err != nil {
 		c.fail()
-		api.RespondError(ctx, http.StatusBadRequest, fmt.Sprintf("monitoring database connection failed: %v", err))
+		respond.Error(ctx, http.StatusBadRequest, fmt.Sprintf("monitoring database connection failed: %v", err))
 		return
 	}
 
 	if err := c.createAccountAndSettings(&request, cfg); err != nil {
 		c.fail()
-		api.RespondError(ctx, http.StatusInternalServerError, "failed to save installation settings")
+		respond.Error(ctx, http.StatusInternalServerError, "failed to save installation settings")
 		return
 	}
 
@@ -165,7 +165,7 @@ func (c *Controller) complete(ctx *gin.Context) {
 		c.Deactivate()
 		close(c.done)
 	}()
-	api.RespondSuccessMessage(ctx, "installation completed", gin.H{})
+	respond.SuccessMessage(ctx, "installation completed", gin.H{})
 }
 
 func (c *Controller) fail() {
@@ -246,5 +246,5 @@ func metricConfig(request completeRequest) (*metricstore.MetricStoreConfig, erro
 }
 
 func decodeJSON(ctx *gin.Context, target any) error {
-	return api.DecodeJSONBody(ctx, target, 1<<20)
+	return respond.DecodeJSONBody(ctx, target, 1<<20)
 }

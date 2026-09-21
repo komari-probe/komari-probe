@@ -20,11 +20,11 @@ import (
 	installweb "github.com/komari-monitor/komari/internal/features/install"
 	migrationweb "github.com/komari-monitor/komari/internal/features/migration"
 	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	frontendpublic "github.com/komari-monitor/komari/internal/platform/public"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/pkg/logger"
 )
@@ -185,7 +185,7 @@ func guideNoRoute(pagePath, missingAPI string, handlers []gin.HandlerFunc) gin.H
 	return func(c *gin.Context) {
 		requestPath := c.Request.URL.Path
 		if strings.HasPrefix(requestPath, "/api") {
-			api.RespondError(c, http.StatusNotFound, missingAPI)
+			respond.Error(c, http.StatusNotFound, missingAPI)
 			return
 		}
 		if c.Request.Method == http.MethodGet && requestPath != pagePath && filepath.Ext(requestPath) == "" {

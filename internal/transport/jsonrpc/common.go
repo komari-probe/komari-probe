@@ -6,13 +6,12 @@ import (
 	"sort"
 	"time"
 
+	clientfeature "github.com/komari-monitor/komari/internal/features/client"
 	"github.com/komari-monitor/komari/internal/features/ping"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
-	"github.com/komari-monitor/komari/internal/platform/publicinfo"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/version"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -230,7 +229,7 @@ func gpuUsageFromReport(rep *v2.Report) float32 {
 }
 
 func getPublicInfo(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	info, err := publicinfo.GetPublicInfo()
+	info, err := assemblePublicInfo()
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get public info", err.Error())
 	}
@@ -247,8 +246,8 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 	}
 
 	meta := rpc.MetaFromContext(ctx)
-	latest := agent_runtime.GetLatestReport()
-	onlineUUIDs := agent_runtime.GetAllOnlineUUIDs()
+	latest := clientfeature.GetLatestReport()
+	onlineUUIDs := clientfeature.GetAllOnlineUUIDs()
 	onlineSet := make(map[string]bool, len(onlineUUIDs))
 	for _, uuid := range onlineUUIDs {
 		onlineSet[uuid] = true
@@ -465,7 +464,7 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 		}
 	}
 
-	reports := agent_runtime.GetRecentReports(params.UUID)
+	reports := clientfeature.GetRecentReports(params.UUID)
 
 	// 扁平化为 { count, records: [] }
 	// Named nodeStatusRecord, not flatRecord, so it doesn't shadow the

@@ -17,7 +17,7 @@ import (
 type renderKind int
 
 const (
-	// renderStandard: { "status":"success", "message":<msg>, "data":<result> }（api.Respond 约定）
+	// renderStandard: { "status":"success", "message":<msg>, "data":<result> }（respond.Send 约定）
 	renderStandard renderKind = iota
 	// renderFlat: 把 result(map) 平铺到顶层，并附加 { "status":"success" }
 	renderFlat
@@ -131,7 +131,7 @@ func rpcErrorHTTPStatus(code int) int {
 
 func renderResponse(c *gin.Context, cfg *bindConfig, resp *rpc.JsonRpcResponse) {
 	if resp.Error != nil {
-		// 统一错误形状：{ status:"error", message } —— 与 api.RespondError 一致。
+		// 统一错误形状：{ status:"error", message } —— 与 respond.Error 一致。
 		c.JSON(rpcErrorHTTPStatus(resp.Error.Code), gin.H{"status": "error", "message": resp.Error.Message})
 		return
 	}
@@ -147,7 +147,7 @@ func renderResponse(c *gin.Context, cfg *bindConfig, resp *rpc.JsonRpcResponse) 
 		}
 		c.JSON(http.StatusOK, out)
 	default: // renderStandard
-		// 与 api.Response 一致：data 为 nil 时省略该字段（omitempty 语义）。
+		// 与 respond.Response 一致：data 为 nil 时省略该字段（omitempty 语义）。
 		out := gin.H{"status": "success", "message": cfg.successMsg}
 		if resp.Result != nil {
 			out["data"] = resp.Result

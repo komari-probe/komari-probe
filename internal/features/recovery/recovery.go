@@ -15,8 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	jsonrpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -110,7 +110,7 @@ func (c *Controller) authStatus(ctx *gin.Context) {
 	oauthEnabled, _ := kv.GetAs[bool](settings.OAuthEnabledKey, false)
 	oauthProvider, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
 	disablePassword, _ := kv.GetAs[bool](settings.DisablePasswordLoginKey, false)
-	api.RespondSuccess(ctx, gin.H{
+	respond.Success(ctx, gin.H{
 		"oauth_enabled":          oauthEnabled,
 		"oauth_provider":         oauthProvider,
 		"password_login_enabled": !disablePassword,
@@ -121,34 +121,34 @@ func (c *Controller) getStatus(ctx *gin.Context) {
 	c.mu.RLock()
 	status := c.status
 	c.mu.RUnlock()
-	api.RespondSuccess(ctx, status)
+	respond.Success(ctx, status)
 }
 
 func (c *Controller) updateDSN(ctx *gin.Context) {
 	var request dsnRequest
 	if err := decodeJSON(ctx, &request); err != nil {
-		api.RespondError(ctx, http.StatusBadRequest, err.Error())
+		respond.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	request.DSN = strings.TrimSpace(request.DSN)
 	if request.DSN == "" {
-		api.RespondError(ctx, http.StatusBadRequest, "monitoring database DSN is required")
+		respond.Error(ctx, http.StatusBadRequest, "monitoring database DSN is required")
 		return
 	}
 
 	driver, ok := metricstore.InferDriverFromDSN(request.DSN)
 	if !ok {
-		api.RespondError(ctx, http.StatusBadRequest, "cannot infer monitoring database type from DSN")
+		respond.Error(ctx, http.StatusBadRequest, "cannot infer monitoring database type from DSN")
 		return
 	}
 	if !c.beginConnection() {
-		api.RespondError(ctx, http.StatusConflict, "monitoring database recovery is already running or completed")
+		respond.Error(ctx, http.StatusConflict, "monitoring database recovery is already running or completed")
 		return
 	}
 	cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig]()
 	if err != nil {
 		c.setFailure(err, request.DSN)
-		api.RespondError(ctx, http.StatusInternalServerError, "failed to load monitoring database settings")
+		respond.Error(ctx, http.StatusInternalServerError, "failed to load monitoring database settings")
 		return
 	}
 	cfg.Driver = string(driver)
@@ -159,7 +159,7 @@ func (c *Controller) updateDSN(ctx *gin.Context) {
 	cancel()
 	if err != nil {
 		c.setFailure(err, request.DSN)
-		api.RespondError(ctx, http.StatusBadRequest, "monitoring database connection failed: "+metricstore.RedactConnectionError(err.Error(), request.DSN))
+		respond.Error(ctx, http.StatusBadRequest, "monitoring database connection failed: "+metricstore.RedactConnectionError(err.Error(), request.DSN))
 		return
 	}
 	c.mu.Lock()
@@ -176,7 +176,7 @@ func (c *Controller) updateDSN(ctx *gin.Context) {
 		c.Deactivate()
 		c.once.Do(func() { close(c.done) })
 	}()
-	api.RespondSuccessMessage(ctx, "monitoring database settings saved", gin.H{})
+	respond.SuccessMessage(ctx, "monitoring database settings saved", gin.H{})
 }
 
 func (c *Controller) beginConnection() bool {

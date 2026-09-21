@@ -1,4 +1,4 @@
-package agent
+package client
 
 import (
 	"crypto/rand"

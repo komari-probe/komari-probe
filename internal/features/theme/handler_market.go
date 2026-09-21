@@ -9,71 +9,71 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 func ListThemeMarketSources(c *gin.Context) {
 	sources, err := getThemeMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
 		return
 	}
-	api.RespondSuccess(c, sources)
+	respond.Success(c, sources)
 }
 
 func CreateThemeMarketSource(c *gin.Context) {
 	var source ThemeMarketSource
 	if err := c.ShouldBindJSON(&source); err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 	var err error
 	source, err = normalizeThemeMarketSource(source)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	source.ID, err = market.NewSourceID()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to create source ID")
+		respond.Error(c, http.StatusInternalServerError, "Failed to create source ID")
 		return
 	}
 	sources, err := getThemeMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
 		return
 	}
 	for _, existing := range sources {
 		if existing.URL == source.URL {
-			api.RespondError(c, http.StatusConflict, "A source with this URL already exists")
+			respond.Error(c, http.StatusConflict, "A source with this URL already exists")
 			return
 		}
 	}
 	sources = append(sources, source)
 	if err := saveThemeMarketSources(sources); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save theme market source: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to save theme market source: "+err.Error())
 		return
 	}
-	api.RespondSuccessMessage(c, "Theme market source created", source)
+	respond.SuccessMessage(c, "Theme market source created", source)
 }
 
 func UpdateThemeMarketSource(c *gin.Context) {
 	var update ThemeMarketSource
 	if err := c.ShouldBindJSON(&update); err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 	update.ID = c.Param("id")
 	var err error
 	update, err = normalizeThemeMarketSource(update)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	sources, err := getThemeMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
 		return
 	}
 	found := false
@@ -86,30 +86,30 @@ func UpdateThemeMarketSource(c *gin.Context) {
 			continue
 		}
 		if sources[i].URL == update.URL {
-			api.RespondError(c, http.StatusConflict, "A source with this URL already exists")
+			respond.Error(c, http.StatusConflict, "A source with this URL already exists")
 			return
 		}
 	}
 	if !found {
-		api.RespondError(c, http.StatusNotFound, "Theme market source not found")
+		respond.Error(c, http.StatusNotFound, "Theme market source not found")
 		return
 	}
 	if err := saveThemeMarketSources(sources); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save theme market source: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to save theme market source: "+err.Error())
 		return
 	}
 	invalidateThemeMarketCache(oldURL)
 	if oldURL != update.URL {
 		invalidateThemeMarketCache(update.URL)
 	}
-	api.RespondSuccessMessage(c, "Theme market source updated", update)
+	respond.SuccessMessage(c, "Theme market source updated", update)
 }
 
 func DeleteThemeMarketSource(c *gin.Context) {
 	id := c.Param("id")
 	sources, err := getThemeMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
 		return
 	}
 	next := make([]ThemeMarketSource, 0, len(sources))
@@ -123,21 +123,21 @@ func DeleteThemeMarketSource(c *gin.Context) {
 		next = append(next, sources[i])
 	}
 	if deleted == nil {
-		api.RespondError(c, http.StatusNotFound, "Theme market source not found")
+		respond.Error(c, http.StatusNotFound, "Theme market source not found")
 		return
 	}
 	if err := saveThemeMarketSources(next); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to delete theme market source: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to delete theme market source: "+err.Error())
 		return
 	}
 	invalidateThemeMarketCache(deleted.URL)
-	api.RespondSuccessMessage(c, "Theme market source deleted", nil)
+	respond.SuccessMessage(c, "Theme market source deleted", nil)
 }
 
 func ListThemeMarketCatalog(c *gin.Context) {
 	sources, err := getThemeMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
 		return
 	}
 	force := c.Query("refresh") == "true"
@@ -166,7 +166,7 @@ func ListThemeMarketCatalog(c *gin.Context) {
 	for _, items := range results {
 		themes = append(themes, items...)
 	}
-	api.RespondSuccess(c, gin.H{"themes": themes, "sources": statuses})
+	respond.Success(c, gin.H{"themes": themes, "sources": statuses})
 }
 
 func InstallThemeFromMarket(c *gin.Context) {
@@ -175,12 +175,12 @@ func InstallThemeFromMarket(c *gin.Context) {
 		Short    string `json:"short" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 	sources, err := getThemeMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load theme market sources: "+err.Error())
 		return
 	}
 	var source *ThemeMarketSource
@@ -191,12 +191,12 @@ func InstallThemeFromMarket(c *gin.Context) {
 		}
 	}
 	if source == nil {
-		api.RespondError(c, http.StatusNotFound, "Theme market source not found or disabled")
+		respond.Error(c, http.StatusNotFound, "Theme market source not found or disabled")
 		return
 	}
 	items, err := fetchThemeMarketCatalog(*source, true)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Failed to load theme market source: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Failed to load theme market source: "+err.Error())
 		return
 	}
 	var selected *ThemeMarketTheme
@@ -207,52 +207,52 @@ func InstallThemeFromMarket(c *gin.Context) {
 		}
 	}
 	if selected == nil {
-		api.RespondError(c, http.StatusNotFound, "Theme not found in source")
+		respond.Error(c, http.StatusNotFound, "Theme not found in source")
 		return
 	}
 	if !selected.Installable {
-		api.RespondError(c, http.StatusBadRequest, "This theme does not provide an installable package")
+		respond.Error(c, http.StatusBadRequest, "This theme does not provide an installable package")
 		return
 	}
 	data, err := market.DownloadMarketURL(selected.Download, market.PackageMaxSize)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Failed to download theme: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Failed to download theme: "+err.Error())
 		return
 	}
 	digest := sha256.Sum256(data)
 	if !strings.EqualFold(hex.EncodeToString(digest[:]), selected.SHA256) {
-		api.RespondError(c, http.StatusBadRequest, "Theme SHA-256 checksum does not match the market catalog")
+		respond.Error(c, http.StatusBadRequest, "Theme SHA-256 checksum does not match the market catalog")
 		return
 	}
 	tempFile, err := os.CreateTemp("", "komari-market-theme-*.zip")
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to create temporary theme file")
+		respond.Error(c, http.StatusInternalServerError, "Failed to create temporary theme file")
 		return
 	}
 	tempPath := tempFile.Name()
 	defer os.Remove(tempPath)
 	if _, err := tempFile.Write(data); err != nil {
 		tempFile.Close()
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save temporary theme file")
+		respond.Error(c, http.StatusInternalServerError, "Failed to save temporary theme file")
 		return
 	}
 	if err := tempFile.Close(); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save temporary theme file")
+		respond.Error(c, http.StatusInternalServerError, "Failed to save temporary theme file")
 		return
 	}
 	manifest, err := peekThemeFromZip(tempPath)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	if manifest.Short != selected.Short || manifest.Version != selected.Version {
-		api.RespondError(c, http.StatusBadRequest, "Theme manifest does not match the market catalog")
+		respond.Error(c, http.StatusBadRequest, "Theme manifest does not match the market catalog")
 		return
 	}
 	installed, err := InstallZip(tempPath)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	api.RespondSuccessMessage(c, "Theme installed from market", installed)
+	respond.SuccessMessage(c, "Theme installed from market", installed)
 }

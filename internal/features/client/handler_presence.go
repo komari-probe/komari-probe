@@ -3,9 +3,6 @@ package client
 import (
 	"sync"
 	"time"
-
-	"github.com/komari-monitor/komari/internal/features/notification"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
 )
 
 const (
@@ -37,14 +34,14 @@ func refreshPostPresence(uuid string) {
 		entry.timer = time.AfterFunc(postPresenceTTL, func() {
 			postPresenceExpired(uuid, entry.connID, gen)
 		})
-		agent_runtime.KeepAlivePresence(uuid, entry.connID, postPresenceTTL)
+		KeepAlivePresence(uuid, entry.connID, postPresenceTTL)
 		return
 	}
 
 	connID := time.Now().UnixNano()
-	agent_runtime.KeepAlivePresence(uuid, connID, postPresenceTTL)
-	agent_runtime.MarkV2Client(uuid)
-	go notification.OnlineNotification(uuid, connID)
+	KeepAlivePresence(uuid, connID, postPresenceTTL)
+	MarkV2Client(uuid)
+	go notifyOnline(uuid, connID)
 
 	defaultGeneration := uint64(0)
 	entry := &postPresenceEntry{connID: connID, generation: defaultGeneration}
@@ -64,6 +61,6 @@ func postPresenceExpired(uuid string, connID int64, gen uint64) {
 	delete(postPresenceStates, uuid)
 	postPresenceMu.Unlock()
 
-	agent_runtime.SetPresence(uuid, connID, false)
-	notification.OfflineNotification(uuid, connID)
+	SetPresence(uuid, connID, false)
+	notifyOffline(uuid, connID)
 }

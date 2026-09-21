@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/geoip"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
 // update.go
@@ -20,12 +20,12 @@ import (
 
 func UpdateMmdbGeoIP(c *gin.Context) {
 	if err := geoip.UpdateDatabase(); err != nil {
-		api.RespondError(c, 500, "Failed to update GeoIP database "+err.Error())
+		respond.Error(c, 500, "Failed to update GeoIP database "+err.Error())
 		return
 	}
 	uuid, _ := c.Get("uuid")
 	auditlog.Log(c.ClientIP(), uuid.(string), "GeoIP database updated", "info")
-	api.RespondSuccess(c, nil)
+	respond.Success(c, nil)
 }
 
 func UploadFavicon(c *gin.Context) {
@@ -33,31 +33,31 @@ func UploadFavicon(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		if strings.Contains(err.Error(), "request body too large") {
-			api.RespondError(c, http.StatusRequestEntityTooLarge, "File too large. Maximum size is 5MB")
+			respond.Error(c, http.StatusRequestEntityTooLarge, "File too large. Maximum size is 5MB")
 		} else {
-			api.RespondError(c, http.StatusBadRequest, err.Error())
+			respond.Error(c, http.StatusBadRequest, err.Error())
 		}
 		return
 	}
 	if err := os.WriteFile("./data/favicon.ico", data, 0644); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save favicon: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to save favicon: "+err.Error())
 		return
 	}
 	uuid, _ := c.Get("uuid")
 	auditlog.Log(c.ClientIP(), uuid.(string), "Favicon uploaded", "info")
-	api.RespondSuccess(c, nil)
+	respond.Success(c, nil)
 }
 
 func DeleteFavicon(c *gin.Context) {
 	if err := os.Remove("./data/favicon.ico"); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			api.RespondError(c, http.StatusNotFound, "Favicon not found")
+			respond.Error(c, http.StatusNotFound, "Favicon not found")
 		} else {
-			api.RespondError(c, http.StatusInternalServerError, "Failed to delete favicon: "+err.Error())
+			respond.Error(c, http.StatusInternalServerError, "Failed to delete favicon: "+err.Error())
 		}
 		return
 	}
 	uuid, _ := c.Get("uuid")
 	auditlog.Log(c.ClientIP(), uuid.(string), "Favicon deleted", "info")
-	api.RespondSuccess(c, nil)
+	respond.Success(c, nil)
 }

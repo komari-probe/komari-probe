@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 
@@ -27,7 +27,7 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 		Value:    value,
 		Path:     "/",
 		MaxAge:   maxAge,
-		Secure:   api.GetScheme(c) == "https",
+		Secure:   respond.GetScheme(c) == "https",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -36,52 +36,52 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 func Login(c *gin.Context) {
 	DisablePasswordLogin, _ := kv.GetAs[bool](settings.DisablePasswordLoginKey, false)
 	if DisablePasswordLogin {
-		api.RespondError(c, http.StatusForbidden, "Password login is disabled")
+		respond.Error(c, http.StatusForbidden, "Password login is disabled")
 		return
 	}
 
 	bodyBytes, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
 		return
 	}
 	var data LoginRequest
 	err = json.Unmarshal(bodyBytes, &data)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
 		return
 	}
 	if data.Username == "" || data.Password == "" {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request body: Username and password are required")
+		respond.Error(c, http.StatusBadRequest, "Invalid request body: Username and password are required")
 		return
 	}
 
 	uuid, success := CheckPassword(data.Username, data.Password)
 	if !success {
-		api.RespondError(c, http.StatusUnauthorized, "Invalid credentials")
+		respond.Error(c, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
 	// 2FA
 	user, _ := GetUserByUUID(uuid)
 	if user.TwoFactor != "" { // 开启了2FA
 		if data.TwoFa == "" {
-			api.RespondError(c, http.StatusUnauthorized, "2FA code is required")
+			respond.Error(c, http.StatusUnauthorized, "2FA code is required")
 			return
 		}
 		if ok, err := Verify2Fa(uuid, data.TwoFa); err != nil || !ok {
-			api.RespondError(c, http.StatusUnauthorized, "Invalid 2FA code")
+			respond.Error(c, http.StatusUnauthorized, "Invalid 2FA code")
 			return
 		}
 	}
 	// Create session
 	session, err := CreateSession(uuid, sessionCookieMaxAge, c.Request.UserAgent(), c.ClientIP(), "password")
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to create session: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to create session: "+err.Error())
 		return
 	}
 	setSessionCookie(c, session, sessionCookieMaxAge)
 	auditlog.Log(c.ClientIP(), uuid, "logged in (password)", "login")
-	api.RespondSuccess(c, gin.H{"set-cookie": gin.H{"session_token": session}})
+	respond.Success(c, gin.H{"set-cookie": gin.H{"session_token": session}})
 }
 func Logout(c *gin.Context) {
 	session, _ := c.Cookie("session_token")

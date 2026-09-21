@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	clientfeature "github.com/komari-monitor/komari/internal/features/client"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
@@ -27,6 +28,11 @@ type notificationState struct {
 // clientStates 使用 sync.Map 实现对客户端状态的并发访问。
 // 映射关系：clientID (string) -> *notificationState
 var clientStates sync.Map
+
+func init() {
+	clientfeature.OnOnline(OnlineNotification)
+	clientfeature.OnOffline(OfflineNotification)
+}
 
 // getNotificationConfig 获取指定客户端的通知配置。
 // 返回配置对象和一个布尔值，指示全局和该客户端是否启用通知。

@@ -127,7 +127,7 @@ r.GET("/api/admin/client/:uuid", jsonRpc.Bind("admin:getClient", jsonRpc.WithPat
 
 - 参数装配：JSON body（对象/数组）+ `WithPath(...)` 路径参数 + `WithQuery(...)` 查询参数，合并为 RPC 参数。
 - 响应渲染器（保契约）：
-  - 默认 `renderStandard` → `{status:"success", message, data}`（data 为空时省略，对齐 `api.Response`）。
+  - 默认 `renderStandard` → `{status:"success", message, data}`（data 为空时省略，对齐 `respond.Response`）。
   - `WithFlat()` → 把 result(map) 平铺到顶层 + `{status:"success"}`（addClient/getClientToken/getSessions/provider set）。
   - `WithRaw()` → 直接输出 result（agent 裸 JSON / me / listClients / getClient）。
 - 错误：统一 `{status:"error", message}` + JSON-RPC 错误码到 HTTP 码映射。

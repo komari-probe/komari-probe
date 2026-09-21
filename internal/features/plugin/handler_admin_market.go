@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/market"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 )
@@ -107,64 +107,64 @@ func normalizePluginMarketSource(source PluginMarketSource) (PluginMarketSource,
 func ListPluginMarketSources(c *gin.Context) {
 	sources, err := getPluginMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
 		return
 	}
-	api.RespondSuccess(c, sources)
+	respond.Success(c, sources)
 }
 
 func CreatePluginMarketSource(c *gin.Context) {
 	var source PluginMarketSource
 	if err := c.ShouldBindJSON(&source); err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 	var err error
 	source, err = normalizePluginMarketSource(source)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	source.ID, err = market.NewSourceID()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to create source ID")
+		respond.Error(c, http.StatusInternalServerError, "Failed to create source ID")
 		return
 	}
 	sources, err := getPluginMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
 		return
 	}
 	for _, existing := range sources {
 		if existing.URL == source.URL {
-			api.RespondError(c, http.StatusConflict, "A source with this URL already exists")
+			respond.Error(c, http.StatusConflict, "A source with this URL already exists")
 			return
 		}
 	}
 	sources = append(sources, source)
 	if err := savePluginMarketSources(sources); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save plugin market source: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to save plugin market source: "+err.Error())
 		return
 	}
-	api.RespondSuccessMessage(c, "Plugin market source created", source)
+	respond.SuccessMessage(c, "Plugin market source created", source)
 }
 
 func UpdatePluginMarketSource(c *gin.Context) {
 	var update PluginMarketSource
 	if err := c.ShouldBindJSON(&update); err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 	update.ID = c.Param("id")
 	var err error
 	update, err = normalizePluginMarketSource(update)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	sources, err := getPluginMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
 		return
 	}
 	found := false
@@ -177,30 +177,30 @@ func UpdatePluginMarketSource(c *gin.Context) {
 			continue
 		}
 		if sources[i].URL == update.URL {
-			api.RespondError(c, http.StatusConflict, "A source with this URL already exists")
+			respond.Error(c, http.StatusConflict, "A source with this URL already exists")
 			return
 		}
 	}
 	if !found {
-		api.RespondError(c, http.StatusNotFound, "Plugin market source not found")
+		respond.Error(c, http.StatusNotFound, "Plugin market source not found")
 		return
 	}
 	if err := savePluginMarketSources(sources); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save plugin market source: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to save plugin market source: "+err.Error())
 		return
 	}
 	invalidatePluginMarketCache(oldURL)
 	if oldURL != update.URL {
 		invalidatePluginMarketCache(update.URL)
 	}
-	api.RespondSuccessMessage(c, "Plugin market source updated", update)
+	respond.SuccessMessage(c, "Plugin market source updated", update)
 }
 
 func DeletePluginMarketSource(c *gin.Context) {
 	id := c.Param("id")
 	sources, err := getPluginMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
 		return
 	}
 	next := make([]PluginMarketSource, 0, len(sources))
@@ -214,21 +214,21 @@ func DeletePluginMarketSource(c *gin.Context) {
 		next = append(next, sources[i])
 	}
 	if deleted == nil {
-		api.RespondError(c, http.StatusNotFound, "Plugin market source not found")
+		respond.Error(c, http.StatusNotFound, "Plugin market source not found")
 		return
 	}
 	if err := savePluginMarketSources(next); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to save plugin market sources: "+err.Error())
 		return
 	}
 	invalidatePluginMarketCache(deleted.URL)
-	api.RespondSuccessMessage(c, "Plugin market source deleted", nil)
+	respond.SuccessMessage(c, "Plugin market source deleted", nil)
 }
 
 func ListPluginMarketCatalog(c *gin.Context) {
 	sources, err := getPluginMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
 		return
 	}
 	force := c.Query("refresh") == "true"
@@ -257,7 +257,7 @@ func ListPluginMarketCatalog(c *gin.Context) {
 	for _, items := range results {
 		plugins = append(plugins, items...)
 	}
-	api.RespondSuccess(c, gin.H{"plugins": plugins, "sources": statuses})
+	respond.Success(c, gin.H{"plugins": plugins, "sources": statuses})
 }
 
 func InstallPluginFromMarket(c *gin.Context) {
@@ -266,12 +266,12 @@ func InstallPluginFromMarket(c *gin.Context) {
 		Short    string `json:"short" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 	sources, err := getPluginMarketSources()
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
+		respond.Error(c, http.StatusInternalServerError, "Failed to load plugin market sources: "+err.Error())
 		return
 	}
 	var source *PluginMarketSource
@@ -282,12 +282,12 @@ func InstallPluginFromMarket(c *gin.Context) {
 		}
 	}
 	if source == nil {
-		api.RespondError(c, http.StatusNotFound, "Plugin market source not found or disabled")
+		respond.Error(c, http.StatusNotFound, "Plugin market source not found or disabled")
 		return
 	}
 	items, err := fetchPluginMarketCatalog(*source, true)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Failed to load plugin market source: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Failed to load plugin market source: "+err.Error())
 		return
 	}
 	var selected *PluginMarketPlugin
@@ -298,49 +298,49 @@ func InstallPluginFromMarket(c *gin.Context) {
 		}
 	}
 	if selected == nil {
-		api.RespondError(c, http.StatusNotFound, "Plugin not found in source")
+		respond.Error(c, http.StatusNotFound, "Plugin not found in source")
 		return
 	}
 	if !selected.Installable {
-		api.RespondError(c, http.StatusBadRequest, "This plugin does not provide an installable package")
+		respond.Error(c, http.StatusBadRequest, "This plugin does not provide an installable package")
 		return
 	}
 	data, err := market.DownloadMarketURL(selected.Download, market.PackageMaxSize)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, "Failed to download plugin: "+err.Error())
+		respond.Error(c, http.StatusBadRequest, "Failed to download plugin: "+err.Error())
 		return
 	}
 	digest := sha256.Sum256(data)
 	if !strings.EqualFold(hex.EncodeToString(digest[:]), selected.SHA256) {
-		api.RespondError(c, http.StatusBadRequest, "Plugin SHA-256 checksum does not match the market catalog")
+		respond.Error(c, http.StatusBadRequest, "Plugin SHA-256 checksum does not match the market catalog")
 		return
 	}
 	tempFile, err := os.CreateTemp("", "komari-market-plugin-*.zip")
 	if err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to create temporary plugin file")
+		respond.Error(c, http.StatusInternalServerError, "Failed to create temporary plugin file")
 		return
 	}
 	tempPath := tempFile.Name()
 	defer os.Remove(tempPath)
 	if _, err := tempFile.Write(data); err != nil {
 		_ = tempFile.Close()
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save temporary plugin file")
+		respond.Error(c, http.StatusInternalServerError, "Failed to save temporary plugin file")
 		return
 	}
 	if err := tempFile.Close(); err != nil {
-		api.RespondError(c, http.StatusInternalServerError, "Failed to save temporary plugin file")
+		respond.Error(c, http.StatusInternalServerError, "Failed to save temporary plugin file")
 		return
 	}
 	installed, err := InstallZip(tempPath)
 	if err != nil {
-		api.RespondError(c, http.StatusBadRequest, err.Error())
+		respond.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	if installed.Short != selected.Short || installed.Version != selected.Version {
-		api.RespondError(c, http.StatusBadRequest, "Plugin manifest does not match the market catalog")
+		respond.Error(c, http.StatusBadRequest, "Plugin manifest does not match the market catalog")
 		return
 	}
-	api.RespondSuccessMessage(c, "Plugin installed from market", installed)
+	respond.SuccessMessage(c, "Plugin installed from market", installed)
 }
 
 func fetchPluginMarketCatalog(source PluginMarketSource, force bool) ([]PluginMarketPlugin, error) {

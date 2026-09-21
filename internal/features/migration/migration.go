@@ -13,10 +13,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	jsonrpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -141,7 +141,7 @@ func (c *Controller) authStatus(ctx *gin.Context) {
 	oauthEnabled, _ := kv.GetAs[bool](settings.OAuthEnabledKey, false)
 	oauthProvider, _ := kv.GetAs[string](settings.OAuthProviderKey, "github")
 	disablePassword, _ := kv.GetAs[bool](settings.DisablePasswordLoginKey, false)
-	api.RespondSuccess(ctx, gin.H{
+	respond.Success(ctx, gin.H{
 		"oauth_enabled":          oauthEnabled,
 		"oauth_provider":         oauthProvider,
 		"password_login_enabled": !disablePassword,
@@ -153,7 +153,7 @@ func (c *Controller) getStatus(ctx *gin.Context) {
 	c.mu.RLock()
 	status := c.status
 	c.mu.RUnlock()
-	api.RespondSuccess(ctx, status)
+	respond.Success(ctx, status)
 }
 
 func (c *Controller) start(ctx *gin.Context) {
@@ -166,66 +166,66 @@ func (c *Controller) start(ctx *gin.Context) {
 
 func (c *Controller) discard(ctx *gin.Context) {
 	if c.mode != ModeMetricStructure {
-		api.RespondError(ctx, http.StatusNotFound, "history discard is unavailable for this migration")
+		respond.Error(ctx, http.StatusNotFound, "history discard is unavailable for this migration")
 		return
 	}
 	c.mu.Lock()
 	if c.operationActiveLocked() || c.status.State == "completed" {
 		c.mu.Unlock()
-		api.RespondError(ctx, http.StatusConflict, "database migration is already running or completed")
+		respond.Error(ctx, http.StatusConflict, "database migration is already running or completed")
 		return
 	}
 	c.status = Status{Mode: c.mode, State: "discarding", Phase: "discarding"}
 	c.mu.Unlock()
 
 	go c.runDiscard()
-	api.RespondSuccessMessage(ctx, "historical metric data deletion started", gin.H{})
+	respond.SuccessMessage(ctx, "historical metric data deletion started", gin.H{})
 }
 
 func (c *Controller) startStructure(ctx *gin.Context) {
 	c.mu.Lock()
 	if c.operationActiveLocked() || c.status.State == "completed" {
 		c.mu.Unlock()
-		api.RespondError(ctx, http.StatusConflict, "database migration is already running or completed")
+		respond.Error(ctx, http.StatusConflict, "database migration is already running or completed")
 		return
 	}
 	c.status = Status{Mode: c.mode, State: "copying", Phase: "preparing"}
 	c.mu.Unlock()
 
 	go c.runStructure()
-	api.RespondSuccessMessage(ctx, "database migration started", gin.H{})
+	respond.SuccessMessage(ctx, "database migration started", gin.H{})
 }
 
 func (c *Controller) startLegacy(ctx *gin.Context) {
 	var request startRequest
 	if err := decodeJSON(ctx, &request); err != nil {
-		api.RespondError(ctx, http.StatusBadRequest, err.Error())
+		respond.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	cfg, err := metricConfig(request.Driver, request.DSN)
 	if err != nil {
-		api.RespondError(ctx, http.StatusBadRequest, err.Error())
+		respond.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	summary, err := migrations.InspectLegacyMonitoring(c.db)
 	if err != nil {
-		api.RespondError(ctx, http.StatusInternalServerError, "failed to inspect legacy monitoring data")
+		respond.Error(ctx, http.StatusInternalServerError, "failed to inspect legacy monitoring data")
 		return
 	}
 	driver := metricstore.ResolveDriverFromConfig(cfg.Driver, cfg.DSN)
 	if driver == tsdb.DriverSQLite && summary.ServerCount > 5 && summary.RetentionDays > 7 && !request.ConfirmSQLiteRisk {
-		api.RespondError(ctx, http.StatusConflict, "SQLite risk confirmation is required")
+		respond.Error(ctx, http.StatusConflict, "SQLite risk confirmation is required")
 		return
 	}
 	if summary.LoadRows+summary.LatencyRows > largeDatasetThreshold && !request.ConfirmLargeDataset {
-		api.RespondError(ctx, http.StatusConflict, "large dataset confirmation is required")
+		respond.Error(ctx, http.StatusConflict, "large dataset confirmation is required")
 		return
 	}
 
 	c.mu.Lock()
 	if c.operationActiveLocked() || c.status.State == "completed" {
 		c.mu.Unlock()
-		api.RespondError(ctx, http.StatusConflict, "database migration is already running or completed")
+		respond.Error(ctx, http.StatusConflict, "database migration is already running or completed")
 		return
 	}
 	c.status = Status{
@@ -239,7 +239,7 @@ func (c *Controller) startLegacy(ctx *gin.Context) {
 	c.mu.Unlock()
 
 	go c.runLegacy(*cfg, summary.RetentionDays)
-	api.RespondSuccessMessage(ctx, "database migration started", gin.H{})
+	respond.SuccessMessage(ctx, "database migration started", gin.H{})
 }
 
 func (c *Controller) operationActiveLocked() bool {
@@ -516,5 +516,5 @@ func metricConfig(requestedDriver, requestedDSN string) (*metricstore.MetricStor
 }
 
 func decodeJSON(ctx *gin.Context, target any) error {
-	return api.DecodeJSONBody(ctx, target, 1<<20)
+	return respond.DecodeJSONBody(ctx, target, 1<<20)
 }

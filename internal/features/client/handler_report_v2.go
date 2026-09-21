@@ -12,11 +12,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/komari-monitor/komari/internal/features/notification"
-	agent_runtime "github.com/komari-monitor/komari/internal/platform/agent"
-	"github.com/komari-monitor/komari/internal/platform/api"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
 
@@ -56,7 +54,7 @@ func handleV2RPC(uuid string, req v2.Request, allowWait bool) v2.Response {
 		}
 		return v2.Success(req.ID, gin.H{
 			"status": "success",
-			"events": agent_runtime.TakeV2Events(uuid, params.AckEventIDs, 8),
+			"events": TakeV2Events(uuid, params.AckEventIDs, 8),
 		})
 	case v2.MethodAgentBasicInfo:
 		var params v2.BasicInfoParams
@@ -82,13 +80,13 @@ func handleV2RPC(uuid string, req v2.Request, allowWait bool) v2.Response {
 			return v2.Error(req.ID, -32602, "invalid pull params", err.Error())
 		}
 		refreshPostPresence(uuid)
-		agent_runtime.MarkV2Client(uuid)
+		MarkV2Client(uuid)
 		timeout := 0 * time.Second
 		if allowWait {
 			timeout = 25 * time.Second
 		}
 		return v2.Success(req.ID, gin.H{
-			"events": agent_runtime.WaitV2Events(uuid, params.AckEventIDs, timeout),
+			"events": WaitV2Events(uuid, params.AckEventIDs, timeout),
 		})
 	default:
 		return v2.Error(req.ID, -32601, "method not found", req.Method)
@@ -120,11 +118,11 @@ func UploadV2RPC(c *gin.Context) {
 }
 
 func WebSocketV2RPC(c *gin.Context) {
-	if !api.IsWebSocketUpgrade(c) {
+	if !respond.IsWebSocketUpgrade(c) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "Require WebSocket upgrade"})
 		return
 	}
-	conn, err := api.UpgradeSafeConn(c, api.EnableWebSocketCompression)
+	conn, err := respond.UpgradeSafeConn(c, respond.EnableWebSocketCompression)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "Failed to upgrade to WebSocket." + err.Error()})
 		return
@@ -136,14 +134,14 @@ func WebSocketV2RPC(c *gin.Context) {
 		conn.WriteJSON(v2.Error(nil, -32001, "invalid token", nil))
 		return
 	}
-	if oldConn, exists := agent_runtime.GetConnectedClients()[uuid]; exists {
+	if oldConn, exists := GetConnectedClients()[uuid]; exists {
 		go oldConn.Close()
 	}
-	agent_runtime.SetConnectedClients(uuid, conn)
-	agent_runtime.MarkV2Client(uuid)
+	SetConnectedClients(uuid, conn)
+	MarkV2Client(uuid)
 	go notifierOnline(uuid, conn.ID)
 	defer func() {
-		agent_runtime.DeleteClientConditionally(uuid, conn)
+		DeleteClientConditionally(uuid, conn)
 		notifierOffline(uuid, conn.ID)
 	}()
 	if !pushQueuedV2Events(conn, uuid) {
@@ -176,7 +174,7 @@ func WebSocketV2RPC(c *gin.Context) {
 }
 
 func pushQueuedV2Events(conn *wsconn.SafeConn, uuid string) bool {
-	events := agent_runtime.TakeV2Events(uuid, nil, 0)
+	events := TakeV2Events(uuid, nil, 0)
 	if len(events) == 0 {
 		return true
 	}
@@ -184,13 +182,13 @@ func pushQueuedV2Events(conn *wsconn.SafeConn, uuid string) bool {
 	for _, event := range events {
 		payload := v2.Request{JSONRPC: v2.Version, Method: event.Method, Params: event.Params}
 		if err := conn.WriteJSON(payload); err != nil {
-			agent_runtime.AckV2Events(uuid, ackIDs)
+			AckV2Events(uuid, ackIDs)
 			logger.Errorf("client-api", "failed to push queued v2 event %s to client %s: %v", event.ID, uuid, err)
 			return false
 		}
 		ackIDs = append(ackIDs, event.ID)
 	}
-	agent_runtime.AckV2Events(uuid, ackIDs)
+	AckV2Events(uuid, ackIDs)
 	return true
 }
 
@@ -211,11 +209,11 @@ func clientUUIDFromContext(c *gin.Context) (string, bool) {
 func notifierOnline(uuid string, connID int64) {
 	go func() {
 		defer func() { _ = recover() }()
-		notification.OnlineNotification(uuid, connID)
+		notifyOnline(uuid, connID)
 	}()
 }
 
 func notifierOffline(uuid string, connID int64) {
 	defer func() { _ = recover() }()
-	notification.OfflineNotification(uuid, connID)
+	notifyOffline(uuid, connID)
 }
