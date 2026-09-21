@@ -37,7 +37,7 @@ func writePingRecords(ctx context.Context, records []models.PingRecord) error {
 
 	points := make([]tsdb.Point, 0, len(records)*2)
 	for _, rec := range records {
-		tags := map[string]string{"task_id": fmt.Sprintf("%d", rec.TaskId)}
+		tags := map[string]string{"task_id": fmt.Sprintf("%d", rec.TaskID)}
 		loss := 0.0
 		if rec.Value < 0 {
 			loss = 1
@@ -106,7 +106,7 @@ func GetPingRecords(ctx context.Context, clientUUID string, taskID int, start, e
 
 		records = append(records, models.PingRecord{
 			Client: p.EntityID,
-			TaskId: taskIDVal,
+			TaskID: taskIDVal,
 			Time:   p.Bucket.UTC(),
 			Value:  int(p.Value),
 		})

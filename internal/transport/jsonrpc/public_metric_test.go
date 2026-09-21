@@ -232,7 +232,7 @@ func TestPublicPingMetricMinusOneIsPreservedWithoutFillEmpty(t *testing.T) {
 func TestPublicPingStatsFromAggregateGroupsUsesTaskNamesAndLossMetric(t *testing.T) {
 	base := time.Date(2026, 6, 18, 0, 0, 0, 0, time.UTC)
 	taskMap := map[string]models.PingTask{
-		"1": {Id: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
+		"1": {ID: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
 	}
 	// Counts are kept at or above ping.MinSamplesForVolatility (20 valid
 	// samples) so the volatility ratio is actually computed; see
@@ -294,7 +294,7 @@ func TestPublicPingStatsFromAggregateGroupsUsesTaskNamesAndLossMetric(t *testing
 func TestPublicPingStatsFromAggregateGroupsSuppressesVolatilityBelowMinSamples(t *testing.T) {
 	base := time.Date(2026, 6, 18, 0, 0, 0, 0, time.UTC)
 	taskMap := map[string]models.PingTask{
-		"1": {Id: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
+		"1": {ID: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
 	}
 	groups := publicPingMetricAggregateGroups{
 		Avg: map[string][]tsdb.AggregatePoint{

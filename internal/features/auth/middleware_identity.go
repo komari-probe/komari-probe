@@ -212,7 +212,7 @@ func checkTokenAndGetUUID(token string) (string, error) {
 }
 
 func isApiKeyValid(apiKey string) bool {
-	apiKeyConfig, err := kv.GetAs[string](settings.ApiKeyKey, "")
+	apiKeyConfig, err := kv.GetAs[string](settings.APIKeyKey, "")
 	if err != nil {
 		return false
 	}

@@ -599,9 +599,9 @@ func recordToPoints(rec models.Record) []tsdb.Point {
 	ts := rec.Time
 	entityID := rec.Client
 	return []tsdb.Point{
-		{MetricName: metricstore.MetricCPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.Cpu)},
-		{MetricName: metricstore.MetricGPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.Gpu)},
-		{MetricName: metricstore.MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(rec.Ram)},
+		{MetricName: metricstore.MetricCPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.CPU)},
+		{MetricName: metricstore.MetricGPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.GPU)},
+		{MetricName: metricstore.MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(rec.RAM)},
 		{MetricName: metricstore.MetricSwap, EntityID: entityID, Timestamp: ts, Value: float64(rec.Swap)},
 		{MetricName: metricstore.MetricLoad, EntityID: entityID, Timestamp: ts, Value: float64(rec.Load)},
 		{MetricName: metricstore.MetricDisk, EntityID: entityID, Timestamp: ts, Value: float64(rec.Disk)},
@@ -613,7 +613,7 @@ func recordToPoints(rec models.Record) []tsdb.Point {
 		{MetricName: metricstore.MetricTrafficDown, EntityID: entityID, Timestamp: ts, Value: float64(rec.TrafficDown)},
 		{MetricName: metricstore.MetricProcess, EntityID: entityID, Timestamp: ts, Value: float64(rec.Process)},
 		{MetricName: metricstore.MetricConnections, EntityID: entityID, Timestamp: ts, Value: float64(rec.Connections)},
-		{MetricName: metricstore.MetricConnectionsUDP, EntityID: entityID, Timestamp: ts, Value: float64(rec.ConnectionsUdp)},
+		{MetricName: metricstore.MetricConnectionsUDP, EntityID: entityID, Timestamp: ts, Value: float64(rec.ConnectionsUDP)},
 	}
 }
 
@@ -633,7 +633,7 @@ func gpuRecordToPoints(rec models.GPURecord) []tsdb.Point {
 
 func pingRecordToPoints(rec models.PingRecord) []tsdb.Point {
 	ts := rec.Time
-	tags := map[string]string{"task_id": fmt.Sprintf("%d", rec.TaskId)}
+	tags := map[string]string{"task_id": fmt.Sprintf("%d", rec.TaskID)}
 	loss := 0.0
 	if rec.Value < 0 {
 		loss = 1

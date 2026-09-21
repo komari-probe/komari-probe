@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -104,7 +103,7 @@ func fetchThemeMarketCatalog(source ThemeMarketSource, force bool) ([]ThemeMarke
 			return append([]ThemeMarketTheme(nil), cached.Themes...), nil
 		}
 	}
-	data, err := download.DownloadMarketURL(source.URL, market.CatalogMaxSize)
+	data, err := market.DownloadMarketURL(source.URL, market.CatalogMaxSize)
 	if err != nil {
 		return nil, err
 	}

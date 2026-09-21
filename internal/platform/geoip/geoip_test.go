@@ -11,23 +11,23 @@ import (
 // 测试GeoIP数据库的初始化和更新功能
 func TestMmdb(t *testing.T) {
 	geoip.CurrentProvider, _ = provider.NewMaxMindGeoIPService()
-	testIpAddr(t)
+	testIPAddr(t)
 }
 func TestIpApi(t *testing.T) {
 	geoip.CurrentProvider, _ = provider.NewIPAPIService()
-	testIpAddr(t)
+	testIPAddr(t)
 }
 
 func TestGeojs(t *testing.T) {
 	geoip.CurrentProvider, _ = provider.NewGeoJSService()
-	testIpAddr(t)
+	testIPAddr(t)
 }
 
 func TestIpInfo(t *testing.T) {
 	geoip.CurrentProvider, _ = provider.NewIPInfoService()
-	testIpAddr(t)
+	testIPAddr(t)
 }
-func testIpAddr(t *testing.T) {
+func testIPAddr(t *testing.T) {
 	// IPv4
 	ipaddr := "8.8.8.8"
 	ip := net.ParseIP(ipaddr)

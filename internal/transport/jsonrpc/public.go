@@ -51,7 +51,7 @@ func publicGetNodesInformation(ctx context.Context, _ *rpc.JsonRpcRequest) (any,
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to retrieve client information: "+err.Error(), nil)
 	}
-	sendIPToGuest, _ := kv.GetAs[bool](settings.SendIpAddrToGuestKey)
+	sendIPToGuest, _ := kv.GetAs[bool](settings.SendIPAddrToGuestKey)
 	clientList = clients.FilterVisible(clientList, isLoginFromCtx(ctx), sendIPToGuest)
 	return clientList, nil
 }
@@ -215,7 +215,7 @@ func publicGetPublicPingTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *r
 	out := make([]publicPingTask, len(pingTasks))
 	for i, task := range pingTasks {
 		out[i] = publicPingTask{
-			ID:        task.Id,
+			ID:        task.ID,
 			Weight:    task.Weight,
 			Name:      task.Name,
 			Clients:   task.Clients,
@@ -234,14 +234,14 @@ func filterPublicRecordsByLoadType(recs []models.Record, loadType string) []map[
 		record := map[string]any{"client": r.Client, "time": r.Time}
 		switch loadType {
 		case "cpu":
-			record["cpu"] = r.Cpu
+			record["cpu"] = r.CPU
 		case "gpu":
-			record["gpu"] = r.Gpu
+			record["gpu"] = r.GPU
 		case "ram":
-			record["ram"] = r.Ram
-			record["ram_total"] = r.RamTotal
-			if r.RamTotal > 0 {
-				record["ram_percent"] = float32(r.Ram) / float32(r.RamTotal) * 100
+			record["ram"] = r.RAM
+			record["ram_total"] = r.RAMTotal
+			if r.RAMTotal > 0 {
+				record["ram_percent"] = float32(r.RAM) / float32(r.RAMTotal) * 100
 			}
 		case "swap":
 			record["swap"] = r.Swap
@@ -268,8 +268,8 @@ func filterPublicRecordsByLoadType(recs []models.Record, loadType string) []map[
 			record["process"] = r.Process
 		case "connections":
 			record["connections"] = r.Connections
-			record["connections_udp"] = r.ConnectionsUdp
-			record["connections_tcp"] = r.Connections - r.ConnectionsUdp
+			record["connections_udp"] = r.ConnectionsUDP
+			record["connections_tcp"] = r.Connections - r.ConnectionsUDP
 		}
 		out = append(out, record)
 	}
@@ -355,7 +355,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		if r.Client != "" && !isLogin && hiddenMap[r.Client] {
 			continue
 		}
-		rec := recordsResp{Time: r.Time.UTC(), Value: r.Value, Client: r.Client, TaskID: r.TaskId}
+		rec := recordsResp{Time: r.Time.UTC(), Value: r.Value, Client: r.Client, TaskID: r.TaskID}
 		stats := clientStats[r.Client]
 		stats.total++
 		if r.Value < 0 {
@@ -393,7 +393,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		}
 		tasksList := make([]map[string]any, 0, len(pingTasks))
 		for _, t := range pingTasks {
-			if taskID != -1 && t.Id != uint(taskID) {
+			if taskID != -1 && t.ID != uint(taskID) {
 				continue
 			}
 			if params.UUID != "" && !t.AppliesToClient(params.UUID) {
@@ -401,7 +401,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 			}
 			totalCount, lossCount, minLatency, maxLatency, sumLatency, validCount := 0, 0, 0, 0, 0, 0
 			for _, r := range recs {
-				if r.TaskId != t.Id {
+				if r.TaskID != t.ID {
 					continue
 				}
 				if params.UUID != "" && r.Client != params.UUID {
@@ -430,7 +430,7 @@ func publicGetPingRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 				avgLatency = sumLatency / validCount
 			}
 			taskInfo := map[string]any{
-				"id": t.Id, "name": t.Name, "type": t.Type, "interval": t.Interval,
+				"id": t.ID, "name": t.Name, "type": t.Type, "interval": t.Interval,
 				"default_on": t.DefaultOn, "loss": lossRate, "min": minLatency,
 				"max": maxLatency, "avg": avgLatency, "total": totalCount,
 			}

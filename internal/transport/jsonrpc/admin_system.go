@@ -72,7 +72,7 @@ func adminTestGeoip(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 			ip = meta.RemoteIP
 		}
 	}
-	cfg, err := kv.GetAs[bool](settings.GeoIpEnabledKey, false)
+	cfg, err := kv.GetAs[bool](settings.GeoIPEnabledKey, false)
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get configuration: "+err.Error(), nil)
 	}

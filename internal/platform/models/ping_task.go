@@ -5,15 +5,15 @@ import "time"
 type PingRecord struct {
 	Client     string    `json:"client" gorm:"type:varchar(36);not null;index"`
 	ClientInfo Client    `json:"client_info" gorm:"foreignKey:Client;references:UUID;constraint:OnDelete:CASCADE,OnUpdate:CASCADE"`
-	TaskId     uint      `json:"task_id" gorm:"not null;index"`
-	Task       PingTask  `json:"task" gorm:"foreignKey:TaskId;references:Id;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;"`
+	TaskID     uint      `json:"task_id" gorm:"not null;index"`
+	Task       PingTask  `json:"task" gorm:"foreignKey:TaskID;references:ID;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;"`
 	Time       time.Time `json:"time" gorm:"index;not null"`
 	Value      int       `json:"value" gorm:"type:int;not null"` // Ping 值，单位毫秒
 }
 
 // PingTask 表示一次延迟监测任务配置。
 type PingTask struct {
-	Id        uint        `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
+	ID        uint        `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
 	Weight    int         `json:"weight" gorm:"type:int;not null;default:0;index"`
 	Name      string      `json:"name" gorm:"type:varchar(255);not null;index"`
 	Clients   StringArray `json:"clients" gorm:"type:longtext"`

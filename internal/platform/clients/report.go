@@ -56,11 +56,11 @@ func ReportVerify(report v2.Report) error {
 	}
 
 	// [int64] 防止数据溢出
-	// Ram 验证
-	if err := checkInt64("Ram.Used", report.Ram.Used); err != nil {
+	// RAM 验证
+	if err := checkInt64("RAM.Used", report.RAM.Used); err != nil {
 		return err
 	}
-	if err := checkInt64("Ram.Total", report.Ram.Total); err != nil {
+	if err := checkInt64("RAM.Total", report.RAM.Total); err != nil {
 		return err
 	}
 	// Swap 验证

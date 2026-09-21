@@ -563,26 +563,26 @@ func TestGetRecordsByClientAndTimeReadsRollupsAfterRawCompaction(t *testing.T) {
 	rec := models.Record{
 		Client:         "node-a",
 		Time:           ts,
-		Cpu:            42.5,
-		Ram:            123456,
-		RamTotal:       999999,
+		CPU:            42.5,
+		RAM:            123456,
+		RAMTotal:       999999,
 		Disk:           456789,
 		DiskTotal:      777777,
 		Load:           0.75,
 		Connections:    321,
-		ConnectionsUdp: 12,
+		ConnectionsUDP: 12,
 	}
 	if _, err := WriteReport(ctx, v2.Report{
 		UUID:      rec.Client,
 		UpdatedAt: ts,
-		CPU:       v2.CPUReport{Usage: float64(rec.Cpu)},
-		Ram:       v2.RamReport{Used: rec.Ram, Total: rec.RamTotal},
+		CPU:       v2.CPUReport{Usage: float64(rec.CPU)},
+		RAM:       v2.RAMReport{Used: rec.RAM, Total: rec.RAMTotal},
 		Load:      v2.LoadReport{Load1: float64(rec.Load)},
 		Disk:      v2.DiskReport{Used: rec.Disk, Total: rec.DiskTotal},
 		Process:   rec.Process,
 		Connections: v2.ConnectionsReport{
 			TCP: rec.Connections,
-			UDP: rec.ConnectionsUdp,
+			UDP: rec.ConnectionsUDP,
 		},
 	}); err != nil {
 		t.Fatalf("write record: %v", err)
@@ -597,7 +597,7 @@ func TestGetRecordsByClientAndTimeReadsRollupsAfterRawCompaction(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("expected 1 reconstructed record from rollup, got %d: %#v", len(got), got)
 	}
-	if got[0].Cpu == 0 || got[0].Ram == 0 || got[0].Disk == 0 || got[0].Connections == 0 {
+	if got[0].CPU == 0 || got[0].RAM == 0 || got[0].Disk == 0 || got[0].Connections == 0 {
 		t.Fatalf("record was not reconstructed from rollup: %#v", got[0])
 	}
 
@@ -605,7 +605,7 @@ func TestGetRecordsByClientAndTimeReadsRollupsAfterRawCompaction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get all records: %v", err)
 	}
-	if len(all) != 1 || all[0].Client != rec.Client || all[0].Cpu == 0 {
+	if len(all) != 1 || all[0].Client != rec.Client || all[0].CPU == 0 {
 		t.Fatalf("all-client records were not reconstructed from rollup: %#v", all)
 	}
 }
@@ -640,10 +640,10 @@ func TestGetRecordMetricMaxByClientAndTimeQueriesOnlySelectedMetric(t *testing.T
 	if len(got) != 1 {
 		t.Fatalf("record count = %d, want 1: %#v", len(got), got)
 	}
-	if got[0].Cpu != 90 {
-		t.Fatalf("CPU max = %v, want 90", got[0].Cpu)
+	if got[0].CPU != 90 {
+		t.Fatalf("CPU max = %v, want 90", got[0].CPU)
 	}
-	if got[0].Ram != 0 {
-		t.Fatalf("unselected RAM value = %d, want 0", got[0].Ram)
+	if got[0].RAM != 0 {
+		t.Fatalf("unselected RAM value = %d, want 0", got[0].RAM)
 	}
 }

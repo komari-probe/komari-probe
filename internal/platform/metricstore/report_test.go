@@ -177,8 +177,8 @@ func TestWriteReportStoresMinuteMetricsAndResetAwareTraffic(t *testing.T) {
 		UUID:        "node-a",
 		UpdatedAt:   base,
 		CPU:         v2.CPUReport{Usage: 12.5},
-		Ram:         v2.RamReport{Used: 100, Total: 1000},
-		Swap:        v2.RamReport{Used: 20, Total: 200},
+		RAM:         v2.RAMReport{Used: 100, Total: 1000},
+		Swap:        v2.RAMReport{Used: 20, Total: 200},
 		Load:        v2.LoadReport{Load1: 0.5},
 		Disk:        v2.DiskReport{Used: 300, Total: 3000},
 		Network:     v2.NetworkReport{Up: 3, Down: 4, TotalUp: 100, TotalDown: 200},
@@ -329,9 +329,9 @@ func TestPingBatcherFlushesLatencyAndLossTogether(t *testing.T) {
 
 	base := time.Now().UTC().Truncate(time.Second)
 	records := []models.PingRecord{
-		{Client: "ping-node", TaskId: 7, Time: base, Value: 24},
-		{Client: "ping-node", TaskId: 7, Time: base.Add(time.Minute), Value: -1},
-		{Client: "ping-node", TaskId: 8, Time: base, Value: 31},
+		{Client: "ping-node", TaskID: 7, Time: base, Value: 24},
+		{Client: "ping-node", TaskID: 7, Time: base.Add(time.Minute), Value: -1},
+		{Client: "ping-node", TaskID: 8, Time: base, Value: 31},
 	}
 	for _, record := range records {
 		if err := WritePingRecord(ctx, record); err != nil {
@@ -464,7 +464,7 @@ func TestRecordReconstructionUsesMetricSpecificAggregation(t *testing.T) {
 	if len(records) != 1 {
 		t.Fatalf("records = %#v, want one bucket", records)
 	}
-	if records[0].Cpu != 20 || records[0].NetTotalUp != 200 || records[0].TrafficUp != 30 {
+	if records[0].CPU != 20 || records[0].NetTotalUp != 200 || records[0].TrafficUp != 30 {
 		t.Fatalf("unexpected aggregation result: %#v", records[0])
 	}
 }

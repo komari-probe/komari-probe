@@ -56,15 +56,15 @@ type Message struct {
 }
 
 type IPAddress struct {
-	Ipv4 string `json:"ipv4"`
-	Ipv6 string `json:"ipv6"`
+	IPv4 string `json:"ipv4"`
+	IPv6 string `json:"ipv6"`
 }
 
 type Report struct {
 	UUID        string            `json:"uuid,omitempty"`
 	CPU         CPUReport         `json:"cpu"`
-	Ram         RamReport         `json:"ram"`
-	Swap        RamReport         `json:"swap"`
+	RAM         RAMReport         `json:"ram"`
+	Swap        RAMReport         `json:"swap"`
 	Load        LoadReport        `json:"load"`
 	Disk        DiskReport        `json:"disk"`
 	Network     NetworkReport     `json:"network"`
@@ -98,7 +98,7 @@ type GPUDeviceInfo struct {
 	Temperature int     `json:"temperature"`
 }
 
-type RamReport struct {
+type RAMReport struct {
 	Total int64 `json:"total"`
 	Used  int64 `json:"used"`
 }

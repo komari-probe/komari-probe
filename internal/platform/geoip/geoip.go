@@ -23,18 +23,18 @@ func init() {
 	geoCache = cache.New(48*time.Hour, 1*time.Hour)
 }
 
-func InitGeoIp() {
+func InitGeoIP() {
 	conf, err := kv.GetMany(map[string]any{
-		settings.GeoIpEnabledKey:  true,
-		settings.GeoIpProviderKey: "ipinfo",
+		settings.GeoIPEnabledKey:  true,
+		settings.GeoIPProviderKey: "ipinfo",
 	})
 	if err != nil {
 		panic("Failed to get configuration for GeoIP: " + err.Error())
 	}
-	if !conf[settings.GeoIpEnabledKey].(bool) {
+	if !conf[settings.GeoIPEnabledKey].(bool) {
 		return
 	}
-	switch conf[settings.GeoIpProviderKey].(string) {
+	switch conf[settings.GeoIPProviderKey].(string) {
 	case "mmdb":
 		setGeoIPProvider("MaxMind", func() (provider.GeoIPService, error) { return provider.NewMaxMindGeoIPService() })
 	case "ip-api":

@@ -14,7 +14,7 @@ type OfflineNotification struct {
 
 // LoadNotification 定义了基于资源占用达标时间比的负载通知规则
 type LoadNotification struct {
-	Id           uint        `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
+	ID           uint        `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
 	Name         string      `json:"name" gorm:"type:varchar(255)"`
 	Clients      StringArray `json:"clients" gorm:"type:longtext"`
 	Metric       string      `json:"metric" gorm:"type:varchar(50);not null;default:'cpu'"`     // 监控指标，如 cpu, ram, load

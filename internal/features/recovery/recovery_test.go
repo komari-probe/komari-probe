@@ -93,7 +93,7 @@ func TestStatusAllowsAdminAPIKey(t *testing.T) {
 		t.Fatalf("open config db: %v", err)
 	}
 	kv.SetDb(db)
-	if err := kv.Set(settings.ApiKeyKey, "recovery-api-key"); err != nil {
+	if err := kv.Set(settings.APIKeyKey, "recovery-api-key"); err != nil {
 		t.Fatalf("set API key: %v", err)
 	}
 

@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
+	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/random"
@@ -36,7 +36,7 @@ func CreateSession(uuid string, expires int, userAgent, ip, loginMethod string) 
 		Session:      session,
 		Expires:      time.Now().UTC().Add(time.Duration(expires) * time.Second),
 		UserAgent:    userAgent,
-		Ip:           ip,
+		IP:           ip,
 		LoginMethod:  loginMethod,
 		LatestOnline: time.Now().UTC(),
 	}

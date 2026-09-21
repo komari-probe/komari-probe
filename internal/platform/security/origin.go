@@ -3,6 +3,7 @@ package security
 import (
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -51,8 +52,38 @@ func OriginInAllowlist(origin, rawAllowlist string) bool {
 	return false
 }
 
+// CheckWebSocketOrigin reports whether a WebSocket upgrade request's Origin
+// is acceptable: API-key requests and token-authenticated requests without
+// an Origin header bypass the check, KOMARI_WS_DISABLE_ORIGIN=true disables
+// it entirely, and otherwise the origin must match the request host or be
+// listed in the configured allowlist.
+func CheckWebSocketOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if strings.EqualFold(os.Getenv("KOMARI_WS_DISABLE_ORIGIN"), "true") {
+		return true
+	}
+	if IsAPIKeyRequest(r) {
+		return true
+	}
+	if origin == "" && r.URL.Query().Get("token") != "" {
+		return true
+	}
+	enabled, _ := kv.GetAs[bool](settings.WsOriginCheckEnabledKey, true)
+	if !enabled {
+		return true
+	}
+	if origin == "" {
+		return false
+	}
+	if OriginMatchesHost(origin, r.Host) {
+		return true
+	}
+	allowlist, _ := kv.GetAs[string](settings.WsAllowedOriginsKey, "")
+	return OriginInAllowlist(origin, allowlist)
+}
+
 func IsAPIKeyRequest(r *http.Request) bool {
-	apiKeyConfig, err := kv.GetAs[string](settings.ApiKeyKey, "")
+	apiKeyConfig, err := kv.GetAs[string](settings.APIKeyKey, "")
 	if err != nil || apiKeyConfig == "" || len(apiKeyConfig) < 12 {
 		return false
 	}

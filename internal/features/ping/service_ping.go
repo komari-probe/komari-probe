@@ -29,7 +29,7 @@ func AddPingTask(clients []string, defaultOn bool, name string, target, taskType
 		}
 
 		// Append by id to avoid races between concurrent create requests.
-		result := tx.Model(&models.PingTask{}).Where("id = ?", task.Id).Update("weight", int(task.Id))
+		result := tx.Model(&models.PingTask{}).Where("id = ?", task.ID).Update("weight", int(task.ID))
 		if result.Error != nil {
 			return result.Error
 		}
@@ -42,7 +42,7 @@ func AddPingTask(clients []string, defaultOn bool, name string, target, taskType
 	if err != nil {
 		return 0, err
 	}
-	return task.Id, ReloadPingSchedule()
+	return task.ID, ReloadPingSchedule()
 }
 
 func DeletePingTask(id []uint) error {
@@ -77,7 +77,7 @@ func EditPingTask(tasks []*models.PingTask) error {
 			"target":      task.Target,
 			"interval":    task.Interval,
 		}
-		result := db.Model(&models.PingTask{}).Where("id = ?", task.Id).Updates(updates)
+		result := db.Model(&models.PingTask{}).Where("id = ?", task.ID).Updates(updates)
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
 		}
@@ -204,7 +204,7 @@ func AddDefaultOnClientUUID(uuid string) error {
 		}
 		next := append(models.StringArray{}, task.Clients...)
 		next = append(next, uuid)
-		if err := db.Model(&models.PingTask{}).Where("id = ?", task.Id).Update("clients", next).Error; err != nil {
+		if err := db.Model(&models.PingTask{}).Where("id = ?", task.ID).Update("clients", next).Error; err != nil {
 			return err
 		}
 		changed = true

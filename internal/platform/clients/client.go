@@ -14,9 +14,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func DeleteClient(clientUuid string) error {
+func DeleteClient(clientUUID string) error {
 	db := dbcore.GetDBInstance()
-	err := db.Delete(&models.Client{}, "uuid = ?", clientUuid).Error
+	err := db.Delete(&models.Client{}, "uuid = ?", clientUUID).Error
 	if err != nil {
 		return err
 	}
@@ -91,13 +91,13 @@ func SaveClientInfo(update map[string]any) error {
 	}
 
 	verify := func(update map[string]any) error {
-		if err := checkOptionalInt("Cpu.Cores", "cpu_cores", math.MaxInt-1); err != nil {
+		if err := checkOptionalInt("CPU.Cores", "cpu_cores", math.MaxInt-1); err != nil {
 			return err
 		}
-		if err := checkOptionalInt("Cpu.PhysicalCores", "cpu_physical_cores", math.MaxInt-1); err != nil {
+		if err := checkOptionalInt("CPU.PhysicalCores", "cpu_physical_cores", math.MaxInt-1); err != nil {
 			return err
 		}
-		if err := checkOptionalInt("Ram.Total", "mem_total", math.MaxInt64-1); err != nil {
+		if err := checkOptionalInt("RAM.Total", "mem_total", math.MaxInt64-1); err != nil {
 			return err
 		}
 		if err := checkOptionalInt("Swap.Total", "swap_total", math.MaxInt64-1); err != nil {

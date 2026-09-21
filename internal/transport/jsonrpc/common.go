@@ -68,15 +68,15 @@ func getPingStatsForNode(uuid string, pingTasks []models.PingTask) map[string]pi
 	grouped := make(map[uint][]models.PingRecord)
 	for _, r := range recs {
 		for _, t := range assigned {
-			if r.TaskId == t.Id {
-				grouped[r.TaskId] = append(grouped[r.TaskId], r)
+			if r.TaskID == t.ID {
+				grouped[r.TaskID] = append(grouped[r.TaskID], r)
 				break
 			}
 		}
 	}
 	result := make(map[string]pingStat, len(grouped))
 	for _, t := range assigned {
-		records := grouped[t.Id]
+		records := grouped[t.ID]
 		if len(records) == 0 {
 			continue
 		}
@@ -124,7 +124,7 @@ func getPingStatsForNode(uuid string, pingTasks []models.PingTask) map[string]pi
 		if total > 0 {
 			lossRate = float64(lossCount) / float64(total) * 100
 		}
-		result[fmt.Sprintf("%d", t.Id)] = pingStat{
+		result[fmt.Sprintf("%d", t.ID)] = pingStat{
 			Name:   t.Name,
 			Latest: latest,
 			Avg:    avg,
@@ -202,7 +202,7 @@ func getNodes(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcEr
 	}
 	meta := rpc.MetaFromContext(ctx)
 
-	sendIPToGuest, _ := kv.GetAs[bool](settings.SendIpAddrToGuestKey)
+	sendIPToGuest, _ := kv.GetAs[bool](settings.SendIPAddrToGuestKey)
 	isAdmin := meta.Principal != nil && meta.Principal.HasRole(rpc.RoleAdmin)
 	cinfo = clients.FilterVisible(cinfo, isAdmin, sendIPToGuest)
 	if params.UUID != "" {
@@ -284,10 +284,10 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 		Client          string              `json:"client"`
 		Time            time.Time           `json:"time"`
 		CPU             float32             `json:"cpu"`
-		Gpu             float32             `json:"gpu"`
-		GpuCount        int                 `json:"gpu_count,omitempty"`
-		GpuAverageUsage float64             `json:"gpu_average_usage,omitempty"`
-		GpuDetailedInfo []v2.GPUDeviceInfo  `json:"gpu_detailed_info,omitempty"`
+		GPU             float32             `json:"gpu"`
+		GPUCount        int                 `json:"gpu_count,omitempty"`
+		GPUAverageUsage float64             `json:"gpu_average_usage,omitempty"`
+		GPUDetailedInfo []v2.GPUDeviceInfo  `json:"gpu_detailed_info,omitempty"`
 		RAM             int64               `json:"ram"`
 		RAMTotal        int64               `json:"ram_total"`
 		Swap            int64               `json:"swap"`
@@ -324,9 +324,9 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 			Client:         uuid,
 			Time:           rep.UpdatedAt,
 			CPU:            float32(rep.CPU.Usage),
-			Gpu:            gpuUsageFromReport(rep),
-			RAM:            rep.Ram.Used,
-			RAMTotal:       rep.Ram.Total,
+			GPU:            gpuUsageFromReport(rep),
+			RAM:            rep.RAM.Used,
+			RAMTotal:       rep.RAM.Total,
 			Swap:           rep.Swap.Used,
 			SwapTotal:      rep.Swap.Total,
 			Load:           float32(rep.Load.Load1),
@@ -347,9 +347,9 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 			Ping:           stats,
 		}
 		if rep.GPU != nil {
-			rl.GpuCount = rep.GPU.Count
-			rl.GpuAverageUsage = rep.GPU.AverageUsage
-			rl.GpuDetailedInfo = rep.GPU.DetailedInfo
+			rl.GPUCount = rep.GPU.Count
+			rl.GPUAverageUsage = rep.GPU.AverageUsage
+			rl.GPUDetailedInfo = rep.GPU.DetailedInfo
 		}
 		respMap[uuid] = rl
 	}
@@ -474,7 +474,7 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 		Client         string    `json:"client"`
 		Time           time.Time `json:"time"`
 		CPU            float32   `json:"cpu"`
-		Gpu            float32   `json:"gpu"`
+		GPU            float32   `json:"gpu"`
 		RAM            int64     `json:"ram"`
 		RAMTotal       int64     `json:"ram_total"`
 		Swap           int64     `json:"swap"`
@@ -510,9 +510,9 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 			Client:         params.UUID,
 			Time:           r.UpdatedAt,
 			CPU:            float32(r.CPU.Usage),
-			Gpu:            gpuUsageFromReport(&r),
-			RAM:            r.Ram.Used,
-			RAMTotal:       r.Ram.Total,
+			GPU:            gpuUsageFromReport(&r),
+			RAM:            r.RAM.Used,
+			RAMTotal:       r.RAM.Total,
 			Swap:           r.Swap.Used,
 			SwapTotal:      r.Swap.Total,
 			Load:           float32(r.Load.Load1),

@@ -16,7 +16,7 @@ func reportMetricPoints(report v2.Report, trafficUp, trafficDown int64) []tsdb.P
 	ts := report.UpdatedAt
 	points := []tsdb.Point{
 		{MetricName: MetricCPU, EntityID: entityID, Timestamp: ts, Value: report.CPU.Usage},
-		{MetricName: MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(report.Ram.Used)},
+		{MetricName: MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(report.RAM.Used)},
 		{MetricName: MetricSwap, EntityID: entityID, Timestamp: ts, Value: float64(report.Swap.Used)},
 		{MetricName: MetricLoad, EntityID: entityID, Timestamp: ts, Value: report.Load.Load1},
 		{MetricName: MetricDisk, EntityID: entityID, Timestamp: ts, Value: float64(report.Disk.Used)},

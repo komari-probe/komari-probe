@@ -15,7 +15,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/api"
-	"github.com/komari-monitor/komari/internal/platform/download"
 	"github.com/komari-monitor/komari/internal/platform/market"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -306,7 +305,7 @@ func InstallPluginFromMarket(c *gin.Context) {
 		api.RespondError(c, http.StatusBadRequest, "This plugin does not provide an installable package")
 		return
 	}
-	data, err := download.DownloadMarketURL(selected.Download, market.PackageMaxSize)
+	data, err := market.DownloadMarketURL(selected.Download, market.PackageMaxSize)
 	if err != nil {
 		api.RespondError(c, http.StatusBadRequest, "Failed to download plugin: "+err.Error())
 		return
@@ -353,7 +352,7 @@ func fetchPluginMarketCatalog(source PluginMarketSource, force bool) ([]PluginMa
 			return append([]PluginMarketPlugin(nil), cached.Plugins...), nil
 		}
 	}
-	data, err := download.DownloadMarketURL(source.URL, market.CatalogMaxSize)
+	data, err := market.DownloadMarketURL(source.URL, market.CatalogMaxSize)
 	if err != nil {
 		return nil, err
 	}

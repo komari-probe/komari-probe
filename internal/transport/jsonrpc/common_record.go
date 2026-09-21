@@ -222,7 +222,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 
 		for _, r := range recs {
 			rr := RecordsResp{
-				TaskID: r.TaskId,
+				TaskID: r.TaskID,
 				Time:   r.Time,
 				Value:  r.Value,
 				Client: r.Client,
@@ -269,7 +269,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		}
 		toList := make([]map[string]any, 0, len(pingTasks))
 		for _, t := range pingTasks {
-			if taskID != -1 && t.Id != uint(taskID) {
+			if taskID != -1 && t.ID != uint(taskID) {
 				continue
 			}
 			if params.UUID != "" { // ensure task assigned to specific client when filtering by uuid
@@ -288,7 +288,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			// 收集该任务的所有有效(非丢包)延迟值以计算百分位
 			latencies := make([]int, 0, 64)
 			for _, r := range recs {
-				if r.TaskId != t.Id {
+				if r.TaskID != t.ID {
 					continue
 				}
 				if params.UUID != "" && r.Client != params.UUID {
@@ -336,7 +336,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 				avg = sum / valid
 			}
 			info := map[string]any{
-				"id":            t.Id,
+				"id":            t.ID,
 				"name":          t.Name,
 				"type":          t.Type,
 				"interval":      t.Interval,
@@ -424,7 +424,7 @@ type flatRecord struct {
 	Client         string    `json:"client"`
 	Time           time.Time `json:"time"`
 	CPU            *float32  `json:"cpu,omitempty"`
-	Gpu            *float32  `json:"gpu,omitempty"`
+	GPU            *float32  `json:"gpu,omitempty"`
 	RAM            *int64    `json:"ram,omitempty"`
 	RAMTotal       *int64    `json:"ram_total,omitempty"`
 	Swap           *int64    `json:"swap,omitempty"`
@@ -449,15 +449,15 @@ func filterRecordsByLoadType(recs []models.Record, loadType string) []flatRecord
 		fr := flatRecord{Client: r.Client, Time: r.Time}
 		switch loadType {
 		case "cpu":
-			v := r.Cpu
+			v := r.CPU
 			fr.CPU = &v
 		case "gpu":
-			v := r.Gpu
-			fr.Gpu = &v
+			v := r.GPU
+			fr.GPU = &v
 		case "ram":
-			v := r.Ram
+			v := r.RAM
 			fr.RAM = &v
-			vt := r.RamTotal
+			vt := r.RAMTotal
 			fr.RAMTotal = &vt
 		case "swap":
 			v := r.Swap
@@ -490,11 +490,11 @@ func filterRecordsByLoadType(recs []models.Record, loadType string) []flatRecord
 		case "connections":
 			v := r.Connections
 			fr.Connections = &v
-			vu := r.ConnectionsUdp
+			vu := r.ConnectionsUDP
 			fr.ConnectionsUDP = &vu
 		default:
 			// unknown type: fallback to all fields as a full record would be returned elsewhere
-			v := r.Cpu
+			v := r.CPU
 			fr.CPU = &v
 		}
 		out = append(out, fr)

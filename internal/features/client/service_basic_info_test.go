@@ -41,7 +41,7 @@ func TestV2BasicInfoFillsRegionFromGeoIP(t *testing.T) {
 	flags.DatabaseFile = "file:v2_basic_info_geoip?mode=memory&cache=shared"
 
 	db := dbcore.GetDBInstance()
-	if err := kv.Set(settings.GeoIpEnabledKey, true); err != nil {
+	if err := kv.Set(settings.GeoIPEnabledKey, true); err != nil {
 		t.Fatalf("enable geoip: %v", err)
 	}
 

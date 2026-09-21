@@ -66,7 +66,7 @@ func executePingTask(ctx context.Context, task models.PingTask) {
 			// Context is still active, continue.
 		}
 
-		agent_runtime.DispatchPing(clientUUID, v2.PingParams{TaskID: task.Id, Type: task.Type, Target: task.Target})
+		agent_runtime.DispatchPing(clientUUID, v2.PingParams{TaskID: task.ID, Type: task.Type, Target: task.Target})
 	}
 }
 

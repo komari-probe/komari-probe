@@ -15,7 +15,7 @@ import (
 func (a *App) InitProviders() error {
 	a.initOAuth()
 
-	go geoip.InitGeoIp()
+	go geoip.InitGeoIP()
 	a.addCleanup("geoip", func(context.Context) error { return geoip.Shutdown() })
 
 	messagesender.Initialize()

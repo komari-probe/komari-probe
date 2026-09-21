@@ -3,16 +3,11 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/komari-monitor/komari/internal/platform/security"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
 
@@ -31,7 +26,7 @@ func UpgradeWebSocket(c *gin.Context, options ...WebSocketUpgradeOption) (*webso
 		return nil, fmt.Errorf("require websocket upgrade")
 	}
 	upgrader := websocket.Upgrader{
-		CheckOrigin: CheckWebSocketOrigin,
+		CheckOrigin: security.CheckWebSocketOrigin,
 	}
 	for _, option := range options {
 		option(&upgrader)
@@ -73,29 +68,4 @@ func UpgradeSafeConn(c *gin.Context, options ...WebSocketUpgradeOption) (*wsconn
 	}
 	sc.SetInterceptor(info, interceptor)
 	return sc, nil
-}
-
-func CheckWebSocketOrigin(r *http.Request) bool {
-	origin := r.Header.Get("Origin")
-	if strings.EqualFold(os.Getenv("KOMARI_WS_DISABLE_ORIGIN"), "true") {
-		return true
-	}
-	if security.IsAPIKeyRequest(r) {
-		return true
-	}
-	if origin == "" && r.URL.Query().Get("token") != "" {
-		return true
-	}
-	enabled, _ := kv.GetAs[bool](settings.WsOriginCheckEnabledKey, true)
-	if !enabled {
-		return true
-	}
-	if origin == "" {
-		return false
-	}
-	if security.OriginMatchesHost(origin, r.Host) {
-		return true
-	}
-	allowlist, _ := kv.GetAs[string](settings.WsAllowedOriginsKey, "")
-	return security.OriginInAllowlist(origin, allowlist)
 }

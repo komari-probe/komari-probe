@@ -406,7 +406,7 @@ func TestGetConfigurationResolvesSelectorValues(t *testing.T) {
 	if err := dbcore.GetDBInstance().Create(&models.Client{UUID: "node-a"}).Error; err != nil {
 		t.Fatal(err)
 	}
-	if err := dbcore.GetDBInstance().Create(&models.PingTask{Id: 8}).Error; err != nil {
+	if err := dbcore.GetDBInstance().Create(&models.PingTask{ID: 8}).Error; err != nil {
 		t.Fatal(err)
 	}
 	zipPath := writePluginZip(t, map[string]string{

@@ -36,19 +36,19 @@ func TestLegacyMonitoringTablesMigratedByOneShotMigration(t *testing.T) {
 	}
 
 	base := time.Date(2026, 7, 8, 23, 42, 0, 0, time.UTC)
-	if err := mainDB.Create(&models.Record{Client: "client-a", Time: base, Cpu: 12.5, Ram: 2048}).Error; err != nil {
+	if err := mainDB.Create(&models.Record{Client: "client-a", Time: base, CPU: 12.5, RAM: 2048}).Error; err != nil {
 		t.Fatalf("seed records: %v", err)
 	}
-	if err := mainDB.Table("records_long_term").Create(&models.Record{Client: "client-a", Time: base.Add(time.Minute), Cpu: 22.5, Ram: 4096}).Error; err != nil {
+	if err := mainDB.Table("records_long_term").Create(&models.Record{Client: "client-a", Time: base.Add(time.Minute), CPU: 22.5, RAM: 4096}).Error; err != nil {
 		t.Fatalf("seed records_long_term: %v", err)
 	}
 	if err := mainDB.Create(&models.GPURecord{Client: "client-a", Time: base, DeviceIndex: 0, DeviceName: "GPU 0", MemUsed: 1024, MemTotal: 2048, Utilization: 67, Temperature: 55}).Error; err != nil {
 		t.Fatalf("seed gpu_records: %v", err)
 	}
-	if err := mainDB.Create(&models.PingRecord{Client: "client-a", TaskId: 7, Time: base, Value: 36}).Error; err != nil {
+	if err := mainDB.Create(&models.PingRecord{Client: "client-a", TaskID: 7, Time: base, Value: 36}).Error; err != nil {
 		t.Fatalf("seed ping_records: %v", err)
 	}
-	if err := mainDB.Create(&models.PingRecord{Client: "client-a", TaskId: 7, Time: base.Add(30 * time.Second), Value: -1}).Error; err != nil {
+	if err := mainDB.Create(&models.PingRecord{Client: "client-a", TaskID: 7, Time: base.Add(30 * time.Second), Value: -1}).Error; err != nil {
 		t.Fatalf("seed loss ping_records: %v", err)
 	}
 	summary, err := InspectLegacyMonitoring(mainDB)
@@ -229,10 +229,10 @@ func TestLegacyRecordProjectionFillsMissingMetricColumns(t *testing.T) {
 	if err := db.Raw(projection).Scan(&record).Error; err != nil {
 		t.Fatalf("scan projected legacy row: %v", err)
 	}
-	if record.Client != "node-a" || !record.Time.Equal(base) || record.Cpu != 42.5 {
+	if record.Client != "node-a" || !record.Time.Equal(base) || record.CPU != 42.5 {
 		t.Fatalf("unexpected projected record: %#v", record)
 	}
-	if record.ConnectionsUdp != 0 || record.NetTotalDown != 0 {
+	if record.ConnectionsUDP != 0 || record.NetTotalDown != 0 {
 		t.Fatalf("missing metric columns were not zero-filled: %#v", record)
 	}
 }

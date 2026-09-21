@@ -1,66 +1,70 @@
-package models
+package theme
 
-import "testing"
+import (
+	"testing"
 
-func TestThemeValidateConfiguration(t *testing.T) {
+	"github.com/komari-monitor/komari/internal/platform/models"
+)
+
+func TestValidateThemeConfiguration(t *testing.T) {
 	tests := map[string]struct {
-		theme   Theme
+		theme   models.Theme
 		wantErr bool
 	}{
 		"managed empty data": {
-			theme: Theme{
-				Configuration: Configuration{Type: ThemeConfigurationManaged},
+			theme: models.Theme{
+				Configuration: models.Configuration{Type: models.ThemeConfigurationManaged},
 			},
 		},
 		"missing type defaults to managed": {
-			theme: Theme{},
+			theme: models.Theme{},
 		},
 		"raw html": {
-			theme: Theme{
-				Configuration: Configuration{
-					Type: ThemeConfigurationRaw,
+			theme: models.Theme{
+				Configuration: models.Configuration{
+					Type: models.ThemeConfigurationRaw,
 					Data: "<!doctype html><title>raw</title>",
 				},
 			},
 		},
 		"raw rejects empty html": {
-			theme: Theme{
-				Configuration: Configuration{
-					Type: ThemeConfigurationRaw,
+			theme: models.Theme{
+				Configuration: models.Configuration{
+					Type: models.ThemeConfigurationRaw,
 					Data: "  ",
 				},
 			},
 			wantErr: true,
 		},
 		"redirect relative path": {
-			theme: Theme{
-				Configuration: Configuration{
-					Type: ThemeConfigurationRedirect,
+			theme: models.Theme{
+				Configuration: models.Configuration{
+					Type: models.ThemeConfigurationRedirect,
 					Data: "/dashboard?tab=nodes",
 				},
 			},
 		},
 		"redirect rejects absolute url": {
-			theme: Theme{
-				Configuration: Configuration{
-					Type: ThemeConfigurationRedirect,
+			theme: models.Theme{
+				Configuration: models.Configuration{
+					Type: models.ThemeConfigurationRedirect,
 					Data: "https://example.com",
 				},
 			},
 			wantErr: true,
 		},
 		"redirect rejects parent traversal": {
-			theme: Theme{
-				Configuration: Configuration{
-					Type: ThemeConfigurationRedirect,
+			theme: models.Theme{
+				Configuration: models.Configuration{
+					Type: models.ThemeConfigurationRedirect,
 					Data: "/../admin",
 				},
 			},
 			wantErr: true,
 		},
 		"unknown type": {
-			theme: Theme{
-				Configuration: Configuration{Type: "hosted"},
+			theme: models.Theme{
+				Configuration: models.Configuration{Type: "hosted"},
 			},
 			wantErr: true,
 		},
@@ -68,7 +72,7 @@ func TestThemeValidateConfiguration(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			err := tt.theme.ValidateConfiguration()
+			err := validateThemeConfiguration(tt.theme)
 			if tt.wantErr && err == nil {
 				t.Fatal("expected error, got nil")
 			}
@@ -129,7 +133,7 @@ func TestNormalizeThemeRedirectTarget(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, ok := NormalizeThemeRedirectTarget(tt.input)
+			got, ok := normalizeThemeRedirectTarget(tt.input)
 			if ok != tt.ok {
 				t.Fatalf("ok = %v, want %v", ok, tt.ok)
 			}

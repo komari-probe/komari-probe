@@ -12,14 +12,14 @@ type Client struct {
 	UUID             string     `json:"uuid,omitempty" gorm:"type:varchar(36);primaryKey"`
 	Token            string     `json:"token,omitempty" gorm:"type:varchar(255);unique;not null"`
 	Name             string     `json:"name" gorm:"type:varchar(100)"`
-	CpuName          string     `json:"cpu_name" gorm:"type:varchar(100)"`
+	CPUName          string     `json:"cpu_name" gorm:"type:varchar(100)"`
 	Virtualization   string     `json:"virtualization" gorm:"type:varchar(50)"`
 	Arch             string     `json:"arch" gorm:"type:varchar(50)"`
-	CpuCores         int        `json:"cpu_cores" gorm:"type:int"`
-	CpuPhysicalCores int        `json:"cpu_physical_cores" gorm:"type:int"`
+	CPUCores         int        `json:"cpu_cores" gorm:"type:int"`
+	CPUPhysicalCores int        `json:"cpu_physical_cores" gorm:"type:int"`
 	OS               string     `json:"os" gorm:"type:varchar(100)"`
 	KernelVersion    string     `json:"kernel_version" gorm:"type:varchar(100)"`
-	GpuName          string     `json:"gpu_name" gorm:"type:varchar(100)"`
+	GPUName          string     `json:"gpu_name" gorm:"type:varchar(100)"`
 	IPv4             string     `json:"ipv4,omitempty" gorm:"type:varchar(100)"`
 	IPv6             string     `json:"ipv6,omitempty" gorm:"type:varchar(100)"`
 	Region           string     `json:"region" gorm:"type:varchar(100)"`
@@ -62,11 +62,11 @@ type Session struct {
 	UUID            string    `json:"uuid" gorm:"type:varchar(36)"`
 	Session         string    `json:"session" gorm:"type:varchar(255);primaryKey;uniqueIndex:idx_sessions_session;not null"`
 	UserAgent       string    `json:"user_agent" gorm:"type:text"`
-	Ip              string    `json:"ip" gorm:"type:varchar(100)"`
+	IP              string    `json:"ip" gorm:"type:varchar(100)"`
 	LoginMethod     string    `json:"login_method" gorm:"type:varchar(50)"`
 	LatestOnline    time.Time `json:"latest_online" gorm:"type:timestamp"`
 	LatestUserAgent string    `json:"latest_user_agent" gorm:"type:text"`
-	LatestIp        string    `json:"latest_ip" gorm:"type:varchar(100)"`
+	LatestIP        string    `json:"latest_ip" gorm:"type:varchar(100)"`
 	Expires         time.Time `json:"expires" gorm:"not null"`
 	CreatedAt       time.Time `json:"created_at"`
 }
@@ -75,10 +75,10 @@ type Session struct {
 type Record struct {
 	Client         string    `json:"client" gorm:"type:varchar(36);index"`
 	Time           time.Time `json:"time" gorm:"index"`
-	Cpu            float32   `json:"cpu" gorm:"type:decimal(5,2)"` // e.g., 75.50%
-	Gpu            float32   `json:"gpu" gorm:"type:decimal(5,2)"`
-	Ram            int64     `json:"ram" gorm:"type:bigint"`
-	RamTotal       int64     `json:"ram_total" gorm:"type:bigint"`
+	CPU            float32   `json:"cpu" gorm:"type:decimal(5,2)"` // e.g., 75.50%
+	GPU            float32   `json:"gpu" gorm:"type:decimal(5,2)"`
+	RAM            int64     `json:"ram" gorm:"type:bigint"`
+	RAMTotal       int64     `json:"ram_total" gorm:"type:bigint"`
 	Swap           int64     `json:"swap" gorm:"type:bigint"`
 	SwapTotal      int64     `json:"swap_total" gorm:"type:bigint"`
 	Load           float32   `json:"load" gorm:"type:decimal(5,2)"`
@@ -93,7 +93,7 @@ type Record struct {
 	TrafficDown    int64     `json:"traffic_down" gorm:"type:bigint"`
 	Process        int       `json:"process"`
 	Connections    int       `json:"connections"`
-	ConnectionsUdp int       `json:"connections_udp"`
+	ConnectionsUDP int       `json:"connections_udp"`
 	//Uptime         int64     `json:"uptime" gorm:"type:bigint"`
 }
 

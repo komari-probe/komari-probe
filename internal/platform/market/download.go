@@ -1,4 +1,4 @@
-package download
+package market
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
-	"net/url"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -52,7 +51,7 @@ func IsSSRFProtectionEnabled() bool {
 // (including on every redirect hop); when disabled, downloads proceed
 // without address filtering.
 func DownloadMarketURL(rawURL string, maxSize int64) ([]byte, error) {
-	if err := validateMarketDownloadURL(rawURL); err != nil {
+	if err := ValidateURLSyntax(rawURL); err != nil {
 		return nil, err
 	}
 	protectionEnabled, err := ssrfProtectionEnabled()
@@ -71,7 +70,7 @@ func DownloadMarketURL(rawURL string, maxSize int64) ([]byte, error) {
 			if len(via) >= 10 {
 				return errors.New("too many redirects")
 			}
-			return validateMarketDownloadURL(req.URL.String())
+			return ValidateURLSyntax(req.URL.String())
 		},
 	}
 
@@ -94,14 +93,6 @@ func DownloadMarketURL(rawURL string, maxSize int64) ([]byte, error) {
 		return nil, errors.New("empty response")
 	}
 	return data, nil
-}
-
-func validateMarketDownloadURL(rawURL string) error {
-	parsed, err := url.Parse(rawURL)
-	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" || parsed.User != nil {
-		return errors.New("only HTTP and HTTPS URLs are allowed")
-	}
-	return nil
 }
 
 func newSSRFProtectedTransport() *http.Transport {

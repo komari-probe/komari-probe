@@ -387,7 +387,7 @@ func publicGetPingMetricStats(ctx context.Context, req *rpc.JsonRpcRequest) (any
 	}
 	taskMap := make(map[string]models.PingTask, len(taskList))
 	for _, task := range taskList {
-		taskMap[strconv.FormatUint(uint64(task.Id), 10)] = task
+		taskMap[strconv.FormatUint(uint64(task.ID), 10)] = task
 	}
 	taskFilter := normalizePingMetricTaskIDs(params.TaskID, params.TaskIDs)
 

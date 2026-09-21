@@ -177,7 +177,7 @@ func setupCORSConfigDB(t *testing.T, apiKey string) {
 
 	kv.SetDb(db)
 	if apiKey != "" {
-		if err := kv.Set(settings.ApiKeyKey, apiKey); err != nil {
+		if err := kv.Set(settings.APIKeyKey, apiKey); err != nil {
 			t.Fatalf("set api key: %v", err)
 		}
 	}

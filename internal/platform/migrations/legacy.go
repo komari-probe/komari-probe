@@ -6,12 +6,12 @@ import "time"
 type ClientInfo struct {
 	UUID           string     `json:"uuid,omitempty" gorm:"type:varchar(36);primaryKey;foreignKey:ClientUUID;references:UUID;constraint:OnDelete:CASCADE"`
 	Name           string     `json:"name" gorm:"type:varchar(100);not null"`
-	CpuName        string     `json:"cpu_name" gorm:"type:varchar(100)"`
+	CPUName        string     `json:"cpu_name" gorm:"type:varchar(100)"`
 	Virtualization string     `json:"virtualization" gorm:"type:varchar(50)"`
 	Arch           string     `json:"arch" gorm:"type:varchar(50)"`
-	CpuCores       int        `json:"cpu_cores" gorm:"type:int"`
+	CPUCores       int        `json:"cpu_cores" gorm:"type:int"`
 	OS             string     `json:"os" gorm:"type:varchar(100)"`
-	GpuName        string     `json:"gpu_name" gorm:"type:varchar(100)"`
+	GPUName        string     `json:"gpu_name" gorm:"type:varchar(100)"`
 	IPv4           string     `json:"ipv4,omitempty" gorm:"type:varchar(100)"`
 	IPv6           string     `json:"ipv6,omitempty" gorm:"type:varchar(100)"`
 	Region         string     `json:"region" gorm:"type:varchar(100)"`

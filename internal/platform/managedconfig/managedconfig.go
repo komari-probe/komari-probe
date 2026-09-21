@@ -87,7 +87,7 @@ func ResolveForOutput(values map[string]any, items []models.ManagedThemeConfigur
 			return err
 		}
 		for _, task := range tasks {
-			livePingTasks[task.Id] = struct{}{}
+			livePingTasks[task.ID] = struct{}{}
 		}
 	}
 

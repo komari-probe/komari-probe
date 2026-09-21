@@ -20,13 +20,13 @@ type legacyModelConfig struct {
 	Description                string  `json:"description" gorm:"type:text"`
 	Theme                      string  `json:"theme" gorm:"type:varchar(100);default:'default'"`
 	PrivateSite                bool    `json:"private_site" gorm:"default:false"`
-	ApiKey                     string  `json:"api_key" gorm:"type:varchar(255);default:''"`
+	APIKey                     string  `json:"api_key" gorm:"type:varchar(255);default:''"`
 	AutoDiscoveryKey           string  `json:"auto_discovery_key" gorm:"type:varchar(255);default:''"`
 	ScriptDomain               string  `json:"script_domain" gorm:"type:varchar(255);default:''"`
-	SendIpAddrToGuest          bool    `json:"send_ip_addr_to_guest" gorm:"default:false"`
+	SendIPAddrToGuest          bool    `json:"send_ip_addr_to_guest" gorm:"default:false"`
 	EulaAccepted               bool    `json:"eula_accepted" gorm:"default:false"`
-	GeoIpEnabled               bool    `json:"geo_ip_enabled" gorm:"default:true"`
-	GeoIpProvider              string  `json:"geo_ip_provider" gorm:"type:varchar(20);default:'ip-api'"`
+	GeoIPEnabled               bool    `json:"geo_ip_enabled" gorm:"default:true"`
+	GeoIPProvider              string  `json:"geo_ip_provider" gorm:"type:varchar(20);default:'ip-api'"`
 	OAuthEnabled               bool    `json:"o_auth_enabled" gorm:"default:false"`
 	OAuthProvider              string  `json:"o_auth_provider" gorm:"type:varchar(50);default:'github'"`
 	DisablePasswordLogin       bool    `json:"disable_password_login" gorm:"default:false"`
@@ -53,14 +53,14 @@ type legacyConfig struct {
 	Description                string    `json:"description"`
 	Theme                      string    `json:"theme"`
 	PrivateSite                bool      `json:"private_site"`
-	ApiKey                     string    `json:"api_key"`
+	APIKey                     string    `json:"api_key"`
 	AutoDiscoveryKey           string    `json:"auto_discovery_key"`
 	ScriptDomain               string    `json:"script_domain"`
-	SendIpAddrToGuest          bool      `json:"send_ip_addr_to_guest"`
+	SendIPAddrToGuest          bool      `json:"send_ip_addr_to_guest"`
 	EulaAccepted               bool      `json:"eula_accepted"`
 	BaseScriptsURLKey          string    `json:"base_scripts_url"`
-	GeoIpEnabled               bool      `json:"geo_ip_enabled"`
-	GeoIpProvider              string    `json:"geo_ip_provider"`
+	GeoIPEnabled               bool      `json:"geo_ip_enabled"`
+	GeoIPProvider              string    `json:"geo_ip_provider"`
 	OAuthEnabled               bool      `json:"o_auth_enabled"`
 	OAuthProvider              string    `json:"o_auth_provider"`
 	DisablePasswordLogin       bool      `json:"disable_password_login"`
@@ -81,7 +81,7 @@ func (legacyConfig) TableName() string {
 }
 
 type legacyPingTask struct {
-	Id      uint   `gorm:"column:id"`
+	ID      uint   `gorm:"column:id"`
 	Clients string `gorm:"column:clients"`
 }
 
@@ -390,12 +390,12 @@ func migrateLegacyClientInfo(db *gorm.DB) error {
 		}
 
 		client.Name = info.Name
-		client.CpuName = info.CpuName
+		client.CPUName = info.CPUName
 		client.Virtualization = info.Virtualization
 		client.Arch = info.Arch
-		client.CpuCores = info.CpuCores
+		client.CPUCores = info.CPUCores
 		client.OS = info.OS
-		client.GpuName = info.GpuName
+		client.GPUName = info.GPUName
 		client.IPv4 = info.IPv4
 		client.IPv6 = info.IPv6
 		client.Region = info.Region
@@ -469,8 +469,8 @@ func migrateLegacyPingAllClientsExpansion(db *gorm.DB) error {
 		if !isLegacyPingClientsEmpty(task.Clients) {
 			continue
 		}
-		if err := db.Table("ping_tasks").Where("id = ?", task.Id).Update("clients", allUUIDs).Error; err != nil {
-			return fmt.Errorf("expand legacy all_clients ping task %d: %w", task.Id, err)
+		if err := db.Table("ping_tasks").Where("id = ?", task.ID).Update("clients", allUUIDs).Error; err != nil {
+			return fmt.Errorf("expand legacy all_clients ping task %d: %w", task.ID, err)
 		}
 	}
 	return nil

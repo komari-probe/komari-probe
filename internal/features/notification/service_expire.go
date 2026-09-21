@@ -7,7 +7,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
+	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/timeutil"

@@ -48,7 +48,7 @@ func ingestBasicInfo(uuid string, info map[string]any, fallbackIP string) error 
 func ingestPingResult(uuid string, taskID uint, value int) error {
 	return ping.SavePingRecord(models.PingRecord{
 		Client: uuid,
-		TaskId: taskID,
+		TaskID: taskID,
 		Value:  value,
 		Time:   time.Now().UTC(),
 	})

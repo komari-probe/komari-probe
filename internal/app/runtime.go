@@ -43,8 +43,8 @@ func (a *App) registerReloadHandlers(cors *security.CorsController) {
 		}
 	})
 	a.reload.Register("geoip-provider", func(event kv.ConfigEvent) {
-		if event.IsChanged(settings.GeoIpProviderKey) {
-			go geoip.InitGeoIp()
+		if event.IsChanged(settings.GeoIPProviderKey) {
+			go geoip.InitGeoIP()
 		}
 	})
 	a.reload.Register("message-sender", func(event kv.ConfigEvent) {

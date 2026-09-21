@@ -1,9 +1,7 @@
 package dbcore
 
 import (
-	"archive/zip"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,157 +11,13 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/pkg/archive"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/sqlitetune"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
-
-// zipDirectoryExcluding 将 srcDir 打包为 dstZip，exclude 是绝对路径集合需要排除
-func zipDirectoryExcluding(srcDir, dstZip string, exclude map[string]struct{}) error {
-	// 规范化排除路径为绝对路径
-	normExclude := make(map[string]struct{}, len(exclude))
-	for p := range exclude {
-		abs, _ := filepath.Abs(p)
-		normExclude[abs] = struct{}{}
-	}
-
-	out, err := os.Create(dstZip)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	zw := zip.NewWriter(out)
-	defer zw.Close()
-
-	absSrc, _ := filepath.Abs(srcDir)
-	walkErr := filepath.Walk(absSrc, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// 排除 backup.zip 本身
-		if _, ok := normExclude[path]; ok {
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		// 计算 zip 内相对路径
-		rel, err := filepath.Rel(absSrc, path)
-		if err != nil {
-			return err
-		}
-		// 根目录跳过
-		if rel == "." {
-			return nil
-		}
-		// 替换为正斜杠
-		zipName := filepath.ToSlash(rel)
-
-		if info.IsDir() {
-			_, err := zw.Create(zipName + "/")
-			return err
-		}
-		// 普通文件
-		fh, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		w, err := zw.Create(zipName)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		if _, err := io.Copy(w, fh); err != nil {
-			fh.Close()
-			return err
-		}
-		fh.Close()
-		return nil
-	})
-	if walkErr != nil {
-		return walkErr
-	}
-	return zw.Close()
-}
-
-// removeAllInDirExcept 删除 dir 下除 exclude 指定绝对路径外的所有文件和文件夹
-func removeAllInDirExcept(dir string, exclude map[string]struct{}) error {
-	absDir, err := filepath.Abs(dir)
-	if err != nil {
-		return err
-	}
-	normExclude := make(map[string]struct{}, len(exclude))
-	for p := range exclude {
-		abs, _ := filepath.Abs(p)
-		normExclude[abs] = struct{}{}
-	}
-	entries, err := os.ReadDir(absDir)
-	if err != nil {
-		return err
-	}
-	for _, e := range entries {
-		full := filepath.Join(absDir, e.Name())
-		if _, ok := normExclude[full]; ok {
-			continue
-		}
-		if err := os.RemoveAll(full); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// unzipToDir 将 zipPath 解压到 dstDir，包含路径遍历保护
-func unzipToDir(zipPath, dstDir string) error {
-	zr, err := zip.OpenReader(zipPath)
-	if err != nil {
-		return err
-	}
-	defer zr.Close()
-
-	if err := os.MkdirAll(dstDir, 0755); err != nil {
-		return err
-	}
-	absDst, _ := filepath.Abs(dstDir)
-
-	for _, f := range zr.File {
-		// 构造目标路径并做路径遍历保护
-		cleanName := filepath.Clean(f.Name)
-		targetPath := filepath.Join(absDst, cleanName)
-		if !strings.HasPrefix(targetPath, absDst+string(os.PathSeparator)) && targetPath != absDst {
-			return fmt.Errorf("illegal file path in zip: %s", f.Name)
-		}
-		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(targetPath, 0755); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
-			return err
-		}
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		out, err := os.Create(targetPath)
-		if err != nil {
-			rc.Close()
-			return err
-		}
-		if _, err := io.Copy(out, rc); err != nil {
-			out.Close()
-			rc.Close()
-			return err
-		}
-		out.Close()
-		rc.Close()
-	}
-	return nil
-}
 
 var (
 	instance *gorm.DB
@@ -257,7 +111,7 @@ func backupOnVersionUpgrade() {
 	tsName := time.Now().UTC().Format("20060102-150405")
 	bakPath := filepath.Join(backupDir, fmt.Sprintf("upgrade-%s.zip", tsName))
 	backupZipPath := filepath.Join(".", "data", "backup.zip")
-	if zipErr := zipDirectoryExcluding("./data", bakPath, map[string]struct{}{backupZipPath: {}, backupDir: {}}); zipErr != nil {
+	if zipErr := archive.ZipDirectoryExcluding("./data", bakPath, map[string]struct{}{backupZipPath: {}, backupDir: {}}); zipErr != nil {
 		logger.Errorf("dbcore", "[upgrade-backup] failed to backup ./data before upgrade (from %q to %q): %v", prevVersion, versionID, zipErr)
 		return
 	}
@@ -354,7 +208,7 @@ func doInitialize() error {
 			} else {
 				tsName := time.Now().UTC().Format("20060102-150405")
 				bakPath := filepath.Join(backupDir, fmt.Sprintf("pre-restore-%s.zip", tsName))
-				if zipErr := zipDirectoryExcluding("./data", bakPath, map[string]struct{}{backupZipPath: {}, backupDir: {}}); zipErr != nil {
+				if zipErr := archive.ZipDirectoryExcluding("./data", bakPath, map[string]struct{}{backupZipPath: {}, backupDir: {}}); zipErr != nil {
 					logger.Errorf("dbcore", "[restore] failed to zip current data: %v", zipErr)
 				} else {
 					logger.Infof("dbcore", "[restore] current data zipped to %s", bakPath)
@@ -362,12 +216,12 @@ func doInitialize() error {
 			}
 
 			// 5. 删除数据文件，但保留归档目录和待恢复的 backup.zip。
-			if delErr := removeAllInDirExcept("./data", map[string]struct{}{backupZipPath: {}, backupDir: {}}); delErr != nil {
+			if delErr := archive.RemoveAllInDirExcept("./data", map[string]struct{}{backupZipPath: {}, backupDir: {}}); delErr != nil {
 				logger.Errorf("dbcore", "[restore] failed to cleanup data dir: %v", delErr)
 			}
 
 			// 6. 解压 ./data/backup.zip 到 ./data
-			if unzipErr := unzipToDir(backupZipPath, "./data"); unzipErr != nil {
+			if unzipErr := archive.UnzipToDir(backupZipPath, "./data"); unzipErr != nil {
 				logger.Errorf("dbcore", "[restore] failed to unzip backup into data: %v", unzipErr)
 			} else {
 				logger.Infof("dbcore", "[restore] backup.zip extracted to ./data")

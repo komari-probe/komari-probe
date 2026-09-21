@@ -195,11 +195,11 @@ func listRecordEntityIDs(ctx context.Context, s *tsdb.Store, start, end time.Tim
 func applyRecordMetricValue(rec *models.Record, metricName string, value float64) {
 	switch metricName {
 	case MetricCPU:
-		rec.Cpu = float32(value)
+		rec.CPU = float32(value)
 	case MetricGPU:
-		rec.Gpu = float32(value)
+		rec.GPU = float32(value)
 	case MetricRAM:
-		rec.Ram = int64(value)
+		rec.RAM = int64(value)
 	case MetricSwap:
 		rec.Swap = int64(value)
 	case MetricLoad:
@@ -223,7 +223,7 @@ func applyRecordMetricValue(rec *models.Record, metricName string, value float64
 	case MetricConnections:
 		rec.Connections = int(value)
 	case MetricConnectionsUDP:
-		rec.ConnectionsUdp = int(value)
+		rec.ConnectionsUDP = int(value)
 	}
 }
 

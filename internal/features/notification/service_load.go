@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	messageevent "github.com/komari-monitor/komari/internal/platform/models/messageEvent"
+	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/records"
 	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/scheduler"
@@ -81,7 +81,7 @@ func executeLoadNotificationTask(task models.LoadNotification) {
 
 	}
 	sendLoadNotification(overloadClients, task)
-	updateLastNotified(task.Id, now)
+	updateLastNotified(task.ID, now)
 }
 
 // shouldSkipNotification 检查是否应该跳过通知（冷却期检查）
@@ -130,15 +130,15 @@ func checkMetricThreshold(records []models.Record, task models.LoadNotification)
 func getMetricValue(record models.Record, metric string) float32 {
 	switch metric {
 	case "cpu":
-		return record.Cpu
+		return record.CPU
 	case "gpu":
-		return record.Gpu
+		return record.GPU
 	case "net_in", "netin":
 		return bytesPerSecondToMbps(record.NetIn)
 	case "net_out", "netout":
 		return bytesPerSecondToMbps(record.NetOut)
 	case "ram":
-		return usagePercentOfClientTotal(record, record.Ram, func(c models.Client) int64 { return c.MemTotal })
+		return usagePercentOfClientTotal(record, record.RAM, func(c models.Client) int64 { return c.MemTotal })
 	case "swap":
 		return usagePercentOfClientTotal(record, record.Swap, func(c models.Client) int64 { return c.SwapTotal })
 	case "load":
@@ -206,7 +206,7 @@ func sendLoadNotification(clientUUIDs []string, task models.LoadNotification) {
 			Emoji:   "⚠️",
 			Message: task.Name,
 		}); err != nil {
-			logger.Errorf("notifier", "Failed to send load notification for task %d: %v", task.Id, err)
+			logger.Errorf("notifier", "Failed to send load notification for task %d: %v", task.ID, err)
 		}
 	}()
 }
