@@ -1,4 +1,4 @@
-package client
+package node
 
 import (
 	"github.com/gin-gonic/gin"

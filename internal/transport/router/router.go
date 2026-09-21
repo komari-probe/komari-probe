@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/features/backup"
-	"github.com/komari-monitor/komari/internal/features/client"
+	"github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/plugin"
 	"github.com/komari-monitor/komari/internal/features/theme"
 	"github.com/komari-monitor/komari/internal/platform/public"
@@ -41,7 +41,7 @@ func registerPublicRoutes(r *gin.Engine) {
 	r.GET("/api/plugin/:short/*filepath", plugin.ServePublicPluginFile)
 	// /api/clients 是 WebSocket 端点（客户端发 "get"/"get <uuid>" 拉取在线列表与最新上报），
 	// 非 JSON-RPC，保留为 WS handler。
-	r.GET("/api/clients", client.GetClients)
+	r.GET("/api/clients", node.GetClients)
 
 	// JSON 接口 -> RPC2。
 	r.GET("/api/me", jsonRpc.Bind("public:getMe", jsonRpc.WithRaw()))
@@ -61,13 +61,13 @@ func registerPublicRoutes(r *gin.Engine) {
 // registerAgentRoutes agent（客户端）上报与拉取路由。
 func registerAgentRoutes(r *gin.Engine) {
 	// AutoDiscovery 注册使用独立的 Authorization key 鉴权，保留 REST handler。
-	r.POST("/api/clients/register", client.RegisterClient)
+	r.POST("/api/clients/register", node.RegisterClient)
 
 	tokenAuthorized := r.Group("/api/clients", auth.RequireRole(auth.RoleAdmin, auth.RoleClient))
 	{
 		// Agent 上报统一使用 v2 JSON-RPC。
-		tokenAuthorized.GET("/v2/rpc", client.WebSocketV2RPC)
-		tokenAuthorized.POST("/v2/rpc", client.UploadV2RPC)
+		tokenAuthorized.GET("/v2/rpc", node.WebSocketV2RPC)
+		tokenAuthorized.POST("/v2/rpc", node.UploadV2RPC)
 	}
 }
 

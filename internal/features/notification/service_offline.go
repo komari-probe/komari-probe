@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	clientfeature "github.com/komari-monitor/komari/internal/features/client"
+	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
@@ -30,8 +30,8 @@ type notificationState struct {
 var clientStates sync.Map
 
 func init() {
-	clientfeature.OnOnline(OnlineNotification)
-	clientfeature.OnOffline(OfflineNotification)
+	nodefeature.OnOnline(OnlineNotification)
+	nodefeature.OnOffline(OfflineNotification)
 }
 
 // getNotificationConfig 获取指定客户端的通知配置。

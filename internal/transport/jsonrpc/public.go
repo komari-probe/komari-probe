@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	clientfeature "github.com/komari-monitor/komari/internal/features/client"
+	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
@@ -105,7 +105,7 @@ func publicGetClientRecentRecords(ctx context.Context, req *rpc.JsonRpcRequest) 
 	if !isLoginFromCtx(ctx) && isHiddenClient(params.UUID) {
 		return nil, rpc.MakeError(rpc.InvalidParams, "UUID is required", nil) // 防止未登录获取隐藏客户端
 	}
-	return clientfeature.GetRecentReports(params.UUID), nil
+	return nodefeature.GetRecentReports(params.UUID), nil
 }
 
 // isHiddenClient 查询指定 uuid 是否为隐藏节点。

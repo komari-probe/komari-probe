@@ -1,4 +1,4 @@
-package client
+package node
 
 // PresenceHook is invoked when a client's connectivity state changes.
 // It exists so this package doesn't need to import internal/features/notification

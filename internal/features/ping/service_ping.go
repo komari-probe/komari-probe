@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	clientfeature "github.com/komari-monitor/komari/internal/features/client"
+	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
@@ -13,8 +13,8 @@ import (
 )
 
 func init() {
-	clientfeature.SetPingResultRecorder(SavePingRecord)
-	clientfeature.SetDefaultPingTaskApplier(AddDefaultOnClientUUID)
+	nodefeature.SetPingResultRecorder(SavePingRecord)
+	nodefeature.SetDefaultPingTaskApplier(AddDefaultOnClientUUID)
 }
 
 // AddPingTask 创建延迟监测任务。defaultOn 表示新加入的服务器是否自动开启此监测。

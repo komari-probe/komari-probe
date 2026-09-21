@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	clientfeature "github.com/komari-monitor/komari/internal/features/client"
+	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
@@ -246,8 +246,8 @@ func getNodesLatestStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *r
 	}
 
 	meta := rpc.MetaFromContext(ctx)
-	latest := clientfeature.GetLatestReport()
-	onlineUUIDs := clientfeature.GetAllOnlineUUIDs()
+	latest := nodefeature.GetLatestReport()
+	onlineUUIDs := nodefeature.GetAllOnlineUUIDs()
 	onlineSet := make(map[string]bool, len(onlineUUIDs))
 	for _, uuid := range onlineUUIDs {
 		onlineSet[uuid] = true
@@ -464,7 +464,7 @@ func getNodeRecentStatus(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rp
 		}
 	}
 
-	reports := clientfeature.GetRecentReports(params.UUID)
+	reports := nodefeature.GetRecentReports(params.UUID)
 
 	// 扁平化为 { count, records: [] }
 	// Named nodeStatusRecord, not flatRecord, so it doesn't shadow the

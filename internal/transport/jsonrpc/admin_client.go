@@ -1,16 +1,16 @@
 package jsonrpc
 
 import (
-	"github.com/komari-monitor/komari/internal/features/client"
+	"github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
 // admin_client.go
-// client 资源的 RPC2 方法注册（admin 命名空间）。处理逻辑在 internal/features/client，
+// client 资源的 RPC2 方法注册（admin 命名空间）。处理逻辑在 internal/features/node，
 // 这里只做注册，元数据沿用原 web/api/admin/client.go 的接口约定。
 
 func init() {
-	RegisterWithGroupAndMeta("addClient", rpc.RoleAdmin, client.AdminAddClient, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("addClient", rpc.RoleAdmin, node.AdminAddClient, &rpc.MethodMeta{
 		Name:    "admin:addClient",
 		Summary: "Create a new client",
 		Params: []rpc.ParamMeta{
@@ -18,7 +18,7 @@ func init() {
 		},
 		Returns: "{ uuid: string, token: string }",
 	})
-	RegisterWithGroupAndMeta("editClient", rpc.RoleAdmin, client.AdminEditClient, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("editClient", rpc.RoleAdmin, node.AdminEditClient, &rpc.MethodMeta{
 		Name:    "admin:editClient",
 		Summary: "Edit a client (partial update)",
 		Params: []rpc.ParamMeta{
@@ -26,7 +26,7 @@ func init() {
 		},
 		Returns: "null",
 	})
-	RegisterWithGroupAndMeta("removeClient", rpc.RoleAdmin, client.AdminRemoveClient, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("removeClient", rpc.RoleAdmin, node.AdminRemoveClient, &rpc.MethodMeta{
 		Name:    "admin:removeClient",
 		Summary: "Delete a client",
 		Params: []rpc.ParamMeta{
@@ -34,7 +34,7 @@ func init() {
 		},
 		Returns: "null",
 	})
-	RegisterWithGroupAndMeta("getClient", rpc.RoleAdmin, client.AdminGetClient, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("getClient", rpc.RoleAdmin, node.AdminGetClient, &rpc.MethodMeta{
 		Name:    "admin:getClient",
 		Summary: "Get a client by UUID",
 		Params: []rpc.ParamMeta{
@@ -42,12 +42,12 @@ func init() {
 		},
 		Returns: "Client",
 	})
-	RegisterWithGroupAndMeta("listClients", rpc.RoleAdmin, client.AdminListClients, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("listClients", rpc.RoleAdmin, node.AdminListClients, &rpc.MethodMeta{
 		Name:    "admin:listClients",
 		Summary: "List all clients (basic info)",
 		Returns: "Client[]",
 	})
-	RegisterWithGroupAndMeta("getClientToken", rpc.RoleAdmin, client.AdminGetClientToken, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("getClientToken", rpc.RoleAdmin, node.AdminGetClientToken, &rpc.MethodMeta{
 		Name:    "admin:getClientToken",
 		Summary: "Get a client's token by UUID",
 		Params: []rpc.ParamMeta{
@@ -55,10 +55,10 @@ func init() {
 		},
 		Returns: "{ token: string }",
 	})
-	RegisterWithGroupAndMeta("clearRecords", rpc.RoleAdmin, client.AdminClearRecords, &rpc.MethodMeta{
+	RegisterWithGroupAndMeta("clearRecords", rpc.RoleAdmin, node.AdminClearRecords, &rpc.MethodMeta{
 		Name:    "admin:clearRecords",
 		Summary: "Delete all load records",
 		Returns: "null",
 	})
-	reg("orderClients", client.AdminOrderClients, "Reorder clients (map of uuid->weight)")
+	reg("orderClients", node.AdminOrderClients, "Reorder clients (map of uuid->weight)")
 }

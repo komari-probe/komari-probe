@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	clientfeature "github.com/komari-monitor/komari/internal/features/client"
+	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/clients"
@@ -18,7 +18,7 @@ func CheckAndAutoRenewal(client models.Client) {
 		return
 	}
 	// 不在线则不续费
-	if _, ok := clientfeature.GetConnectedClients()[client.UUID]; !ok {
+	if _, ok := nodefeature.GetConnectedClients()[client.UUID]; !ok {
 		return
 	}
 	if client.ExpiredAt == nil {
