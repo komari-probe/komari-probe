@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
@@ -101,22 +101,22 @@ func TestLegacyMonitoringTablesMigratedByOneShotMigration(t *testing.T) {
 	}
 
 	hour := base.Truncate(time.Hour)
-	cpuPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricCPU, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour)})
+	cpuPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricruntime.MetricCPU, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour)})
 	if len(cpuPoints) != 1 || math.Abs(cpuPoints[0].Value-22) > 1e-9 || !cpuPoints[0].Bucket.Equal(hour) {
 		t.Fatalf("unexpected cpu points: %#v", cpuPoints)
 	}
 
-	gpuPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricGPUDeviceUsage, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"device_index": "0"}})
+	gpuPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricruntime.MetricGPUDeviceUsage, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"device_index": "0"}})
 	if len(gpuPoints) != 1 || gpuPoints[0].Value != 67 {
 		t.Fatalf("unexpected gpu points: %#v", gpuPoints)
 	}
 
-	pingPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricPingLatency, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
+	pingPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricruntime.MetricPingLatency, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
 	if len(pingPoints) != 1 || math.Abs(pingPoints[0].Value-34.15) > 1e-9 || !pingPoints[0].Bucket.Equal(hour) {
 		t.Fatalf("unexpected ping points: %#v", pingPoints)
 	}
 
-	pingLossPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricstore.MetricPingLoss, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
+	pingLossPoints := queryLegacyRollups(t, ctx, metricStore, tsdb.Query{MetricName: metricruntime.MetricPingLoss, EntityID: "client-a", Start: hour.Add(-time.Second), End: hour.Add(time.Hour), Tags: map[string]string{"task_id": "7"}})
 	if len(pingLossPoints) != 1 || math.Abs(pingLossPoints[0].Value-0.95) > 1e-9 || !pingLossPoints[0].Bucket.Equal(hour) {
 		t.Fatalf("unexpected ping loss points: %#v", pingLossPoints)
 	}

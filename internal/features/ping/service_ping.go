@@ -7,7 +7,7 @@ import (
 
 	nodefeature "github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"gorm.io/gorm"
 )
@@ -164,15 +164,15 @@ func UpdatePingTaskOrder(order map[uint]int) error {
 // metric store，旧 ping_records 表不再参与。
 
 func SavePingRecord(record models.PingRecord) error {
-	return metricstore.WritePingRecord(context.Background(), record)
+	return metricruntime.WritePingRecord(context.Background(), record)
 }
 
 func DeletePingRecords(id []uint) error {
-	return metricstore.DeletePingRecordsByTask(context.Background(), id)
+	return metricruntime.DeletePingRecordsByTask(context.Background(), id)
 }
 
 func DeleteAllPingRecords() error {
-	return metricstore.DeleteAllPingRecords(context.Background())
+	return metricruntime.DeleteAllPingRecords(context.Background())
 }
 
 func ReloadPingSchedule() error {
@@ -222,5 +222,5 @@ func AddDefaultOnClientUUID(uuid string) error {
 }
 
 func GetPingRecords(uuid string, taskId int, start, end time.Time) ([]models.PingRecord, error) {
-	return metricstore.GetPingRecords(context.Background(), uuid, taskId, start, end)
+	return metricruntime.GetPingRecords(context.Background(), uuid, taskId, start, end)
 }

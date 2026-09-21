@@ -13,7 +13,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/notification"
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/komari-monitor/komari/pkg/scheduler"
 )
@@ -60,8 +60,8 @@ func cleanupScheduledData() {
 func compactMetricStore(ctx context.Context) {
 	compactCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
-	written, err := metricstore.Compact(compactCtx, time.Now().UTC())
-	if errors.Is(err, metricstore.ErrCompactInProgress) {
+	written, err := metricruntime.Compact(compactCtx, time.Now().UTC())
+	if errors.Is(err, metricruntime.ErrCompactInProgress) {
 		return
 	}
 	if err != nil {
@@ -76,8 +76,8 @@ func compactMetricStore(ctx context.Context) {
 func cleanupMetricStore(ctx context.Context) {
 	cleanupCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
-	deleted, err := metricstore.CleanupExpired(cleanupCtx, time.Now().UTC())
-	if errors.Is(err, metricstore.ErrCompactInProgress) {
+	deleted, err := metricruntime.CleanupExpired(cleanupCtx, time.Now().UTC())
+	if errors.Is(err, metricruntime.ErrCompactInProgress) {
 		return
 	}
 	if err != nil {

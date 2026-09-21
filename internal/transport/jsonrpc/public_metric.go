@@ -11,7 +11,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
@@ -125,7 +125,7 @@ type publicPingMetricStatsResponse struct {
 }
 
 func publicListMetricDefinitions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	store := metricstore.GetStore()
+	store := metricruntime.GetStore()
 	if store == nil {
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
@@ -174,7 +174,7 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 		return nil, rpcErr
 	}
 
-	store := metricstore.GetStore()
+	store := metricruntime.GetStore()
 	if store == nil {
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
@@ -345,7 +345,7 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 }
 
 func publicMetricUsesRawWindow(start, end, now time.Time) bool {
-	retention := metricstore.DefaultRollupRawRetention
+	retention := metricruntime.DefaultRollupRawRetention
 	return end.Sub(start) <= retention && end.After(now.UTC().Add(-retention))
 }
 
@@ -376,7 +376,7 @@ func publicGetPingMetricStats(ctx context.Context, req *rpc.JsonRpcRequest) (any
 		}, nil
 	}
 
-	store := metricstore.GetStore()
+	store := metricruntime.GetStore()
 	if store == nil {
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
@@ -686,7 +686,7 @@ func isNullPingMetricValue(metricName string, value float64, fillEmpty bool) boo
 	if !fillEmpty || value != -1 {
 		return false
 	}
-	return metricName == metricstore.MetricPingLatency || metricName == metricstore.MetricPingLoss
+	return metricName == metricruntime.MetricPingLatency || metricName == metricruntime.MetricPingLoss
 }
 
 type publicPingMetricAggregateGroups struct {
@@ -713,8 +713,8 @@ func loadPublicPingMetricAggregateGroups(ctx context.Context, store *tsdb.Store,
 	}
 	loaded, err := store.SeriesBatch(ctx, tsdb.BatchSeriesQuery{
 		Specs: []tsdb.BatchSeriesSpec{
-			{MetricName: metricstore.MetricPingLatency, Aggregations: latencyAggregations, Interval: interval, PreserveSeries: true},
-			{MetricName: metricstore.MetricPingLoss, Aggregations: []tsdb.Aggregation{tsdb.AggAvg}, Interval: interval, PreserveSeries: true},
+			{MetricName: metricruntime.MetricPingLatency, Aggregations: latencyAggregations, Interval: interval, PreserveSeries: true},
+			{MetricName: metricruntime.MetricPingLoss, Aggregations: []tsdb.Aggregation{tsdb.AggAvg}, Interval: interval, PreserveSeries: true},
 		},
 		EntityIDs: entityIDs,
 		Start:     start,
@@ -724,8 +724,8 @@ func loadPublicPingMetricAggregateGroups(ctx context.Context, store *tsdb.Store,
 	if err != nil {
 		return nil, err
 	}
-	latency := loaded.Values[metricstore.MetricPingLatency]
-	lossPoints := loaded.Values[metricstore.MetricPingLoss][tsdb.AggAvg]
+	latency := loaded.Values[metricruntime.MetricPingLatency]
+	lossPoints := loaded.Values[metricruntime.MetricPingLoss][tsdb.AggAvg]
 
 	avg := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggAvg])
 	minimum := groupPingMetricAggregatePointsByEntity(latency[tsdb.AggMin])

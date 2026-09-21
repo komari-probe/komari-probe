@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/configform"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -58,7 +58,7 @@ func assemblePublicInfo() (map[string]any, error) {
 			cst.Description = "Komari Monitor, a simple server monitoring tool."
 		}
 	}
-	retention, err := metricstore.GetRetentionSummary(context.Background())
+	retention, err := metricruntime.GetRetentionSummary(context.Background())
 	if err != nil {
 		return nil, err
 	}

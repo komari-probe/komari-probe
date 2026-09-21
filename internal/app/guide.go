@@ -21,7 +21,7 @@ import (
 	migrationweb "github.com/komari-monitor/komari/internal/features/migration"
 	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	frontendpublic "github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/respond"
@@ -46,7 +46,7 @@ func (r DatabaseMigrationRequirement) Required() bool { return r.mode != "" }
 // when both inputs exist, then the startup loop detects the legacy tables on
 // its next pass.
 func (a *App) DatabaseMigrationRequired() (DatabaseMigrationRequirement, error) {
-	structureRequired, err := metricstore.StructureUpgradeRequired(context.Background())
+	structureRequired, err := metricruntime.StructureUpgradeRequired(context.Background())
 	if err != nil {
 		return DatabaseMigrationRequirement{}, err
 	}

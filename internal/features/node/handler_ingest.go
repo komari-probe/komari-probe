@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
 )
@@ -23,7 +23,7 @@ func ingestReport(uuid string, report v2.Report, markPresence bool) error {
 	if err := clients.ReportVerify(report); err != nil {
 		return err
 	}
-	savedReport, err := metricstore.WriteReport(context.Background(), report)
+	savedReport, err := metricruntime.WriteReport(context.Background(), report)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
@@ -128,7 +128,7 @@ func mainDatabaseStatus() databaseStorageStatus {
 }
 
 func monitoringDatabaseStatus(ctx context.Context) databaseStorageStatus {
-	info, err := metricstore.InspectStorage(ctx)
+	info, err := metricruntime.InspectStorage(ctx)
 	status := databaseStorageStatus{
 		Driver: string(info.Driver),
 		Action: string(info.Action),
@@ -171,7 +171,7 @@ func maintainMainDatabase(ctx context.Context) databaseMaintenanceResult {
 }
 
 func maintainMonitoringDatabase(ctx context.Context) databaseMaintenanceResult {
-	maintained, maintenanceErr := metricstore.ReclaimSpace(ctx)
+	maintained, maintenanceErr := metricruntime.ReclaimSpace(ctx)
 	result := databaseMaintenanceResult{
 		Driver:  string(maintained.Driver),
 		Action:  string(maintained.Action),

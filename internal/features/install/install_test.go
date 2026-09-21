@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -95,10 +95,10 @@ func TestInstallCompletesAndPersistsSettings(t *testing.T) {
 		t.Fatalf("find installed admin: %v", err)
 	}
 	want := map[string]any{
-		settings.SitenameKey:          "My Komari",
-		settings.DescriptionKey:       "Private monitoring",
-		metricstore.MetricDBDriverKey: "sqlite",
-		metricstore.MetricDBDSNKey:    metricDSN,
+		settings.SitenameKey:            "My Komari",
+		settings.DescriptionKey:         "Private monitoring",
+		metricruntime.MetricDBDriverKey: "sqlite",
+		metricruntime.MetricDBDSNKey:    metricDSN,
 	}
 	got, err := kv.GetAll()
 	if err != nil {

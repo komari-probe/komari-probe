@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/features/backup"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -142,7 +142,7 @@ func (c *Controller) complete(ctx *gin.Context) {
 	cfg, err := metricConfig(request)
 	if err == nil {
 		pingCtx, cancel := context.WithTimeout(ctx.Request.Context(), 15*time.Second)
-		err = metricstore.TestConnection(pingCtx, cfg)
+		err = metricruntime.TestConnection(pingCtx, cfg)
 		cancel()
 	}
 	if err != nil {
@@ -174,7 +174,7 @@ func (c *Controller) fail() {
 	c.mu.Unlock()
 }
 
-func (c *Controller) createAccountAndSettings(request *completeRequest, cfg *metricstore.MetricStoreConfig) error {
+func (c *Controller) createAccountAndSettings(request *completeRequest, cfg *metricruntime.MetricStoreConfig) error {
 	required, err := IsRequired(c.db)
 	if err != nil {
 		return err
@@ -187,10 +187,10 @@ func (c *Controller) createAccountAndSettings(request *completeRequest, cfg *met
 		return err
 	}
 	settings := map[string]any{
-		settings.SitenameKey:          request.Sitename,
-		settings.DescriptionKey:       request.Description,
-		metricstore.MetricDBDriverKey: cfg.Driver,
-		metricstore.MetricDBDSNKey:    cfg.DSN,
+		settings.SitenameKey:            request.Sitename,
+		settings.DescriptionKey:         request.Description,
+		metricruntime.MetricDBDriverKey: cfg.Driver,
+		metricruntime.MetricDBDSNKey:    cfg.DSN,
 	}
 	if err := kv.SetMany(settings); err != nil {
 		_ = auth.DeleteAccountByUsernameWithDB(c.db, user.Username)
@@ -236,13 +236,13 @@ func hasStrongPassword(password string) bool {
 	return upper && lower && digit
 }
 
-func metricConfig(request completeRequest) (*metricstore.MetricStoreConfig, error) {
+func metricConfig(request completeRequest) (*metricruntime.MetricStoreConfig, error) {
 	dsn := request.MetricDSN
-	driver, ok := metricstore.InferDriverFromDSN(dsn)
+	driver, ok := metricruntime.InferDriverFromDSN(dsn)
 	if !ok {
 		return nil, fmt.Errorf("cannot infer monitoring database type from DSN")
 	}
-	return &metricstore.MetricStoreConfig{Driver: string(driver), DSN: dsn}, nil
+	return &metricruntime.MetricStoreConfig{Driver: string(driver), DSN: dsn}, nil
 }
 
 func decodeJSON(ctx *gin.Context, target any) error {

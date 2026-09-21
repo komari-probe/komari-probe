@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
@@ -59,7 +59,7 @@ func metricDescriptionValue(raw string) any {
 }
 
 func adminListMetricDefinitions(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	store := metricstore.GetStore()
+	store := metricruntime.GetStore()
 	if store == nil {
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
@@ -98,7 +98,7 @@ func adminUpdateMetricDefinition(ctx context.Context, req *rpc.JsonRpcRequest) (
 	if params.RetentionDays < 0 {
 		return nil, rpc.MakeError(rpc.InvalidParams, "retention_days must be a non-negative integer", nil)
 	}
-	store := metricstore.GetStore()
+	store := metricruntime.GetStore()
 	if store == nil {
 		return nil, rpc.MakeError(rpc.InternalError, "metric store not initialized", nil)
 	}
@@ -110,7 +110,7 @@ func adminUpdateMetricDefinition(ctx context.Context, req *rpc.JsonRpcRequest) (
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to update metric definition: "+err.Error(), nil)
 	}
 	if params.RetentionDays == 0 {
-		metricstore.DeleteMetricDataAsync(params.Name)
+		metricruntime.DeleteMetricDataAsync(params.Name)
 	}
 
 	actor, ip := auditActor(ctx)
@@ -143,14 +143,14 @@ func adminUpdateMetricDefinition(ctx context.Context, req *rpc.JsonRpcRequest) (
 //   - migrated_points: 已搬运的采样点数
 //   - start_time / end_time / error
 func adminGetMetricMigrationStatus(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	p := metricstore.GetStoreMigrationProgress()
+	p := metricruntime.GetStoreMigrationProgress()
 	status := p.Status
 	if status == "" {
 		status = "idle"
 	}
 	return map[string]any{
 		"status":          status,
-		"is_running":      metricstore.IsStoreMigrationRunning(),
+		"is_running":      metricruntime.IsStoreMigrationRunning(),
 		"source_driver":   p.SourceDriver,
 		"source_dsn":      p.SourceDSN,
 		"target_driver":   p.TargetDriver,
@@ -182,7 +182,7 @@ func adminStartMetricMigration(ctx context.Context, req *rpc.JsonRpcRequest) (an
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid params: "+err.Error(), nil)
 	}
 
-	if err := metricstore.StartStoreMigration(strings.TrimSpace(params.SourceDriver), strings.TrimSpace(params.SourceDSN)); err != nil {
+	if err := metricruntime.StartStoreMigration(strings.TrimSpace(params.SourceDriver), strings.TrimSpace(params.SourceDSN)); err != nil {
 		return nil, rpc.MakeError(rpc.InvalidRequest, err.Error(), nil)
 	}
 
@@ -198,7 +198,7 @@ func adminStartMetricMigration(ctx context.Context, req *rpc.JsonRpcRequest) (an
 // adminCancelMetricMigration 取消正在运行的 store-to-store 迁移。
 // 因写入是幂等 upsert，取消后可安全重新发起，不会产生重复数据。
 func adminCancelMetricMigration(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
-	if err := metricstore.CancelStoreMigration(); err != nil {
+	if err := metricruntime.CancelStoreMigration(); err != nil {
 		return nil, rpc.MakeError(rpc.InvalidRequest, err.Error(), nil)
 	}
 

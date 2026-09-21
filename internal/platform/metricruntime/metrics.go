@@ -1,4 +1,4 @@
-package metricstore
+package metricruntime
 
 const (
 	MetricCPU            = "cpu.usage"

@@ -10,7 +10,7 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
@@ -229,7 +229,7 @@ func executeDatabase(ctx context.Context, target, statement string, args []any) 
 		result, err := db.ExecContext(ctx, statement, args...)
 		return result, tsdb.DriverSQLite, err
 	case databaseTargetMetrics:
-		return metricstore.ExecContext(ctx, statement, args...)
+		return metricruntime.ExecContext(ctx, statement, args...)
 	default:
 		return nil, "", fmt.Errorf("unsupported database target: %s", target)
 	}
@@ -250,7 +250,7 @@ func listDatabaseTables(ctx context.Context, target string) (databaseTablesRespo
 		}
 		rows, actualDriver, release, err = openDatabaseRows(ctx, target, statement)
 	case databaseTargetMetrics:
-		rows, actualDriver, release, err = metricstore.QueryForDriver(ctx, tableListSQL)
+		rows, actualDriver, release, err = metricruntime.QueryForDriver(ctx, tableListSQL)
 	default:
 		return databaseTablesResponse{}, fmt.Errorf("unsupported database target: %s", target)
 	}
@@ -287,7 +287,7 @@ func openDatabaseRows(ctx context.Context, target, statement string, args ...any
 		rows, err := db.QueryContext(ctx, statement, args...)
 		return rows, tsdb.DriverSQLite, func() {}, err
 	case databaseTargetMetrics:
-		return metricstore.QueryContext(ctx, statement, args...)
+		return metricruntime.QueryContext(ctx, statement, args...)
 	default:
 		return nil, "", nil, fmt.Errorf("unsupported database target: %s", target)
 	}

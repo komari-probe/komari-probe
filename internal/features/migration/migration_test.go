@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"gorm.io/driver/sqlite"
@@ -126,13 +126,13 @@ func TestUnifiedAuthIncludesMode(t *testing.T) {
 }
 
 func TestStructureProgressPercent(t *testing.T) {
-	if got := structureProgressPercent(metricstore.RestructureProgress{RowsDone: 50, RowsTotal: 100}); got != 40 {
+	if got := structureProgressPercent(metricruntime.RestructureProgress{RowsDone: 50, RowsTotal: 100}); got != 40 {
 		t.Fatalf("copying percent = %v, want 40", got)
 	}
-	if got := structureProgressPercent(metricstore.RestructureProgress{Phase: "reclaiming"}); got != 80 {
+	if got := structureProgressPercent(metricruntime.RestructureProgress{Phase: "reclaiming"}); got != 80 {
 		t.Fatalf("reclaiming percent = %v, want 80", got)
 	}
-	if got := structureProgressPercent(metricstore.RestructureProgress{RowsDone: 100, RowsTotal: 100}); got != 80 {
+	if got := structureProgressPercent(metricruntime.RestructureProgress{RowsDone: 100, RowsTotal: 100}); got != 80 {
 		t.Fatalf("capped percent = %v, want 80", got)
 	}
 }

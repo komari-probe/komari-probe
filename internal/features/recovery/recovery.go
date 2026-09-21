@@ -15,7 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	jsonrpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
@@ -63,11 +63,11 @@ func NewController(initialErr error, failures int) *Controller {
 		MaxFailures: failures,
 	}
 	if initialErr != nil {
-		status.Error = metricstore.RedactConnectionError(initialErr.Error(), "")
+		status.Error = metricruntime.RedactConnectionError(initialErr.Error(), "")
 	}
-	if cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig](); err == nil {
+	if cfg, err := kv.GetManyAs[metricruntime.MetricStoreConfig](); err == nil {
 		status.DSN = strings.TrimSpace(cfg.DSN)
-		status.Error = metricstore.RedactConnectionError(status.Error, status.DSN)
+		status.Error = metricruntime.RedactConnectionError(status.Error, status.DSN)
 	}
 	return &Controller{status: status, done: make(chan struct{})}
 }
@@ -136,7 +136,7 @@ func (c *Controller) updateDSN(ctx *gin.Context) {
 		return
 	}
 
-	driver, ok := metricstore.InferDriverFromDSN(request.DSN)
+	driver, ok := metricruntime.InferDriverFromDSN(request.DSN)
 	if !ok {
 		respond.Error(ctx, http.StatusBadRequest, "cannot infer monitoring database type from DSN")
 		return
@@ -145,7 +145,7 @@ func (c *Controller) updateDSN(ctx *gin.Context) {
 		respond.Error(ctx, http.StatusConflict, "monitoring database recovery is already running or completed")
 		return
 	}
-	cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[metricruntime.MetricStoreConfig]()
 	if err != nil {
 		c.setFailure(err, request.DSN)
 		respond.Error(ctx, http.StatusInternalServerError, "failed to load monitoring database settings")
@@ -155,11 +155,11 @@ func (c *Controller) updateDSN(ctx *gin.Context) {
 	cfg.DSN = request.DSN
 
 	recoverCtx, cancel := context.WithTimeout(ctx.Request.Context(), 30*time.Second)
-	err = metricstore.RecoverStore(recoverCtx, cfg)
+	err = metricruntime.RecoverStore(recoverCtx, cfg)
 	cancel()
 	if err != nil {
 		c.setFailure(err, request.DSN)
-		respond.Error(ctx, http.StatusBadRequest, "monitoring database connection failed: "+metricstore.RedactConnectionError(err.Error(), request.DSN))
+		respond.Error(ctx, http.StatusBadRequest, "monitoring database connection failed: "+metricruntime.RedactConnectionError(err.Error(), request.DSN))
 		return
 	}
 	c.mu.Lock()
@@ -193,7 +193,7 @@ func (c *Controller) beginConnection() bool {
 func (c *Controller) setFailure(err error, dsn string) {
 	c.mu.Lock()
 	c.status.State = "waiting"
-	c.status.Error = metricstore.RedactConnectionError(err.Error(), dsn)
+	c.status.Error = metricruntime.RedactConnectionError(err.Error(), dsn)
 	c.mu.Unlock()
 }
 

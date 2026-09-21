@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -212,7 +212,7 @@ func (c *Controller) startLegacy(ctx *gin.Context) {
 		respond.Error(ctx, http.StatusInternalServerError, "failed to inspect legacy monitoring data")
 		return
 	}
-	driver := metricstore.ResolveDriverFromConfig(cfg.Driver, cfg.DSN)
+	driver := metricruntime.ResolveDriverFromConfig(cfg.Driver, cfg.DSN)
 	if driver == tsdb.DriverSQLite && summary.ServerCount > 5 && summary.RetentionDays > 7 && !request.ConfirmSQLiteRisk {
 		respond.Error(ctx, http.StatusConflict, "SQLite risk confirmation is required")
 		return
@@ -251,14 +251,14 @@ func (c *Controller) operationActiveLocked() bool {
 	}
 }
 
-func (c *Controller) runLegacy(cfg metricstore.MetricStoreConfig, legacyRetentionDays int) {
+func (c *Controller) runLegacy(cfg metricruntime.MetricStoreConfig, legacyRetentionDays int) {
 	ctx := context.Background()
 	mainBefore, err := dbcore.StorageSize()
 	if err != nil {
 		c.failTarget(err, cfg.DSN, "measuring")
 		return
 	}
-	store, err := metricstore.OpenStoreForMigration(ctx, &cfg, legacyRetentionDays)
+	store, err := metricruntime.OpenStoreForMigration(ctx, &cfg, legacyRetentionDays)
 	if err != nil {
 		c.failTarget(err, cfg.DSN, "connecting")
 		return
@@ -271,8 +271,8 @@ func (c *Controller) runLegacy(cfg metricstore.MetricStoreConfig, legacyRetentio
 	}
 
 	if err := kv.SetMany(map[string]any{
-		metricstore.MetricDBDriverKey: cfg.Driver,
-		metricstore.MetricDBDSNKey:    cfg.DSN,
+		metricruntime.MetricDBDriverKey: cfg.Driver,
+		metricruntime.MetricDBDSNKey:    cfg.DSN,
 	}); err != nil {
 		c.failTarget(err, cfg.DSN, "saving_target")
 		return
@@ -362,7 +362,7 @@ func (c *Controller) runLegacy(cfg metricstore.MetricStoreConfig, legacyRetentio
 }
 
 func (c *Controller) runStructure() {
-	result, err := metricstore.RestructureConfiguredStore(context.Background(), func(progress metricstore.RestructureProgress) {
+	result, err := metricruntime.RestructureConfiguredStore(context.Background(), func(progress metricruntime.RestructureProgress) {
 		c.mu.Lock()
 		c.status.Phase = progress.Phase
 		c.status.CurrentMetric = progress.CurrentMetric
@@ -381,7 +381,7 @@ func (c *Controller) runStructure() {
 		c.mu.Unlock()
 	})
 	if err != nil {
-		c.fail(metricstore.RedactConnectionError(err.Error(), ""), "failed")
+		c.fail(metricruntime.RedactConnectionError(err.Error(), ""), "failed")
 		return
 	}
 
@@ -406,7 +406,7 @@ func (c *Controller) runStructure() {
 }
 
 func (c *Controller) runDiscard() {
-	result, err := metricstore.DiscardConfiguredStoreHistory(context.Background(), func(progress metricstore.RestructureProgress) {
+	result, err := metricruntime.DiscardConfiguredStoreHistory(context.Background(), func(progress metricruntime.RestructureProgress) {
 		c.mu.Lock()
 		c.status.Phase = progress.Phase
 		c.status.CurrentMetric = progress.CurrentMetric
@@ -424,7 +424,7 @@ func (c *Controller) runDiscard() {
 		c.mu.Unlock()
 	})
 	if err != nil {
-		c.fail(metricstore.RedactConnectionError(err.Error(), ""), "discarding")
+		c.fail(metricruntime.RedactConnectionError(err.Error(), ""), "discarding")
 		return
 	}
 	saved := result.BeforeBytes - result.AfterBytes
@@ -470,7 +470,7 @@ func (c *Controller) failTarget(err error, dsn, phase string) {
 	c.fail(message, phase)
 }
 
-func structureProgressPercent(progress metricstore.RestructureProgress) float64 {
+func structureProgressPercent(progress metricruntime.RestructureProgress) float64 {
 	if progress.Phase == "reclaiming" {
 		return structureProgressCeiling
 	}
@@ -490,7 +490,7 @@ func structureProgressPercent(progress metricstore.RestructureProgress) float64 
 	return value
 }
 
-func metricConfig(requestedDriver, requestedDSN string) (*metricstore.MetricStoreConfig, error) {
+func metricConfig(requestedDriver, requestedDSN string) (*metricruntime.MetricStoreConfig, error) {
 	requestedDriver = strings.ToLower(strings.TrimSpace(requestedDriver))
 	requestedDSN = strings.TrimSpace(requestedDSN)
 	if requestedDriver != string(tsdb.DriverSQLite) && requestedDriver != string(tsdb.DriverMySQL) && requestedDriver != string(tsdb.DriverPostgreSQL) {
@@ -502,11 +502,11 @@ func metricConfig(requestedDriver, requestedDSN string) (*metricstore.MetricStor
 		}
 		requestedDSN = "./data/metrics.db"
 	}
-	resolved := metricstore.ResolveDriverFromConfig(requestedDriver, requestedDSN)
+	resolved := metricruntime.ResolveDriverFromConfig(requestedDriver, requestedDSN)
 	if string(resolved) != requestedDriver {
 		return nil, fmt.Errorf("dsn does not match the selected database type")
 	}
-	cfg, err := kv.GetManyAs[metricstore.MetricStoreConfig]()
+	cfg, err := kv.GetManyAs[metricruntime.MetricStoreConfig]()
 	if err != nil {
 		return nil, fmt.Errorf("load metric store defaults: %w", err)
 	}

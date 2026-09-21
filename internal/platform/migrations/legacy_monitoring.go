@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/tsdb"
@@ -169,7 +169,7 @@ func InspectLegacyMonitoring(db *gorm.DB) (LegacyMonitoringSummary, error) {
 }
 
 func MigrateLegacyMonitoring(ctx context.Context, db *gorm.DB, s *tsdb.Store, progress func(LegacyMonitoringProgress)) (LegacyMonitoringStats, error) {
-	if err := metricstore.EnsureBuiltinMetricDefinitions(ctx, s); err != nil {
+	if err := metricruntime.EnsureBuiltinMetricDefinitions(ctx, s); err != nil {
 		return LegacyMonitoringStats{}, fmt.Errorf("ensure built-in metric definitions: %w", err)
 	}
 	return migrateLegacyMonitoringTables(ctx, db, s, progress)
@@ -599,21 +599,21 @@ func recordToPoints(rec models.Record) []tsdb.Point {
 	ts := rec.Time
 	entityID := rec.Client
 	return []tsdb.Point{
-		{MetricName: metricstore.MetricCPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.CPU)},
-		{MetricName: metricstore.MetricGPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.GPU)},
-		{MetricName: metricstore.MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(rec.RAM)},
-		{MetricName: metricstore.MetricSwap, EntityID: entityID, Timestamp: ts, Value: float64(rec.Swap)},
-		{MetricName: metricstore.MetricLoad, EntityID: entityID, Timestamp: ts, Value: float64(rec.Load)},
-		{MetricName: metricstore.MetricDisk, EntityID: entityID, Timestamp: ts, Value: float64(rec.Disk)},
-		{MetricName: metricstore.MetricNetIn, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetIn)},
-		{MetricName: metricstore.MetricNetOut, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetOut)},
-		{MetricName: metricstore.MetricNetTotalUp, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetTotalUp)},
-		{MetricName: metricstore.MetricNetTotalDown, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetTotalDown)},
-		{MetricName: metricstore.MetricTrafficUp, EntityID: entityID, Timestamp: ts, Value: float64(rec.TrafficUp)},
-		{MetricName: metricstore.MetricTrafficDown, EntityID: entityID, Timestamp: ts, Value: float64(rec.TrafficDown)},
-		{MetricName: metricstore.MetricProcess, EntityID: entityID, Timestamp: ts, Value: float64(rec.Process)},
-		{MetricName: metricstore.MetricConnections, EntityID: entityID, Timestamp: ts, Value: float64(rec.Connections)},
-		{MetricName: metricstore.MetricConnectionsUDP, EntityID: entityID, Timestamp: ts, Value: float64(rec.ConnectionsUDP)},
+		{MetricName: metricruntime.MetricCPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.CPU)},
+		{MetricName: metricruntime.MetricGPU, EntityID: entityID, Timestamp: ts, Value: float64(rec.GPU)},
+		{MetricName: metricruntime.MetricRAM, EntityID: entityID, Timestamp: ts, Value: float64(rec.RAM)},
+		{MetricName: metricruntime.MetricSwap, EntityID: entityID, Timestamp: ts, Value: float64(rec.Swap)},
+		{MetricName: metricruntime.MetricLoad, EntityID: entityID, Timestamp: ts, Value: float64(rec.Load)},
+		{MetricName: metricruntime.MetricDisk, EntityID: entityID, Timestamp: ts, Value: float64(rec.Disk)},
+		{MetricName: metricruntime.MetricNetIn, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetIn)},
+		{MetricName: metricruntime.MetricNetOut, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetOut)},
+		{MetricName: metricruntime.MetricNetTotalUp, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetTotalUp)},
+		{MetricName: metricruntime.MetricNetTotalDown, EntityID: entityID, Timestamp: ts, Value: float64(rec.NetTotalDown)},
+		{MetricName: metricruntime.MetricTrafficUp, EntityID: entityID, Timestamp: ts, Value: float64(rec.TrafficUp)},
+		{MetricName: metricruntime.MetricTrafficDown, EntityID: entityID, Timestamp: ts, Value: float64(rec.TrafficDown)},
+		{MetricName: metricruntime.MetricProcess, EntityID: entityID, Timestamp: ts, Value: float64(rec.Process)},
+		{MetricName: metricruntime.MetricConnections, EntityID: entityID, Timestamp: ts, Value: float64(rec.Connections)},
+		{MetricName: metricruntime.MetricConnectionsUDP, EntityID: entityID, Timestamp: ts, Value: float64(rec.ConnectionsUDP)},
 	}
 }
 
@@ -624,10 +624,10 @@ func gpuRecordToPoints(rec models.GPURecord) []tsdb.Point {
 		"device_name":  rec.DeviceName,
 	}
 	return []tsdb.Point{
-		{MetricName: metricstore.MetricGPUMem, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.MemUsed), Tags: tags},
-		{MetricName: metricstore.MetricGPUMemTotal, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.MemTotal), Tags: tags},
-		{MetricName: metricstore.MetricGPUDeviceUsage, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.Utilization), Tags: tags},
-		{MetricName: metricstore.MetricGPUTemp, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.Temperature), Tags: tags},
+		{MetricName: metricruntime.MetricGPUMem, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.MemUsed), Tags: tags},
+		{MetricName: metricruntime.MetricGPUMemTotal, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.MemTotal), Tags: tags},
+		{MetricName: metricruntime.MetricGPUDeviceUsage, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.Utilization), Tags: tags},
+		{MetricName: metricruntime.MetricGPUTemp, EntityID: rec.Client, Timestamp: ts, Value: float64(rec.Temperature), Tags: tags},
 	}
 }
 
@@ -640,14 +640,14 @@ func pingRecordToPoints(rec models.PingRecord) []tsdb.Point {
 	}
 	return []tsdb.Point{
 		{
-			MetricName: metricstore.MetricPingLatency,
+			MetricName: metricruntime.MetricPingLatency,
 			EntityID:   rec.Client,
 			Timestamp:  ts,
 			Value:      float64(rec.Value),
 			Tags:       tags,
 		},
 		{
-			MetricName: metricstore.MetricPingLoss,
+			MetricName: metricruntime.MetricPingLoss,
 			EntityID:   rec.Client,
 			Timestamp:  ts,
 			Value:      loss,

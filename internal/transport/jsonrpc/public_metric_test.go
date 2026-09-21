@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/ping"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
@@ -207,18 +207,18 @@ func TestAdaptiveFillPublicMetricSeriesNeverEndsWithNullAfterData(t *testing.T) 
 }
 
 func TestPublicPingMetricFillEmptyMapsMinusOneToNull(t *testing.T) {
-	for _, metricName := range []string{metricstore.MetricPingLatency, metricstore.MetricPingLoss} {
+	for _, metricName := range []string{metricruntime.MetricPingLatency, metricruntime.MetricPingLoss} {
 		if value := publicRawMetricValue(metricName, -1, true); value != nil {
 			t.Fatalf("raw %s -1 should become null when fill_empty is enabled, got %v", metricName, *value)
 		}
 	}
-	if value := publicRawMetricValue(metricstore.MetricPingLatency, -1, true); value != nil {
+	if value := publicRawMetricValue(metricruntime.MetricPingLatency, -1, true); value != nil {
 		t.Fatalf("downsampled ping -1 should become null when fill_empty is enabled, got %v", *value)
 	}
 }
 
 func TestPublicPingMetricMinusOneIsPreservedWithoutFillEmpty(t *testing.T) {
-	value := publicRawMetricValue(metricstore.MetricPingLatency, -1, false)
+	value := publicRawMetricValue(metricruntime.MetricPingLatency, -1, false)
 	if value == nil || *value != -1 {
 		t.Fatalf("raw ping -1 should be preserved when fill_empty is disabled, got %v", value)
 	}

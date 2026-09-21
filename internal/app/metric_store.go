@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/metricstore"
+	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/logger"
 )
@@ -18,11 +18,11 @@ const (
 // ConnectMetricStore performs one connection attempt and registers cleanup
 // only after a store has actually opened.
 func (a *App) ConnectMetricStore() error {
-	if err := metricstore.InitializeStore(); err != nil {
+	if err := metricruntime.InitializeStore(); err != nil {
 		return fmt.Errorf("failed to initialize metric store: %s", redactMetricStoreError(err))
 	}
 	if !a.metricStoreCleanupAdded {
-		a.addCleanup("metric-store", metricstore.CloseStoreContext)
+		a.addCleanup("metric-store", metricruntime.CloseStoreContext)
 		a.metricStoreCleanupAdded = true
 	}
 	return nil
@@ -33,10 +33,10 @@ func redactMetricStoreError(err error) string {
 		return ""
 	}
 	dsn := ""
-	if cfg, cfgErr := kv.GetManyAs[metricstore.MetricStoreConfig](); cfgErr == nil {
+	if cfg, cfgErr := kv.GetManyAs[metricruntime.MetricStoreConfig](); cfgErr == nil {
 		dsn = cfg.DSN
 	}
-	return metricstore.RedactConnectionError(err.Error(), dsn)
+	return metricruntime.RedactConnectionError(err.Error(), dsn)
 }
 
 // ConnectMetricStoreWithRetry retries the monitoring database connection.
@@ -81,10 +81,10 @@ func (a *App) InitStores() error {
 		auditlog.EventLog("error", fmt.Sprintf("Failed to initialize metric store: %v", err))
 		return err
 	}
-	metricstore.StartReportBatcher()
-	a.addCleanup("metric-report-batcher", metricstore.StopReportBatcher)
+	metricruntime.StartReportBatcher()
+	a.addCleanup("metric-report-batcher", metricruntime.StopReportBatcher)
 	// A store-to-store migration holds the exclusive operation lease. Stop it
 	// before flushing queued reports, which need the shared lease to write.
-	a.addCleanup("metric-store-migration", metricstore.StopStoreMigrationForShutdown)
+	a.addCleanup("metric-store-migration", metricruntime.StopStoreMigrationForShutdown)
 	return nil
 }
