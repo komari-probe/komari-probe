@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
 	"github.com/komari-monitor/komari/internal/platform/settings"

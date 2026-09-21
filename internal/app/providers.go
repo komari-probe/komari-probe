@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/komari-monitor/komari/internal/features/auth/oauth"
+	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/pkg/logger"
 )
 

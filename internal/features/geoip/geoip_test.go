@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/geoip"
+	"github.com/komari-monitor/komari/internal/features/geoip"
 	provider "github.com/komari-monitor/komari/pkg/geoip"
 )
 
