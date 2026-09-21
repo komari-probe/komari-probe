@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/komari-monitor/komari/internal/platform/geoip"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
@@ -37,8 +36,8 @@ func (p staticGeoIPProvider) Close() error {
 }
 
 func TestV2BasicInfoFillsRegionFromGeoIP(t *testing.T) {
-	flags.DatabaseType = "sqlite"
-	flags.DatabaseFile = "file:v2_basic_info_geoip?mode=memory&cache=shared"
+	dbcore.DatabaseType = "sqlite"
+	dbcore.DatabaseFile = "file:v2_basic_info_geoip?mode=memory&cache=shared"
 
 	db := dbcore.GetDBInstance()
 	if err := kv.Set(settings.GeoIPEnabledKey, true); err != nil {

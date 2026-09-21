@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/archive"
@@ -46,7 +45,7 @@ func SetVersionID(id string) {
 
 // resolveDatabaseFile 返回当前使用的 SQLite 数据库文件路径。
 func resolveDatabaseFile() string {
-	dbFile := flags.DatabaseFile
+	dbFile := DatabaseFile
 	if dbFile == "" {
 		dbFile = "./data/komari.db"
 	}
@@ -227,12 +226,12 @@ func doInitialize() error {
 	}
 
 	// 根据数据库类型选择不同的连接方式
-	switch flags.ApplyDatabaseTypeNormalization() {
-	case flags.DatabaseTypeSQLite:
+	switch ApplyDatabaseTypeNormalization() {
+	case DatabaseTypeSQLite:
 		// _txlock=immediate lets writes acquire their lock before reads can
 		// turn into a lock-upgrade conflict. sqlitetune applies the remaining
 		// per-connection PRAGMAs whenever database/sql opens a connection.
-		dsn := buildSQLiteDSN(flags.DatabaseFile)
+		dsn := buildSQLiteDSN(DatabaseFile)
 		sqlDB, dbErr := sqlitetune.Open(dsn, mainSQLiteOptions())
 		if dbErr != nil {
 			return fmt.Errorf("open SQLite connection pool: %w", dbErr)
@@ -253,7 +252,7 @@ func doInitialize() error {
 			logger.Errorf("dbcore", "Failed to checkpoint SQLite WAL at startup: %v", err)
 		}
 	default:
-		return fmt.Errorf("unsupported database type: %s (supported: %s)", flags.DatabaseType, flags.SupportedDatabaseTypes())
+		return fmt.Errorf("unsupported database type: %s (supported: %s)", DatabaseType, SupportedDatabaseTypes())
 	}
 	if err := migrations.Run(migrations.Context{DB: instance}); err != nil {
 		closeFailedInstance()

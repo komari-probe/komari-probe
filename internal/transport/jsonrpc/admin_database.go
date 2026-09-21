@@ -6,7 +6,6 @@ import (
 
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/pkg/rpc"
 	"github.com/komari-monitor/komari/pkg/tsdb"
@@ -115,7 +114,7 @@ func newDatabaseMaintenanceResponse(main, monitoring databaseMaintenanceResult) 
 
 func mainDatabaseStatus() databaseStorageStatus {
 	status := databaseStorageStatus{
-		Driver:   flags.NormalizeDatabaseType(flags.DatabaseType),
+		Driver:   dbcore.NormalizeDatabaseType(dbcore.DatabaseType),
 		Location: databaseLocationLocal,
 		Action:   string(tsdb.MaintenanceVacuum),
 	}
@@ -154,7 +153,7 @@ func maintainMainDatabase(ctx context.Context) databaseMaintenanceResult {
 		result.SizeError = "before: " + status.Error
 	}
 
-	if !flags.IsSQLite() {
+	if !dbcore.IsSQLite() {
 		result.Error = "main database maintenance is only supported for SQLite"
 	} else if err := dbcore.ReclaimSpace(ctx); err != nil {
 		result.Error = err.Error()

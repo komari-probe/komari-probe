@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/komari-monitor/komari/internal/platform/flags"
+	"github.com/komari-monitor/komari/internal/platform/dbcore"
 
 	"github.com/spf13/cobra"
 )
@@ -36,6 +36,6 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringVarP(&flags.DatabaseType, "db-type", "t", "sqlite", "Database type (sqlite)")
-	RootCmd.PersistentFlags().StringVarP(&flags.DatabaseFile, "database", "d", "./data/komari.db", "SQLite database file path")
+	RootCmd.PersistentFlags().StringVarP(&dbcore.DatabaseType, "db-type", "t", "sqlite", "Database type (sqlite)")
+	RootCmd.PersistentFlags().StringVarP(&dbcore.DatabaseFile, "database", "d", "./data/komari.db", "SQLite database file path")
 }

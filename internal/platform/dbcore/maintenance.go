@@ -8,8 +8,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/komari-monitor/komari/internal/platform/flags"
 )
 
 var maintenanceMu sync.Mutex
@@ -17,7 +15,7 @@ var maintenanceMu sync.Mutex
 // StorageSize returns the bytes occupied by the main SQLite database and its
 // WAL/SHM sidecar files.
 func StorageSize() (int64, error) {
-	if !flags.IsSQLite() {
+	if !IsSQLite() {
 		return 0, errors.New("main database size is only available for SQLite")
 	}
 	return sqliteFileSetSize(resolveDatabaseFile())
@@ -25,7 +23,7 @@ func StorageSize() (int64, error) {
 
 // ReclaimSpace checkpoints the main database WAL and rewrites the SQLite file.
 func ReclaimSpace(ctx context.Context) error {
-	if !flags.IsSQLite() {
+	if !IsSQLite() {
 		return errors.New("main database maintenance is only supported for SQLite")
 	}
 
