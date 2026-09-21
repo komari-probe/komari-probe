@@ -1,13 +1,16 @@
 package auditlog
 
 import (
-	"github.com/komari-monitor/komari/pkg/logger"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
+// Log persists an audit log entry. Failures are logged and otherwise
+// swallowed: callers use this for best-effort auditing, not as a source of
+// error handling.
 func Log(ip, uuid, message, msgType string) {
 	db := dbcore.GetDBInstance()
 	logEntry := &models.Log{
@@ -22,11 +25,12 @@ func Log(ip, uuid, message, msgType string) {
 	}
 }
 
+// EventLog persists a system-generated audit log entry (no IP/UUID actor).
 func EventLog(eventType, message string) {
 	Log("", "", message, eventType)
 }
 
-// Delete logs older than 30 days
+// RemoveOldLogs deletes audit log entries older than 30 days.
 func RemoveOldLogs() {
 	db := dbcore.GetDBInstance()
 	threshold := time.Now().UTC().AddDate(0, 0, -30)
