@@ -30,7 +30,7 @@ func (g *Github) GetAuthorizationURL(_ string) (string, string) {
 		url.QueryEscape(g.Addition.ClientId),
 		url.QueryEscape(state),
 	)
-	g.stateCache.Set(state, true, cache.NoExpiration)
+	g.stateCache.Set(state, true, cache.DefaultExpiration)
 	return authURL, state
 }
 func (g *Github) OnCallback(ctx *gin.Context, state string, query map[string]string, _ string) (factory.OidcCallback, error) {
@@ -47,6 +47,8 @@ func (g *Github) OnCallback(ctx *gin.Context, state string, query map[string]str
 	if state == "" {
 		return factory.OidcCallback{}, fmt.Errorf("invalid state")
 	}
+	// state 只允许使用一次，验证通过后立即失效，防止回调 URL 被重放。
+	g.stateCache.Delete(state)
 
 	// 获取code
 	//code := c.Query("code")
@@ -62,7 +64,10 @@ func (g *Github) OnCallback(ctx *gin.Context, state string, query map[string]str
 		"code":          {code},
 	}
 
-	req, _ := http.NewRequest("POST", tokenURL, nil)
+	req, err := http.NewRequest("POST", tokenURL, nil)
+	if err != nil {
+		return factory.OidcCallback{}, fmt.Errorf("invalid token url: %w", err)
+	}
 	req.URL.RawQuery = data.Encode()
 	req.Header.Set("Accept", "application/json")
 
@@ -83,7 +88,10 @@ func (g *Github) OnCallback(ctx *gin.Context, state string, query map[string]str
 	}
 
 	// 获取用户信息
-	userReq, _ := http.NewRequest("GET", "https://api.github.com/user", nil)
+	userReq, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+	if err != nil {
+		return factory.OidcCallback{}, fmt.Errorf("invalid user info url: %w", err)
+	}
 	userReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
 	userReq.Header.Set("Accept", "application/json")
 

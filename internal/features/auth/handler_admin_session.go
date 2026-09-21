@@ -26,7 +26,9 @@ func AdminDeleteSession(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 	var params struct {
 		Session string `json:"session"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request params: "+err.Error(), nil)
+	}
 	if params.Session == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "session is required", nil)
 	}

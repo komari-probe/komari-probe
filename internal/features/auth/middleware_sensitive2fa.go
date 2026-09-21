@@ -43,7 +43,7 @@ func VerifySensitive2FACore(userUUID, code string, isAPIKey bool) error {
 	if code == "" {
 		return err2FARequired()
 	}
-	valid, err := Verify2Fa(userUUID, code)
+	valid, err := verifyTwoFactorCode(userUUID, code)
 	if err != nil {
 		return err
 	}

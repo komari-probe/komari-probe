@@ -5,11 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/respond"
+	"github.com/komari-monitor/komari/pkg/logger"
 	"github.com/pquerna/otp/totp"
 )
 
 func Generate2FA(c *gin.Context) {
-	secret, img, err := Generate2Fa()
+	secret, img, err := generateTwoFactorSecret()
 	if err != nil {
 		respond.Error(c, 500, "Failed to generate 2FA: "+err.Error())
 		return
@@ -17,7 +18,9 @@ func Generate2FA(c *gin.Context) {
 	c.SetCookie("2fa_secret", secret, 1800, "/", "", false, true)
 	c.Header("Content-Type", "image/png")
 	c.Writer.WriteHeader(200)
-	png.Encode(c.Writer, img)
+	if err := png.Encode(c.Writer, img); err != nil {
+		logger.Errorf("auth", "failed to encode 2FA QR code: %v", err)
+	}
 }
 
 func Enable2FA(c *gin.Context) {
@@ -32,7 +35,7 @@ func Enable2FA(c *gin.Context) {
 		respond.Error(c, 400, "Invalid 2FA code")
 		return
 	}
-	err := Enable2Fa(uuid.(string), secret)
+	err := enableTwoFactor(uuid.(string), secret)
 	if err != nil {
 		respond.Error(c, 500, "Failed to enable 2FA: "+err.Error())
 		return
@@ -44,7 +47,7 @@ func Enable2FA(c *gin.Context) {
 
 func Disable2FA(c *gin.Context) {
 	uuid, _ := c.Get("uuid")
-	err := Disable2Fa(uuid.(string))
+	err := disableTwoFactor(uuid.(string))
 	if err != nil {
 		respond.Error(c, 500, "Failed to disable 2FA: "+err.Error())
 		return

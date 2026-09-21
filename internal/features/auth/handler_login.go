@@ -68,7 +68,7 @@ func Login(c *gin.Context) {
 			respond.Error(c, http.StatusUnauthorized, "2FA code is required")
 			return
 		}
-		if ok, err := Verify2Fa(uuid, data.TwoFa); err != nil || !ok {
+		if ok, err := verifyTwoFactorCode(uuid, data.TwoFa); err != nil || !ok {
 			respond.Error(c, http.StatusUnauthorized, "Invalid 2FA code")
 			return
 		}

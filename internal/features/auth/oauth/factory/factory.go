@@ -41,11 +41,3 @@ func GetConstructor(name string) (OidcConstructor, bool) {
 	constructor, exists := providerConstructor[name]
 	return constructor, exists
 }
-
-func Initialize() {
-	for _, provider := range providers {
-		if err := provider.Init(); err != nil {
-			logger.Errorf("oauth", "Failed to initialize OIDC provider %s: %v", provider.GetName(), err)
-		}
-	}
-}

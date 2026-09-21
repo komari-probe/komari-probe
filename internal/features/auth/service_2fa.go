@@ -13,7 +13,7 @@ var (
 	TwoFactorIssuer = "Komari Monitor"
 )
 
-func Generate2Fa() (string, image.Image, error) {
+func generateTwoFactorSecret() (string, image.Image, error) {
 	otp, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      TwoFactorIssuer,
 		AccountName: "komari",
@@ -28,12 +28,12 @@ func Generate2Fa() (string, image.Image, error) {
 	return otp.Secret(), img, nil
 }
 
-func Enable2Fa(uuid, secret string) error {
+func enableTwoFactor(uuid, secret string) error {
 	db := dbcore.GetDBInstance()
 	return db.Model(&models.User{}).Where("uuid = ?", uuid).Update("two_factor", secret).Error
 }
 
-func Verify2Fa(uuid, code string) (bool, error) {
+func verifyTwoFactorCode(uuid, code string) (bool, error) {
 	db := dbcore.GetDBInstance()
 	var user models.User
 	err := db.Where("uuid = ?", uuid).First(&user).Error
@@ -53,7 +53,7 @@ func Verify2Fa(uuid, code string) (bool, error) {
 	return true, nil
 }
 
-func Disable2Fa(uuid string) error {
+func disableTwoFactor(uuid string) error {
 	db := dbcore.GetDBInstance()
 	return db.Model(&models.User{}).Where("uuid = ?", uuid).Update("two_factor", "").Error
 }

@@ -19,7 +19,9 @@ func AdminGetOidc(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 	var params struct {
 		Provider string `json:"provider"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request params: "+err.Error(), nil)
+	}
 	if params.Provider != "" {
 		cfg, err := oauth.GetOidcConfigByName(params.Provider)
 		if err != nil {

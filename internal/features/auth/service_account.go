@@ -4,19 +4,25 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/komari-monitor/komari/pkg/logger"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-const constantSalt = "06Wm4Jv1Hkxx"
+// legacyConstantSalt 只用于校验迁移前遗留下来的旧哈希，新密码一律走 bcrypt。
+const legacyConstantSalt = "06Wm4Jv1Hkxx"
 
 // CheckPassword 检查密码是否正确
 //
-// 如果密码正确，返回用户的 UUID 和 true；否则返回空字符串和 false
+// 如果密码正确，返回用户的 UUID 和 true；否则返回空字符串和 false。
+// 兼容迁移前的固定盐 SHA-256 哈希：验证通过后会静默把该账号的哈希升级为
+// bcrypt，之后的校验都走 bcrypt，不需要用户重新设置密码。
 func CheckPassword(username, passwd string) (uuid string, success bool) {
 	db := dbcore.GetDBInstance()
 	var user models.User
@@ -25,10 +31,38 @@ func CheckPassword(username, passwd string) (uuid string, success bool) {
 		// 静默处理错误，不显示日志
 		return "", false
 	}
-	if hashPasswd(passwd) != user.Passwd {
+
+	if isBcryptHash(user.Passwd) {
+		if bcrypt.CompareHashAndPassword([]byte(user.Passwd), []byte(passwd)) != nil {
+			return "", false
+		}
+		return user.UUID, true
+	}
+
+	// 旧格式：固定盐 SHA-256。
+	if legacyHashPasswd(passwd) != user.Passwd {
 		return "", false
 	}
+	upgradePasswordHash(db, user.UUID, passwd)
 	return user.UUID, true
+}
+
+// isBcryptHash 判断存储的密码哈希是否已经是 bcrypt 格式。
+func isBcryptHash(hash string) bool {
+	return strings.HasPrefix(hash, "$2a$") || strings.HasPrefix(hash, "$2b$") || strings.HasPrefix(hash, "$2y$")
+}
+
+// upgradePasswordHash 把验证通过的旧格式密码原地升级为 bcrypt。失败只记录日志，
+// 不影响本次登录结果——下次登录仍会用旧哈希验证并再次尝试升级。
+func upgradePasswordHash(db *gorm.DB, uuid, passwd string) {
+	hashed, err := hashPassword(passwd)
+	if err != nil {
+		logger.Errorf("auth", "failed to hash password during upgrade for user %s: %v", uuid, err)
+		return
+	}
+	if err := db.Model(&models.User{}).Where("uuid = ?", uuid).Update("passwd", hashed).Error; err != nil {
+		logger.Errorf("auth", "failed to persist upgraded password hash for user %s: %v", uuid, err)
+	}
 }
 
 // GetFirstUser 获取库中第一个用户账号（本项目目前仅支持单一管理员账号）
@@ -43,8 +77,12 @@ func GetFirstUser() (user models.User, err error) {
 
 // ForceResetPassword 强制重置用户密码
 func ForceResetPassword(username, passwd string) (err error) {
+	hashed, err := hashPassword(passwd)
+	if err != nil {
+		return err
+	}
 	db := dbcore.GetDBInstance()
-	result := db.Model(&models.User{}).Where("username = ?", username).Update("passwd", hashPasswd(passwd))
+	result := db.Model(&models.User{}).Where("username = ?", username).Update("passwd", hashed)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -54,9 +92,19 @@ func ForceResetPassword(username, passwd string) (err error) {
 	return nil
 }
 
-// hashPasswd 对密码进行加盐哈希
-func hashPasswd(passwd string) string {
-	saltedPassword := passwd + constantSalt
+// hashPassword 用 bcrypt 对密码做慢哈希，随机盐由 bcrypt 自行生成并编码进结果里。
+func hashPassword(passwd string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("hash password: %w", err)
+	}
+	return string(hashed), nil
+}
+
+// legacyHashPasswd 是迁移前的固定盐 SHA-256 哈希，只用于校验旧数据，不再用于
+// 生成新密码哈希。
+func legacyHashPasswd(passwd string) string {
+	saltedPassword := passwd + legacyConstantSalt
 	hash := sha256.New()
 	hash.Write([]byte(saltedPassword))
 	hashedPassword := base64.StdEncoding.EncodeToString(hash.Sum(nil))
@@ -68,7 +116,10 @@ func CreateAccount(username, passwd string) (user models.User, err error) {
 }
 
 func CreateAccountWithDB(db *gorm.DB, username, passwd string) (user models.User, err error) {
-	hashedPassword := hashPasswd(passwd)
+	hashedPassword, err := hashPassword(passwd)
+	if err != nil {
+		return models.User{}, err
+	}
 	user = models.User{
 		UUID:     uuid.New().String(),
 		Username: username,
@@ -152,7 +203,11 @@ func updateUserRecord(uuid string, name, password, ssoType *string) error {
 		updates["username"] = *name
 	}
 	if password != nil {
-		updates["passwd"] = hashPasswd(*password)
+		hashed, err := hashPassword(*password)
+		if err != nil {
+			return err
+		}
+		updates["passwd"] = hashed
 	}
 	if ssoType != nil {
 		updates["sso_type"] = *ssoType

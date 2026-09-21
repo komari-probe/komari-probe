@@ -3,8 +3,9 @@ package oauth
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/komari-monitor/komari/pkg/logger"
 	"sync"
+
+	"github.com/komari-monitor/komari/pkg/logger"
 
 	"github.com/komari-monitor/komari/internal/features/auth/oauth/factory"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
@@ -97,14 +98,14 @@ func Initialize() error {
 			configBytes, err := json.Marshal(config)
 			if err != nil {
 				logger.Errorf("oauth", "Failed to marshal config for provider %s: %v", provider.GetName(), err)
-				return
+				continue
 			}
 			if err := SaveOidcConfig(&models.OidcProvider{
 				Name:     provider.GetName(),
 				Addition: string(configBytes),
 			}); err != nil {
 				logger.Errorf("oauth", "Failed to save default config for provider %s: %v", provider.GetName(), err)
-				return
+				continue
 			}
 		}
 	})

@@ -50,6 +50,8 @@ func (g *Generic) OnCallback(ctx *gin.Context, state string, query map[string]st
 	if state == "" {
 		return factory.OidcCallback{}, fmt.Errorf("invalid state")
 	}
+	// state 只允许使用一次，验证通过后立即失效，防止回调 URL 被重放。
+	g.stateCache.Delete(state)
 
 	// 获取code
 	if code == "" {
