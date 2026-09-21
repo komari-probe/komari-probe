@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/komari-monitor/komari/internal/platform/configform"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/managedconfig"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/public"
@@ -80,11 +80,11 @@ func assemblePublicInfo() (map[string]any, error) {
 				continue
 			}
 			if _, exists := tcData[item.Key]; !exists {
-				tcData[item.Key] = managedconfig.DefaultValue(item)
+				tcData[item.Key] = configform.DefaultValue(item)
 			}
 		}
 	}
-	if err := managedconfig.ResolveForOutput(tcData, items); err != nil {
+	if err := configform.ResolveForOutput(tcData, items); err != nil {
 		return nil, err
 	}
 
@@ -120,5 +120,5 @@ func publicThemeConfigurationItems(short string) []models.ManagedThemeConfigurat
 			return nil
 		}
 	}
-	return managedconfig.Items(manifest.Configuration)
+	return configform.Items(manifest.Configuration)
 }

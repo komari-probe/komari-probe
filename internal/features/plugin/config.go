@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/komari-monitor/komari/internal/platform/configform"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/managedconfig"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"gorm.io/gorm"
 )
@@ -26,9 +26,9 @@ func GetConfiguration(short string) (map[string]any, error) {
 	if err != nil {
 		return values, nil // not installed (or unreadable): keep saved values
 	}
-	items := managedconfig.Items(info.Configuration)
+	items := configform.Items(info.Configuration)
 	mergeConfigurationDefaults(values, items)
-	if err := managedconfig.ResolveForOutput(values, items); err != nil {
+	if err := configform.ResolveForOutput(values, items); err != nil {
 		return nil, fmt.Errorf("resolve plugin configuration: %w", err)
 	}
 	return values, nil
@@ -60,7 +60,7 @@ func mergeConfigurationDefaults(values map[string]any, items []models.ManagedThe
 		if _, exists := values[item.Key]; exists {
 			continue
 		}
-		values[item.Key] = managedconfig.DefaultValue(item)
+		values[item.Key] = configform.DefaultValue(item)
 	}
 }
 

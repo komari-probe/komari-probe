@@ -1,6 +1,8 @@
-// Package managedconfig implements the shared managed-configuration behavior
-// used by themes and plugins.
-package managedconfig
+// Package configform implements the shared configuration-form schema
+// resolution used by themes and plugins: interpreting a manifest's declared
+// config items, computing their defaults, and resolving submitted values
+// against still-live nodes/ping tasks for rendering.
+package configform
 
 import (
 	"encoding/json"
@@ -11,7 +13,9 @@ import (
 )
 
 const (
-	TypeNodes     = "nodes"
+	// TypeNodes is the item type for a field whose value is a set of client UUIDs.
+	TypeNodes = "nodes"
+	// TypePingTasks is the item type for a field whose value is a set of ping task IDs.
 	TypePingTasks = "pingtasks"
 )
 
@@ -32,6 +36,9 @@ func Items(configuration models.Configuration) []models.ManagedThemeConfiguratio
 	return items
 }
 
+// DefaultValue computes the fallback value for a config item that has no
+// explicit Default: the first option for a select, a type-appropriate zero
+// value otherwise.
 func DefaultValue(item models.ManagedThemeConfigurationItem) any {
 	value := item.Default
 	if item.Type == "select" && (value == nil || value == "") && item.Options != "" {
@@ -119,10 +126,12 @@ func ResolveForOutput(values map[string]any, items []models.ManagedThemeConfigur
 	return nil
 }
 
+// NodeIDs decodes a TypeNodes field's stored value into client UUIDs.
 func NodeIDs(value any) []string {
 	return decodeIDs[string](value)
 }
 
+// PingTaskIDs decodes a TypePingTasks field's stored value into ping task IDs.
 func PingTaskIDs(value any) []uint {
 	return decodeIDs[uint](value)
 }
