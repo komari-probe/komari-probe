@@ -7,7 +7,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/node"
 	"github.com/komari-monitor/komari/internal/features/plugin"
 	"github.com/komari-monitor/komari/internal/features/theme"
-	"github.com/komari-monitor/komari/internal/platform/public"
+	"github.com/komari-monitor/komari/internal/platform/frontend"
 	"github.com/komari-monitor/komari/internal/transport/admin"
 	jsonRpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
 )
@@ -25,7 +25,7 @@ func Register(r *gin.Engine) {
 	registerAgentRoutes(r)
 	registerAdminRoutes(r)
 
-	public.Static(r.Group("/"), func(handlers ...gin.HandlerFunc) {
+	frontend.Static(r.Group("/"), func(handlers ...gin.HandlerFunc) {
 		r.NoRoute(handlers...)
 	})
 }

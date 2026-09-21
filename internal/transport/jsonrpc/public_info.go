@@ -9,9 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/configform"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/frontend"
 	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/logger"
@@ -110,7 +110,7 @@ func assemblePublicInfo() (map[string]any, error) {
 func publicThemeConfigurationItems(short string) []models.ManagedThemeConfigurationItem {
 	var manifest models.Theme
 	if short == "default" {
-		data, err := public.PublicFS.ReadFile("defaultTheme/komari-theme.json")
+		data, err := frontend.PublicFS.ReadFile("defaultTheme/komari-theme.json")
 		if err != nil || json.Unmarshal(data, &manifest) != nil {
 			return nil
 		}

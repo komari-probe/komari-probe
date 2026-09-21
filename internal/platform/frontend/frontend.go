@@ -1,4 +1,4 @@
-package public
+package frontend
 
 import (
 	"embed"
@@ -31,8 +31,10 @@ const (
 	LanguageCookieName = "language"
 
 	// 主题内部结构定义
-	DistDir   = "dist"       // 静态资源存放目录
-	IndexFile = "index.html" // 相对于 DistDir
+	DistDir        = "dist"       // 静态资源存放目录
+	IndexFile      = "index.html" // 相对于 DistDir
+	AdminDir       = "admin"
+	AdminIndexFile = "admin.html"
 )
 
 func init() {
@@ -41,81 +43,6 @@ func init() {
 	if err != nil {
 		panic("load embedded default frontend: " + err.Error())
 	}
-}
-
-func normalizeHTMLLanguage(language string) string {
-	language = strings.TrimSpace(strings.ReplaceAll(language, "_", "-"))
-	if len(language) < 2 || len(language) > 32 {
-		return ""
-	}
-
-	for _, r := range language {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' {
-			continue
-		}
-		return ""
-	}
-
-	return language
-}
-
-func replaceHTMLLanguage(htmlStr, language string) string {
-	language = normalizeHTMLLanguage(language)
-	if language == "" {
-		return htmlStr
-	}
-
-	replacements := []struct {
-		old string
-		new string
-	}{
-		{`<html lang="en">`, `<html lang="` + language + `">`},
-		{`<html lang='en'>`, `<html lang='` + language + `'>`},
-		{`<html>`, `<html lang="` + language + `">`},
-	}
-
-	for _, replacement := range replacements {
-		if strings.Contains(htmlStr, replacement.old) {
-			return strings.Replace(htmlStr, replacement.old, replacement.new, 1)
-		}
-	}
-
-	return htmlStr
-}
-
-func stripServiceWorkerRegistration(html string) string {
-	return strings.ReplaceAll(html, `<script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script>`, "")
-}
-
-// isSafePath 验证路径是否在指定的基础目录内，防止路径穿透攻击
-func isSafePath(basePath, targetPath string) bool {
-	// 获取基础目录的绝对路径
-	absBase, err := filepath.Abs(basePath)
-	if err != nil {
-		return false
-	}
-
-	// 清理目标路径，移除 ../ 等
-	cleanTarget := filepath.Clean(targetPath)
-
-	// 拼接完整路径
-	fullPath := filepath.Join(absBase, cleanTarget)
-
-	// 获取绝对路径
-	absTarget, err := filepath.Abs(fullPath)
-	if err != nil {
-		return false
-	}
-
-	// 检查目标路径是否以基础路径开头
-	// 使用 filepath.Rel 更可靠地检查路径关系
-	rel, err := filepath.Rel(absBase, absTarget)
-	if err != nil {
-		return false
-	}
-
-	// 如果相对路径以 .. 开头，说明目标在基础目录之外
-	return !strings.HasPrefix(rel, "..") && rel != ".."
 }
 
 // Static 注册静态资源和 SPA 路由处理
@@ -205,18 +132,33 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 		currentTheme := cfg[settings.ThemeKey].(string)
 		shouldReplace := true
 
-		// 特殊页面：强制使用 default 主题，且不进行内容替换
-		if forceDefaultTheme || strings.HasPrefix(reqPath, "/admin") || strings.HasPrefix(reqPath, "/terminal") {
+		// 内置管理应用不属于可替换主题。它与默认主题一起打包，
+		// 但使用自己的入口与 assets，避免第三方主题影响控制台。
+		isAdminApp := strings.HasPrefix(reqPath, "/admin") ||
+			strings.HasPrefix(reqPath, "/terminal") ||
+			strings.HasPrefix(reqPath, "/manage") ||
+			reqPath == "/install" ||
+			strings.HasPrefix(reqPath, "/database-recovery")
+		if forceDefaultTheme || isAdminApp {
 			currentTheme = DefaultTheme
 			shouldReplace = false
 		}
 
-		// 获取 dist/index.html (相对于主题根目录)
 		targetFile := path.Join(DistDir, IndexFile)
+		if isAdminApp {
+			targetFile = path.Join(DistDir, AdminDir, AdminIndexFile)
+		}
 		content, _, exists := getFileContent(currentTheme, targetFile)
+		// A source checkout can contain an older embedded archive until the
+		// frontend packaging action has run. Keep that checkout usable during
+		// the migration; release builds assert and package the admin entry.
+		if !exists && isAdminApp {
+			targetFile = path.Join(DistDir, IndexFile)
+			content, _, exists = getFileContent(DefaultTheme, targetFile)
+		}
 
 		if !exists {
-			c.String(http.StatusNotFound, "Index file missing (checked %s/dist/index.html and default).", currentTheme)
+			c.String(http.StatusNotFound, "Index file missing (checked %s/%s and default).", currentTheme, targetFile)
 			return
 		}
 

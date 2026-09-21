@@ -1,4 +1,4 @@
-package public
+package frontend
 
 import (
 	"archive/tar"
@@ -54,7 +54,7 @@ func decodeEmbeddedDist(archive []byte) (map[string][]byte, error) {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			continue
-		case tar.TypeReg, tar.TypeRegA:
+		case tar.TypeReg:
 			content, err := io.ReadAll(reader)
 			if err != nil {
 				return nil, fmt.Errorf("read tar entry %q: %w", name, err)

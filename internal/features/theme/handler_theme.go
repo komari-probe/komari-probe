@@ -10,9 +10,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/frontend"
 	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/pkg/kv"
 )
@@ -34,7 +34,7 @@ func ListThemes(c *gin.Context) {
 	}
 
 	var themes []models.Theme
-	defaultTheme, err := public.PublicFS.ReadFile("defaultTheme/komari-theme.json")
+	defaultTheme, err := frontend.PublicFS.ReadFile("defaultTheme/komari-theme.json")
 	if err == nil {
 		dt := models.Theme{}
 		err := json.Unmarshal(defaultTheme, &dt)

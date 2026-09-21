@@ -9,9 +9,9 @@
 ### Build Requirements
 
 1. Clone the frontend repository and build the static files
-2. Pack the generated `dist` directory as `tar + zstd -19` to `web/public/defaultTheme/dist.tar.zst` in the backend repository
-3. Copy `komari-theme.json` to `web/public/defaultTheme` if you want the default theme metadata and managed configuration to be available
-4. Ensure `web/public/defaultTheme/dist.tar.zst` contains `index.html` before building the backend
+2. Pack the generated `dist` directory as `tar + zstd -19` to `internal/platform/public/defaultTheme/dist.tar.zst` in the backend repository
+3. Copy `komari-theme.json` to `internal/platform/public/defaultTheme` if you want the default theme metadata and managed configuration to be available
+4. Ensure `internal/platform/public/defaultTheme/dist.tar.zst` contains both `index.html` (the replaceable public theme) and `admin/admin.html` (the built-in administration app) before building the backend
 
 ### Important Note
 
@@ -28,9 +28,9 @@
 ### 构建要求
 
 1. 克隆前端仓库并构建静态文件
-2. 将生成的 `dist` 目录使用 `tar + zstd -19` 打包为后端仓库内的 `web/public/defaultTheme/dist.tar.zst`
-3. 如需让后台显示默认主题元数据和可管理配置，将 `komari-theme.json` 复制到 `web/public/defaultTheme`
-4. 构建后端前，确保 `web/public/defaultTheme/dist.tar.zst` 包含 `index.html`
+2. 将生成的 `dist` 目录使用 `tar + zstd -19` 打包为后端仓库内的 `internal/platform/public/defaultTheme/dist.tar.zst`
+3. 如需让后台显示默认主题元数据和可管理配置，将 `komari-theme.json` 复制到 `internal/platform/public/defaultTheme`
+4. 构建后端前，确保 `internal/platform/public/defaultTheme/dist.tar.zst` 同时包含 `index.html`（可替换公开主题）和 `admin/admin.html`（内置管理后台）
 
 ### 重要提醒
 
@@ -47,9 +47,9 @@
 ### ビルド要件
 
 1. フロントエンドリポジトリをクローンして静的ファイルをビルドする
-2. 生成された `dist` ディレクトリを `tar + zstd -19` で圧縮し、バックエンドリポジトリ内の `web/public/defaultTheme/dist.tar.zst` に配置する
-3. デフォルトテーマのメタデータと管理設定を利用する場合は、`komari-theme.json` を `web/public/defaultTheme` にコピーする
-4. バックエンドをビルドする前に、`web/public/defaultTheme/dist.tar.zst` に `index.html` が含まれていることを確認する
+2. 生成された `dist` ディレクトリを `tar + zstd -19` で圧縮し、バックエンドリポジトリ内の `internal/platform/public/defaultTheme/dist.tar.zst` に配置する
+3. デフォルトテーマのメタデータと管理設定を利用する場合は、`komari-theme.json` を `internal/platform/public/defaultTheme` にコピーする
+4. バックエンドをビルドする前に、`internal/platform/public/defaultTheme/dist.tar.zst` に `index.html`（差し替え可能な公開テーマ）と `admin/admin.html`（内蔵管理アプリ）の両方が含まれていることを確認する
 
 ### 重要な注意事項
 
@@ -69,9 +69,9 @@ npm install
 npm run build
 
 # Pack frontend assets into the backend embed archive / 打包到后端 embed 归档 / バックエンドの embed アーカイブに圧縮
-mkdir -p /path/to/komari/web/public/defaultTheme
+mkdir -p /path/to/komari/internal/platform/public/defaultTheme
 tar -cf /tmp/komari-dist.tar -C dist .
-zstd -19 -T0 -f /tmp/komari-dist.tar -o /path/to/komari/web/public/defaultTheme/dist.tar.zst
+zstd -19 -T0 -f /tmp/komari-dist.tar -o /path/to/komari/internal/platform/public/defaultTheme/dist.tar.zst
 rm -f /tmp/komari-dist.tar
-cp komari-theme.json /path/to/komari/web/public/defaultTheme/
+cp komari-theme.json /path/to/komari/internal/platform/public/defaultTheme/
 ```

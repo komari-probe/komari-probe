@@ -21,9 +21,9 @@ import (
 	migrationweb "github.com/komari-monitor/komari/internal/features/migration"
 	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/frontend"
 	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
-	frontendpublic "github.com/komari-monitor/komari/internal/platform/public"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/pkg/logger"
@@ -138,9 +138,9 @@ func (a *App) runGuideServer(controller guideController, cfg guideServerConfig) 
 	}
 	controller.Register(r)
 
-	serveStatic := frontendpublic.Static
+	serveStatic := frontend.Static
 	if cfg.restrictedStatic {
-		serveStatic = frontendpublic.StaticRestricted
+		serveStatic = frontend.StaticRestricted
 	}
 	serveStatic(r.Group("/"), func(handlers ...gin.HandlerFunc) {
 		r.NoRoute(guideNoRoute(cfg.pagePath, cfg.missingAPI, handlers))
