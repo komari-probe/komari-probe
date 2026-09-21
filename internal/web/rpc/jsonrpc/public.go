@@ -12,7 +12,9 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/publicinfo"
 	"github.com/komari-monitor/komari/internal/platform/records"
+	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/version"
+	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
@@ -49,21 +51,8 @@ func publicGetNodesInformation(ctx context.Context, _ *rpc.JsonRpcRequest) (any,
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to retrieve client information: "+err.Error(), nil)
 	}
-	isLogin := isLoginFromCtx(ctx)
-	j := 0
-	for i := 0; i < len(clientList); i++ {
-		if clientList[i].Hidden && !isLogin {
-			continue
-		}
-		clientList[i].IPv4 = ""
-		clientList[i].IPv6 = ""
-		clientList[i].Remark = ""
-		clientList[i].Version = ""
-		clientList[i].Token = ""
-		clientList[j] = clientList[i]
-		j++
-	}
-	clientList = clientList[:j]
+	sendIPToGuest, _ := kv.GetAs[bool](settings.SendIpAddrToGuestKey)
+	clientList = clients.FilterVisible(clientList, isLoginFromCtx(ctx), sendIPToGuest)
 	return clientList, nil
 }
 

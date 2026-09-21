@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/komari-monitor/komari/internal/features/ping"
 	"github.com/komari-monitor/komari/internal/platform/metricstore"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/pkg/rpc"
@@ -235,33 +236,37 @@ func TestPublicPingStatsFromAggregateGroupsUsesTaskNamesAndLossMetric(t *testing
 	taskMap := map[string]models.PingTask{
 		"1": {Id: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
 	}
+	// Counts are kept at or above ping.MinSamplesForVolatility (20 valid
+	// samples) so the volatility ratio is actually computed; see
+	// TestPublicPingStatsFromAggregateGroupsSuppressesVolatilityBelowMinSamples
+	// for the below-threshold case.
 	groups := publicPingMetricAggregateGroups{
 		Avg: map[string][]tsdb.AggregatePoint{
 			"1": {
-				{Bucket: base, Count: 2, Value: 20},
-				{Bucket: base.Add(time.Minute), Count: 2, Value: 40},
+				{Bucket: base, Count: 14, Value: 20},
+				{Bucket: base.Add(time.Minute), Count: 14, Value: 40},
 			},
 		},
 		Min: map[string][]tsdb.AggregatePoint{
-			"1": {{Bucket: base, Count: 4, Value: 12}},
+			"1": {{Bucket: base, Count: 28, Value: 12}},
 		},
 		Max: map[string][]tsdb.AggregatePoint{
-			"1": {{Bucket: base, Count: 4, Value: 92}},
+			"1": {{Bucket: base, Count: 28, Value: 92}},
 		},
 		Last: map[string][]tsdb.AggregatePoint{
 			"1": {{Bucket: base.Add(time.Minute), Count: 1, Value: 44}},
 		},
 		P50: map[string][]tsdb.AggregatePoint{
-			"1": {{Bucket: base, Count: 4, Value: 30}},
+			"1": {{Bucket: base, Count: 28, Value: 30}},
 		},
 		P99: map[string][]tsdb.AggregatePoint{
-			"1": {{Bucket: base, Count: 4, Value: 80}},
+			"1": {{Bucket: base, Count: 28, Value: 80}},
 		},
 		StdDev: map[string][]tsdb.AggregatePoint{
-			"1": {{Bucket: base, Count: 4, Value: 8}},
+			"1": {{Bucket: base, Count: 28, Value: 8}},
 		},
 		Loss: map[string][]tsdb.AggregatePoint{
-			"1": {{Bucket: base, Count: 4, Value: 0.25}},
+			"1": {{Bucket: base, Count: 28, Value: 0.25}},
 		},
 		LossAvailable: true,
 	}
@@ -274,7 +279,7 @@ func TestPublicPingStatsFromAggregateGroupsUsesTaskNamesAndLossMetric(t *testing
 	if got.Name != "Tokyo ICMP" || got.Type != "icmp" || got.Interval != 60 {
 		t.Fatalf("task metadata not applied: %#v", got)
 	}
-	if got.Total != 4 || got.Valid != 3 {
+	if got.Total != 28 || got.Valid != 21 {
 		t.Fatalf("unexpected totals: %#v", got)
 	}
 	if got.Loss != 25 || got.LossApproximate {
@@ -285,6 +290,40 @@ func TestPublicPingStatsFromAggregateGroupsUsesTaskNamesAndLossMetric(t *testing
 	}
 	if math.Abs(got.P99P50Ratio-1.6666666666666667) > 0.000001 {
 		t.Fatalf("unexpected volatility ratio: %#v", got)
+	}
+}
+
+func TestPublicPingStatsFromAggregateGroupsSuppressesVolatilityBelowMinSamples(t *testing.T) {
+	base := time.Date(2026, 6, 18, 0, 0, 0, 0, time.UTC)
+	taskMap := map[string]models.PingTask{
+		"1": {Id: 1, Name: "Tokyo ICMP", Type: "icmp", Interval: 60},
+	}
+	groups := publicPingMetricAggregateGroups{
+		Avg: map[string][]tsdb.AggregatePoint{
+			"1": {{Bucket: base, Count: 4, Value: 20}},
+		},
+		P50: map[string][]tsdb.AggregatePoint{
+			"1": {{Bucket: base, Count: 4, Value: 30}},
+		},
+		P99: map[string][]tsdb.AggregatePoint{
+			"1": {{Bucket: base, Count: 4, Value: 80}},
+		},
+		Loss: map[string][]tsdb.AggregatePoint{
+			"1": {{Bucket: base, Count: 4, Value: 0}},
+		},
+		LossAvailable: true,
+	}
+
+	stats := publicPingStatsFromAggregateGroups("node-a", groups, taskMap, nil)
+	if len(stats) != 1 {
+		t.Fatalf("expected one stat, got %#v", stats)
+	}
+	got := stats[0]
+	if got.Valid >= ping.MinSamplesForVolatility {
+		t.Fatalf("test fixture must stay below the minimum sample count, got Valid=%d", got.Valid)
+	}
+	if got.P99P50Ratio != 0 {
+		t.Fatalf("volatility ratio must stay 0 below the minimum sample count, got %#v", got)
 	}
 }
 

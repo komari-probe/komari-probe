@@ -2,7 +2,6 @@ package jsonrpc
 
 import (
 	"context"
-	"math"
 	"sort"
 	"time"
 
@@ -113,21 +112,21 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			}
 			// sort and count
 			total := 0
-			groupsMeta := make([]allocationGroup[string], 0, len(grouped))
+			groupsMeta := make([]recordsdb.AllocationGroup[string], 0, len(grouped))
 			for name := range grouped {
 				arr := grouped[name]
 				sort.Slice(arr, func(i, j int) bool { return arr[i].Time.Before(arr[j].Time) })
 				grouped[name] = arr
 				l := len(arr)
 				total += l
-				groupsMeta = append(groupsMeta, allocationGroup[string]{key: name, length: l})
+				groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[string]{Key: name, Length: l})
 			}
 			// downsample across all clients proportionally
 			if maxCount != -1 && total > maxCount {
-				targets := allocateTargets(groupsMeta, maxCount)
+				targets := recordsdb.AllocateTargets(groupsMeta, maxCount)
 				total = 0
 				for name, k := range targets {
-					grouped[name] = sampleEvenly(grouped[name], k)
+					grouped[name] = recordsdb.SampleEvenly(grouped[name], k)
 					total += len(grouped[name])
 				}
 			}
@@ -145,20 +144,20 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			grouped[r.Client] = append(grouped[r.Client], r)
 		}
 		total := 0
-		groupsMeta := make([]allocationGroup[string], 0, len(grouped))
+		groupsMeta := make([]recordsdb.AllocationGroup[string], 0, len(grouped))
 		for name := range grouped {
 			arr := grouped[name]
 			sort.Slice(arr, func(i, j int) bool { return arr[i].Time.Before(arr[j].Time) })
 			grouped[name] = arr
 			l := len(arr)
 			total += l
-			groupsMeta = append(groupsMeta, allocationGroup[string]{key: name, length: l})
+			groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[string]{Key: name, Length: l})
 		}
 		if maxCount != -1 && total > maxCount {
-			targets := allocateTargets(groupsMeta, maxCount)
+			targets := recordsdb.AllocateTargets(groupsMeta, maxCount)
 			total = 0
 			for name, k := range targets {
-				grouped[name] = sampleEvenly(grouped[name], k)
+				grouped[name] = recordsdb.SampleEvenly(grouped[name], k)
 				total += len(grouped[name])
 			}
 		}
@@ -322,34 +321,11 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 			p99 := 0
 			if len(latencies) > 0 {
 				sort.Ints(latencies)
-				getPercentileInt := func(values []int, percentile float64) int {
-					if len(values) == 0 {
-						return 0
-					}
-					if percentile <= 0 {
-						return values[0]
-					}
-					if percentile >= 1 {
-						return values[len(values)-1]
-					}
-					pos := (float64(len(values) - 1)) * percentile
-					lo := int(math.Floor(pos))
-					hi := int(math.Ceil(pos))
-					if lo == hi {
-						return values[lo]
-					}
-					frac := pos - float64(lo)
-					v := float64(values[lo]) + (float64(values[hi])-float64(values[lo]))*frac
-					return int(math.Round(v))
-				}
-				p50 = getPercentileInt(latencies, 0.50)
-				p99 = getPercentileInt(latencies, 0.99)
+				p50, p99 = ping.PercentileLatencies(latencies)
 			}
 			ratio := 0.0
-			if p50 > 0 && p99 >= p50 {
-				jitterMs := float64(p99 - p50)
-				adjustedBase := math.Max(math.Min(float64(p50), 50.0), 10.0)
-				ratio = jitterMs / adjustedBase
+			if len(latencies) >= ping.MinSamplesForVolatility {
+				ratio, _ = ping.Volatility(float64(p50), float64(p99))
 			}
 			lossRate := 0.0
 			if total > 0 {
@@ -400,20 +376,20 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 				})
 			}
 
-			groupsMeta := make([]allocationGroup[uint], 0, len(taskGroups))
+			groupsMeta := make([]recordsdb.AllocationGroup[uint], 0, len(taskGroups))
 			for taskId, records := range taskGroups {
-				groupsMeta = append(groupsMeta, allocationGroup[uint]{
-					key:    taskId,
-					length: len(records),
+				groupsMeta = append(groupsMeta, recordsdb.AllocationGroup[uint]{
+					Key:    taskId,
+					Length: len(records),
 				})
 			}
-			targets := allocateTargets(groupsMeta, maxCount)
+			targets := recordsdb.AllocateTargets(groupsMeta, maxCount)
 
 			// downsample each task group
 			downsampledRecords := make([]RecordsResp, 0, maxCount)
 			for taskId, records := range taskGroups {
 				targetCount := targets[taskId]
-				sampled := sampleEvenly(records, targetCount)
+				sampled := recordsdb.SampleEvenly(records, targetCount)
 				downsampledRecords = append(downsampledRecords, sampled...)
 			}
 
@@ -441,143 +417,6 @@ func getLoadRecordsCombined(uuid string, start, end time.Time) ([]models.Record,
 	}
 	// 所有客户端：统一通过 records 包查询，启用 metric store 时自动走 metric store
 	return recordsdb.GetRecordsByTime(start, end)
-}
-
-// ---------- downsampling helpers ----------
-
-type allocationGroup[K comparable] struct {
-	key    K
-	length int
-}
-
-// allocateTargets splits maxTotal across groups proportionally to their lengths.
-func allocateTargets[K comparable](groups []allocationGroup[K], maxTotal int) map[K]int {
-	result := make(map[K]int, len(groups))
-	if maxTotal < 0 {
-		for _, g := range groups {
-			result[g.key] = g.length
-		}
-		return result
-	}
-	total := 0
-	for _, g := range groups {
-		total += g.length
-	}
-	if total <= maxTotal {
-		for _, g := range groups {
-			result[g.key] = g.length
-		}
-		return result
-	}
-	// initial allocation based on proportion
-	type rem struct {
-		idx  int
-		frac float64
-	}
-	remainders := make([]rem, 0, len(groups))
-	sumTargets := 0
-	for i, g := range groups {
-		if g.length <= 0 {
-			result[g.key] = 0
-			continue
-		}
-		raw := float64(g.length) * float64(maxTotal) / float64(total)
-		t := int(math.Floor(raw))
-		if t > g.length {
-			t = g.length
-		}
-		result[groups[i].key] = t
-		sumTargets += t
-		remainders = append(remainders, rem{i, raw - float64(t)})
-	}
-	// distribute remaining by largest fractional parts
-	if sumTargets < maxTotal {
-		need := maxTotal - sumTargets
-		sort.Slice(remainders, func(i, j int) bool { return remainders[i].frac > remainders[j].frac })
-		for _, r := range remainders {
-			if need == 0 {
-				break
-			}
-			g := groups[r.idx]
-			cur := result[g.key]
-			if cur < g.length {
-				result[g.key] = cur + 1
-				need--
-			}
-		}
-		// if still left, second pass round-robin
-		if need > 0 {
-			for need > 0 {
-				for _, g := range groups {
-					if need == 0 {
-						break
-					}
-					if result[g.key] < g.length {
-						result[g.key]++
-						need--
-					}
-				}
-				if need > 0 {
-					break
-				}
-			}
-		}
-	} else if sumTargets > maxTotal {
-		over := sumTargets - maxTotal
-		sort.Slice(remainders, func(i, j int) bool { return remainders[i].frac < remainders[j].frac })
-		for _, r := range remainders {
-			if over == 0 {
-				break
-			}
-			g := groups[r.idx]
-			if result[g.key] > 0 {
-				result[g.key]--
-				over--
-			}
-		}
-		if over > 0 {
-			for over > 0 {
-				for _, g := range groups {
-					if over == 0 {
-						break
-					}
-					if result[g.key] > 0 {
-						result[g.key]--
-						over--
-					}
-				}
-				if over > 0 {
-					break
-				}
-			}
-		}
-	}
-	return result
-}
-
-func sampleEvenly[T any](in []T, k int) []T {
-	n := len(in)
-	if k <= 0 || n == 0 {
-		return []T{}
-	}
-	if k >= n {
-		return in
-	}
-	out := make([]T, 0, k)
-	if k == 1 {
-		out = append(out, in[n-1])
-		return out
-	}
-	for i := 0; i < k; i++ {
-		idx := int(math.Round(float64(i) * float64(n-1) / float64(k-1)))
-		if idx < 0 {
-			idx = 0
-		} else if idx >= n {
-			idx = n - 1
-		}
-		out = append(out, in[idx])
-	}
-	return out
 }
 
 // flatRecord is a projection used when load_type is specified.

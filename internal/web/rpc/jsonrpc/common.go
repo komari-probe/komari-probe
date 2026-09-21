@@ -3,9 +3,7 @@ package jsonrpc
 import (
 	"context"
 	"fmt"
-	"math"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/features/ping"
@@ -116,35 +114,11 @@ func getPingStatsForNode(uuid string, pingTasks []models.PingTask) map[string]pi
 		if valid > 0 {
 			avg = sum / valid
 		}
-		p50, p99 := 0, 0
-		if len(values) > 0 {
-			sort.Ints(values)
-			percentile := func(vals []int, pct float64) int {
-				if len(vals) == 0 {
-					return 0
-				}
-				if pct <= 0 {
-					return vals[0]
-				}
-				if pct >= 1 {
-					return vals[len(vals)-1]
-				}
-				pos := (float64(len(vals) - 1)) * pct
-				lo := int(math.Floor(pos))
-				hi := int(math.Ceil(pos))
-				if lo == hi {
-					return vals[lo]
-				}
-				frac := pos - float64(lo)
-				v := float64(vals[lo]) + (float64(vals[hi])-float64(vals[lo]))*frac
-				return int(math.Round(v))
-			}
-			p50 = percentile(values, 0.50)
-			p99 = percentile(values, 0.99)
-		}
 		tail := 0.0
-		if p50 > 0 && p99 >= p50 {
-			tail = float64(p99-p50) / float64(p50)
+		if len(values) >= ping.MinSamplesForVolatility {
+			sort.Ints(values)
+			p50, p99 := ping.PercentileLatencies(values)
+			tail, _ = ping.Volatility(float64(p50), float64(p99))
 		}
 		lossRate := 0.0
 		if total > 0 {
@@ -226,33 +200,9 @@ func getNodes(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcEr
 	}
 	meta := rpc.MetaFromContext(ctx)
 
-	SendIpAddrToGuest, _ := kv.GetAs[bool](settings.SendIpAddrToGuestKey)
-	if meta.Principal == nil || !meta.Principal.HasRole(rpc.RoleAdmin) {
-		// 过滤 Hidden 节点并隐藏敏感字段
-		filtered := make([]models.Client, 0, len(cinfo))
-		for _, node := range cinfo {
-			if node.Hidden { // 非 admin 不显示隐藏节点
-				continue
-			}
-			if SendIpAddrToGuest {
-				if node.IPv4 != "" {
-					node.IPv4 = strings.Split(node.IPv4, ".")[0] + ".*.*.*"
-				}
-				if node.IPv6 != "" {
-					node.IPv6 = strings.Split(node.IPv6, ":")[0] + ":*:*:*:*:*:*:*"
-				}
-			} else {
-				node.IPv4 = ""
-				node.IPv6 = ""
-			}
-
-			node.Remark = ""
-			node.Version = ""
-			node.Token = ""
-			filtered = append(filtered, node)
-		}
-		cinfo = filtered
-	}
+	sendIPToGuest, _ := kv.GetAs[bool](settings.SendIpAddrToGuestKey)
+	isAdmin := meta.Principal != nil && meta.Principal.HasRole(rpc.RoleAdmin)
+	cinfo = clients.FilterVisible(cinfo, isAdmin, sendIPToGuest)
 	if params.UUID != "" {
 		for _, node := range cinfo {
 			if node.UUID == params.UUID {

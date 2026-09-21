@@ -1,4 +1,4 @@
-package jsonrpc
+package records
 
 import (
 	"reflect"
@@ -20,20 +20,20 @@ func TestSampleEvenly(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := sampleEvenly(input, test.count); !reflect.DeepEqual(got, test.want) {
-				t.Fatalf("sampleEvenly(%v, %d) = %v, want %v", input, test.count, got, test.want)
+			if got := SampleEvenly(input, test.count); !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("SampleEvenly(%v, %d) = %v, want %v", input, test.count, got, test.want)
 			}
 		})
 	}
 }
 
 func TestAllocateTargetsSupportsTypedKeys(t *testing.T) {
-	groups := []allocationGroup[uint]{
-		{key: 7, length: 6},
-		{key: 9, length: 4},
+	groups := []AllocationGroup[uint]{
+		{Key: 7, Length: 6},
+		{Key: 9, Length: 4},
 	}
-	got := allocateTargets(groups, 5)
+	got := AllocateTargets(groups, 5)
 	if got[7] != 3 || got[9] != 2 {
-		t.Fatalf("allocateTargets() = %v, want map[7:3 9:2]", got)
+		t.Fatalf("AllocateTargets() = %v, want map[7:3 9:2]", got)
 	}
 }

@@ -1,4 +1,4 @@
-package jsonrpc
+package auditlog
 
 import (
 	"strings"
@@ -32,7 +32,7 @@ func TestLogSchemaDefinesQueryIndexes(t *testing.T) {
 	}
 }
 
-func TestFilterAdminLogsByMessageType(t *testing.T) {
+func TestFilterByMessageType(t *testing.T) {
 	db, err := gorm.Open(gormtests.DummyDialector{}, &gorm.Config{
 		DryRun:               true,
 		DisableAutomaticPing: true,
@@ -43,7 +43,7 @@ func TestFilterAdminLogsByMessageType(t *testing.T) {
 	}
 
 	var logs []models.Log
-	statement := filterAdminLogsByMessageType(db.Model(&models.Log{}), " visitor ").Find(&logs).Statement
+	statement := filterByMessageType(db.Model(&models.Log{}), " visitor ").Find(&logs).Statement
 	if sql := statement.SQL.String(); !strings.Contains(sql, "WHERE msg_type = ?") {
 		t.Fatalf("filtered SQL missing message type predicate: %s", sql)
 	}

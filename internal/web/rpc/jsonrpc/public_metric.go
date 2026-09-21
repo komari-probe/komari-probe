@@ -551,28 +551,13 @@ func splitPublicMetricSeries(base publicMetricSeries) []publicMetricSeries {
 // expand into hundreds of artificial empty buckets.
 func adaptiveFillPublicMetricSeries(series publicMetricSeries, start, end time.Time) publicMetricSeries {
 	pointTimes := make([]time.Time, len(series.Points))
-	deltas := make([]time.Duration, 0, len(series.Points))
 	for i, point := range series.Points {
 		pointTimes[i] = point.Time
-		if i > 0 {
-			delta := point.Time.Sub(pointTimes[i-1])
-			if delta > 0 {
-				deltas = append(deltas, delta)
-			}
-		}
 	}
 
-	expectedInterval := time.Duration(series.IntervalSeconds * float64(time.Second))
-	// Two deltas are the minimum needed to distinguish a regular cadence from
-	// one isolated long gap. A lower quartile keeps outages from inflating the
-	// inferred cadence when the rest of the series is regular.
-	if len(deltas) >= 2 {
-		sort.Slice(deltas, func(i, j int) bool { return deltas[i] < deltas[j] })
-		observedInterval := deltas[(len(deltas)-1)/4]
-		if observedInterval > expectedInterval {
-			expectedInterval = observedInterval
-		}
-	}
+	// A lower-quartile cadence estimate keeps outages from inflating the
+	// inferred interval when the rest of the series is regular.
+	expectedInterval := tsdb.InferCollectionInterval(pointTimes, time.Duration(series.IntervalSeconds*float64(time.Second)))
 	if expectedInterval > 0 {
 		series.IntervalSeconds = expectedInterval.Seconds()
 	}
@@ -922,9 +907,10 @@ func publicPingStatsFromAggregateGroups(entityID string, groups publicPingMetric
 			stat.Type = task.Type
 			stat.Interval = task.Interval
 		}
-		if p50 != nil && p99 != nil && *p50 > 0 && *p99 >= *p50 {
-			adjustedBase := math.Max(math.Min(*p50, 50.0), 10.0)
-			stat.P99P50Ratio = (*p99 - *p50) / adjustedBase
+		if valid >= ping.MinSamplesForVolatility && p50 != nil && p99 != nil {
+			if ratio, ok := ping.Volatility(*p50, *p99); ok {
+				stat.P99P50Ratio = ratio
+			}
 		}
 		out = append(out, stat)
 	}

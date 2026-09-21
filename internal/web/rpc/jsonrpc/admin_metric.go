@@ -13,7 +13,7 @@ import (
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
-// admin.tsdb.go
+// admin_metric.go
 // Metrics 数据库迁移相关 RPC 方法（admin 命名空间）。
 //
 // 这些方法服务于「metrics 存储后端迁移」：把默认 SQLite（./data/metrics.db）中的

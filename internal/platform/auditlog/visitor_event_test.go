@@ -1,4 +1,4 @@
-package jsonrpc
+package auditlog
 
 import (
 	"encoding/json"

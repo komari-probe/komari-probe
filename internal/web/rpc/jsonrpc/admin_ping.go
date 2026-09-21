@@ -5,7 +5,7 @@ import (
 	"github.com/komari-monitor/komari/pkg/rpc"
 )
 
-// admin.ping.go
+// admin_ping.go
 // 延迟监测任务（ping task）RPC2 方法注册（admin 命名空间）。
 // 处理逻辑在 internal/features/ping，这里只做注册，
 // 因为注册中心（RegisterWithGroupAndMeta）就在本包。

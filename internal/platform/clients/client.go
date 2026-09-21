@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
@@ -188,6 +189,43 @@ func GetAllClientBasicInfo() (clients []models.Client, err error) {
 		return nil, err
 	}
 	return clients, nil
+}
+
+// RedactForGuest strips or masks the fields a non-admin caller must not see.
+// When sendIPToGuest is true, the IP is partially masked instead of cleared.
+func RedactForGuest(c models.Client, sendIPToGuest bool) models.Client {
+	if sendIPToGuest {
+		if c.IPv4 != "" {
+			c.IPv4 = strings.Split(c.IPv4, ".")[0] + ".*.*.*"
+		}
+		if c.IPv6 != "" {
+			c.IPv6 = strings.Split(c.IPv6, ":")[0] + ":*:*:*:*:*:*:*"
+		}
+	} else {
+		c.IPv4 = ""
+		c.IPv6 = ""
+	}
+	c.Remark = ""
+	c.Version = ""
+	c.Token = ""
+	return c
+}
+
+// FilterVisible drops Hidden clients for non-admin callers and redacts the
+// guest-restricted fields on the ones that remain. Admins get the list
+// unmodified.
+func FilterVisible(list []models.Client, isAdmin, sendIPToGuest bool) []models.Client {
+	if isAdmin {
+		return list
+	}
+	filtered := make([]models.Client, 0, len(list))
+	for _, c := range list {
+		if c.Hidden {
+			continue
+		}
+		filtered = append(filtered, RedactForGuest(c, sendIPToGuest))
+	}
+	return filtered
 }
 
 func SaveClient(updates map[string]any) error {

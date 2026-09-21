@@ -11,6 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 var restoreMutex sync.Mutex
@@ -106,6 +109,39 @@ func (l *RestoreLock) SaveUploadedBackup(file io.Reader, filename string) error 
 	if err := out.Close(); err != nil {
 		return fmt.Errorf("close backup file: %w", err)
 	}
+	return nil
+}
+
+// FinalizeUploadedRestore stages an already-merged backup archive at
+// archivePath and schedules the process to restart so the staged backup
+// applies during the next startup.
+func FinalizeUploadedRestore(archivePath, filename string) error {
+	restoreLock, err := AcquireRestoreLock()
+	if err != nil {
+		return err
+	}
+	archive, err := os.Open(archivePath)
+	if err != nil {
+		restoreLock.Release()
+		return fmt.Errorf("open merged backup: %w", err)
+	}
+	if err := restoreLock.SaveUploadedBackup(archive, filename); err != nil {
+		_ = archive.Close()
+		restoreLock.Release()
+		return err
+	}
+	if err := archive.Close(); err != nil {
+		restoreLock.Release()
+		return fmt.Errorf("close merged backup: %w", err)
+	}
+
+	go func() {
+		logger.InfoArgs("backup", "Backup uploaded, restarting service in 2 seconds to apply on startup...")
+		time.Sleep(2 * time.Second)
+		restoreLock.Release()
+		os.Exit(0)
+	}()
+
 	return nil
 }
 
