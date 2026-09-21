@@ -337,6 +337,9 @@ func InstallPluginFromMarket(c *gin.Context) {
 		return
 	}
 	if installed.Short != selected.Short || installed.Version != selected.Version {
+		// Already extracted to disk by InstallZip; clean up so a mismatched
+		// package doesn't linger as a stray, unrequested install.
+		_ = Delete(installed.Short)
 		respond.Error(c, http.StatusBadRequest, "Plugin manifest does not match the market catalog")
 		return
 	}

@@ -5,6 +5,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/komari-monitor/komari/pkg/logger"
 )
 
 // State persists the enabled flag, the approved permissions hash and the
@@ -77,7 +79,10 @@ func (s *State) saveLocked() {
 	}{Plugins: s.current}
 	data, err := json.MarshalIndent(file, "", "  ")
 	if err != nil {
+		logger.Errorf("plugin", "failed to marshal plugin state: %v", err)
 		return
 	}
-	_ = os.WriteFile(s.path, data, 0644)
+	if err := os.WriteFile(s.path, data, 0644); err != nil {
+		logger.Errorf("plugin", "failed to persist plugin state to %s: %v", s.path, err)
+	}
 }
