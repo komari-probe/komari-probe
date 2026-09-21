@@ -10,8 +10,6 @@ const (
 	MethodAgentBasicInfo  = "agent.basicInfo"
 	MethodAgentPingResult = "agent.pingResult"
 	MethodAgentPing       = "agent.ping"
-	MethodAgentMessage    = "agent.message"
-	MethodAgentEvent      = "agent.event"
 	MethodAgentPull       = "agent.pull"
 )
 
@@ -46,18 +44,6 @@ type RPCError struct {
 type ReportParams struct {
 	Report      Report   `json:"report"`
 	AckEventIDs []string `json:"ack_event_ids,omitempty"`
-}
-
-type Message struct {
-	Type      string `json:"type"`
-	Content   string `json:"content"`
-	Sender    string `json:"sender"`
-	Timestamp int64  `json:"timestamp"`
-}
-
-type IPAddress struct {
-	IPv4 string `json:"ipv4"`
-	IPv6 string `json:"ipv6"`
 }
 
 type Report struct {
@@ -147,17 +133,6 @@ type PingParams struct {
 	TaskID uint   `json:"ping_task_id"`
 	Type   string `json:"ping_type"`
 	Target string `json:"ping_target"`
-}
-
-type MessageParams struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
-}
-
-type EventParams struct {
-	Type string `json:"type"`
-	Data any    `json:"data,omitempty"`
 }
 
 func Success(id any, result any) Response {
