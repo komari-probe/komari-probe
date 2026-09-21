@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
@@ -19,7 +19,7 @@ import (
 // 用户名/密码更新（UpdateUser）已迁移到 internal/features/auth。
 
 func UpdateMmdbGeoIP(c *gin.Context) {
-	if err := geoip.UpdateDatabase(); err != nil {
+	if err := geoipruntime.UpdateDatabase(); err != nil {
 		respond.Error(c, 500, "Failed to update GeoIP database "+err.Error())
 		return
 	}

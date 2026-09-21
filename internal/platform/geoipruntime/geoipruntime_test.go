@@ -1,37 +1,53 @@
-package geoip_test
+package geoipruntime_test
 
 import (
 	"net"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/features/geoip"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	provider "github.com/komari-monitor/komari/pkg/geoip"
 )
 
 // 测试GeoIP数据库的初始化和更新功能
 func TestMmdb(t *testing.T) {
-	geoip.CurrentProvider, _ = provider.NewMaxMindGeoIPService()
+	svc, err := provider.NewMaxMindGeoIPService()
+	if err != nil {
+		t.Fatalf("NewMaxMindGeoIPService: %v", err)
+	}
+	geoipruntime.CurrentProvider = svc
 	testIPAddr(t)
 }
 func TestIpApi(t *testing.T) {
-	geoip.CurrentProvider, _ = provider.NewIPAPIService()
+	svc, err := provider.NewIPAPIService()
+	if err != nil {
+		t.Fatalf("NewIPAPIService: %v", err)
+	}
+	geoipruntime.CurrentProvider = svc
 	testIPAddr(t)
 }
 
 func TestGeojs(t *testing.T) {
-	geoip.CurrentProvider, _ = provider.NewGeoJSService()
+	svc, err := provider.NewGeoJSService()
+	if err != nil {
+		t.Fatalf("NewGeoJSService: %v", err)
+	}
+	geoipruntime.CurrentProvider = svc
 	testIPAddr(t)
 }
 
 func TestIpInfo(t *testing.T) {
-	geoip.CurrentProvider, _ = provider.NewIPInfoService()
+	svc, err := provider.NewIPInfoService()
+	if err != nil {
+		t.Fatalf("NewIPInfoService: %v", err)
+	}
+	geoipruntime.CurrentProvider = svc
 	testIPAddr(t)
 }
 func testIPAddr(t *testing.T) {
 	// IPv4
 	ipaddr := "8.8.8.8"
 	ip := net.ParseIP(ipaddr)
-	record, err := geoip.GetGeoInfo(ip)
+	record, err := geoipruntime.GetGeoInfo(ip)
 	if err != nil {
 		t.Errorf("Failed to get GeoIP info for IP %s: %v", ipaddr, err)
 	}
@@ -49,7 +65,7 @@ func testIPAddr(t *testing.T) {
 	// IPv6
 	ipaddr = "2001:4860:4860::8888"
 	ip = net.ParseIP(ipaddr)
-	record, err = geoip.GetGeoInfo(ip)
+	record, err = geoipruntime.GetGeoInfo(ip)
 	if err != nil {
 		t.Errorf("Failed to get GeoIP info for IPv6 %s: %v", ipaddr, err)
 	}

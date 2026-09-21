@@ -11,11 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/features/auth/oauth"
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/features/plugin"
 	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/transport/router"
@@ -44,7 +44,7 @@ func (a *App) registerReloadHandlers(cors *security.CorsController) {
 	})
 	a.reload.Register("geoip-provider", func(event kv.ConfigEvent) {
 		if event.IsChanged(settings.GeoIPProviderKey) {
-			go geoip.InitGeoIP()
+			go geoipruntime.InitGeoIP()
 		}
 	})
 	a.reload.Register("message-sender", func(event kv.ConfigEvent) {

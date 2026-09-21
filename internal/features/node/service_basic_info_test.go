@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -44,10 +44,10 @@ func TestV2BasicInfoFillsRegionFromGeoIP(t *testing.T) {
 		t.Fatalf("enable geoip: %v", err)
 	}
 
-	oldProvider := geoip.CurrentProvider
-	geoip.CurrentProvider = staticGeoIPProvider{name: t.Name(), iso: "SG"}
+	oldProvider := geoipruntime.CurrentProvider
+	geoipruntime.CurrentProvider = staticGeoIPProvider{name: t.Name(), iso: "SG"}
 	t.Cleanup(func() {
-		geoip.CurrentProvider = oldProvider
+		geoipruntime.CurrentProvider = oldProvider
 	})
 
 	clientUUID := "client-v2-geoip"

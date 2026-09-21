@@ -3,8 +3,8 @@ package node
 import (
 	"net"
 
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	geoipprovider "github.com/komari-monitor/komari/pkg/geoip"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -67,7 +67,7 @@ func appendClientRegionFromGeoIP(info map[string]any) {
 		if ip == nil {
 			continue
 		}
-		record, _ := geoip.GetGeoInfo(ip)
+		record, _ := geoipruntime.GetGeoInfo(ip)
 		if record == nil {
 			continue
 		}

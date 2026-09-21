@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/models/messageevent"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -44,7 +44,7 @@ func CreateSession(uuid string, expires int, userAgent, ip, loginMethod string) 
 		LoginNotification, _ := kv.GetAs[bool](settings.LoginNotificationKey, false)
 		if LoginNotification {
 			ipAddr := net.ParseIP(ip)
-			ipinfo, _ := geoip.GetGeoInfo(ipAddr)
+			ipinfo, _ := geoipruntime.GetGeoInfo(ipAddr)
 			loc := "unknown"
 			if ipinfo != nil && ipinfo.Name != "" {
 				loc = ipinfo.Name

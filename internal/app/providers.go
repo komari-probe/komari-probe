@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/komari-monitor/komari/internal/features/auth/oauth"
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/pkg/logger"
 )
 
@@ -15,8 +15,8 @@ import (
 func (a *App) InitProviders() error {
 	a.initOAuth()
 
-	go geoip.InitGeoIP()
-	a.addCleanup("geoip", func(context.Context) error { return geoip.Shutdown() })
+	go geoipruntime.InitGeoIP()
+	a.addCleanup("geoip", func(context.Context) error { return geoipruntime.Shutdown() })
 
 	messagesender.Initialize()
 	a.addCleanup("message-sender", func(context.Context) error { return messagesender.Shutdown() })

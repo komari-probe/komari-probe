@@ -5,8 +5,8 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/komari-monitor/komari/internal/features/geoip"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
+	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 	"github.com/komari-monitor/komari/pkg/rpc"
@@ -79,7 +79,7 @@ func adminTestGeoip(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 	if !cfg {
 		return nil, rpc.MakeError(rpc.InvalidParams, "GeoIP is not enabled in the configuration.", nil)
 	}
-	record, err := geoip.GetGeoInfo(net.ParseIP(ip))
+	record, err := geoipruntime.GetGeoInfo(net.ParseIP(ip))
 	if err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to get GeoIP record: "+err.Error(), nil)
 	}
