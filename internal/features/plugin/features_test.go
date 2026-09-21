@@ -57,7 +57,7 @@ func TestHookRequestAndResponse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// 用 WrapHandler 包裹（对应 internal/server 的接入点）
+	// 用 WrapHandler 包裹（对应 internal/app 的接入点）
 	wrapped := WrapHandler(engine)
 
 	rec := httptest.NewRecorder()

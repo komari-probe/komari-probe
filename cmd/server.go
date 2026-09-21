@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	appserver "github.com/komari-monitor/komari/internal/server"
+	"github.com/komari-monitor/komari/internal/app"
 
 	"github.com/komari-monitor/komari/internal/platform/flags"
 	"github.com/spf13/cobra"
@@ -12,7 +12,7 @@ var ServerCmd = &cobra.Command{
 	Short: "Start the server",
 	Long:  `Start the server`,
 	Run: func(cmd *cobra.Command, args []string) {
-		appserver.Start(flags.Listen)
+		app.Start(flags.Listen)
 	},
 }
 

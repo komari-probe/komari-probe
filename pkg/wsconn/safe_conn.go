@@ -22,7 +22,7 @@ type ConnInfo struct {
 }
 
 // FrameInterceptor is the optional hook chain around WebSocket connections
-// and frames. The provider is wired once at startup by internal/server (the
+// and frames. The provider is wired once at startup by internal/app (the
 // plugin manager); a nil interceptor leaves every connection untouched.
 type FrameInterceptor interface {
 	// OnConnect runs right after the upgrade. A denied connection is closed

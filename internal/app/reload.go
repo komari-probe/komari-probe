@@ -1,4 +1,4 @@
-package server
+package app
 
 import (
 	"github.com/komari-monitor/komari/pkg/logger"

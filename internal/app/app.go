@@ -1,4 +1,4 @@
-package server
+package app
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type cleanupFunc struct {
 }
 
 // App owns the server lifecycle. Individual phases live in focused files:
-// bootstrap, metric store, providers, guides, router, and runtime.
+// bootstrap, metric store, providers, guide, scheduled, and runtime.
 type App struct {
 	listenAddr              string
 	settings                *settings.Settings
