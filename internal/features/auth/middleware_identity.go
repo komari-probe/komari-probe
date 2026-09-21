@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -220,5 +221,6 @@ func isApiKeyValid(apiKey string) bool {
 	if apiKeyConfig == "" || len(apiKeyConfig) < 12 {
 		return false
 	}
-	return apiKey == "Bearer "+apiKeyConfig
+	expected := "Bearer " + apiKeyConfig
+	return subtle.ConstantTimeCompare([]byte(apiKey), []byte(expected)) == 1
 }

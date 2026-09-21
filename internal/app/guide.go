@@ -24,8 +24,8 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/frontend"
 	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/migrations"
+	"github.com/komari-monitor/komari/internal/platform/origincheck"
 	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/internal/platform/security"
 	"github.com/komari-monitor/komari/pkg/logger"
 )
 
@@ -133,7 +133,7 @@ func (a *App) runGuideServer(controller guideController, cfg guideServerConfig) 
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery(), noStoreAPIResponses())
 	if cfg.requireIdentity {
-		cors := security.NewCorsController(a.settings.CorsOriginCheckEnabled, a.settings.CorsAllowedOrigins)
+		cors := origincheck.NewCorsController(a.settings.CorsOriginCheckEnabled, a.settings.CorsAllowedOrigins)
 		r.Use(cors.Middleware(), auth.IdentityMiddleware())
 	}
 	controller.Register(r)

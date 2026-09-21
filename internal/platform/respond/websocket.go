@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/komari-monitor/komari/internal/platform/security"
+	"github.com/komari-monitor/komari/internal/platform/origincheck"
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
 
@@ -30,7 +30,7 @@ func UpgradeWebSocket(c *gin.Context, options ...WebSocketUpgradeOption) (*webso
 		return nil, fmt.Errorf("require websocket upgrade")
 	}
 	upgrader := websocket.Upgrader{
-		CheckOrigin: security.CheckWebSocketOrigin,
+		CheckOrigin: origincheck.CheckWebSocketOrigin,
 	}
 	for _, option := range options {
 		option(&upgrader)

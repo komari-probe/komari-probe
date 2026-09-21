@@ -16,7 +16,7 @@ import (
 	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
 	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
-	"github.com/komari-monitor/komari/internal/platform/security"
+	"github.com/komari-monitor/komari/internal/platform/origincheck"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/internal/transport/router"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -36,7 +36,7 @@ const (
 	resourceCleanupTimeout = 30 * time.Second
 )
 
-func (a *App) registerReloadHandlers(cors *security.CorsController) {
+func (a *App) registerReloadHandlers(cors *origincheck.CorsController) {
 	a.reload.Register("oauth-provider", func(event kv.ConfigEvent) {
 		if ok, providerName := kv.IsChangedT[string](event, settings.OAuthProviderKey); ok {
 			oauth.ReloadProviderByName(providerName)
@@ -59,7 +59,7 @@ func (a *App) registerReloadHandlers(cors *security.CorsController) {
 func (a *App) BuildRouter() error {
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery())
-	cors := security.NewCorsController(a.settings.CorsOriginCheckEnabled, a.settings.CorsAllowedOrigins)
+	cors := origincheck.NewCorsController(a.settings.CorsOriginCheckEnabled, a.settings.CorsAllowedOrigins)
 	r.Use(cors.Middleware(), auth.IdentityMiddleware(), auth.PrivateSiteMiddleware(), noStoreAPIResponses())
 
 	// The recovery UI belongs only to its temporary restricted listener.
