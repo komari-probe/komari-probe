@@ -36,8 +36,6 @@ const (
 )
 
 func init() {
-	_ = os.MkdirAll("./data/theme", 0755)
-
 	var err error
 	defaultDistFiles, err = loadEmbeddedDist()
 	if err != nil {
