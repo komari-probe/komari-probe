@@ -1,4 +1,3 @@
-// Package backup contains the shared upload preparation for backup restores.
 package backup
 
 import (
