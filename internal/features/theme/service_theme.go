@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/marketutil"
 	"github.com/komari-monitor/komari/internal/platform/models"
@@ -21,7 +22,15 @@ const (
 	maxThemeFileSize      = 128 << 20
 	maxThemeExtractedSize = 512 << 20
 	maxThemeManifestSize  = 1 << 20
+
+	githubAPITimeout = 15 * time.Second
 )
+
+// githubAPIClient is used only for the fixed api.github.com host, so it does
+// not need the SSRF-protected transport marketutil uses for user-supplied
+// download URLs; it does need an explicit timeout so a stalled response
+// can't hang the request handler indefinitely.
+var githubAPIClient = &http.Client{Timeout: githubAPITimeout}
 
 // InstallZip 解压并验证主题
 func InstallZip(zipPath string) (models.Theme, error) {
@@ -45,37 +54,48 @@ func InstallZip(zipPath string) (models.Theme, error) {
 		return themeInfo, fmt.Errorf("创建主题目录失败: %v", err)
 	}
 
-	// 解压文件到主题目录
-	for _, f := range r.File {
+	if err := extractThemeArchive(r.File, themeDir); err != nil {
+		_ = os.RemoveAll(themeDir)
+		return themeInfo, err
+	}
+
+	return themeInfo, nil
+}
+
+// extractThemeArchive 解压文件到主题目录。任意条目路径穿越都会中止整个安装，
+// 而不是静默跳过该条目——否则被篡改的压缩包会被当作"安装成功"接受，
+// 只是悄悄丢了几个文件。
+func extractThemeArchive(files []*zip.File, themeDir string) error {
+	for _, f := range files {
 		path := filepath.Join(themeDir, f.Name)
 
 		// 安全检查，防止路径遍历攻击
 		if !strings.HasPrefix(path, filepath.Clean(themeDir)+string(os.PathSeparator)) {
-			continue
+			return fmt.Errorf("主题压缩包包含非法路径 %q", f.Name)
 		}
 
 		if f.FileInfo().IsDir() {
 			if err := os.MkdirAll(path, f.FileInfo().Mode()); err != nil {
-				return themeInfo, fmt.Errorf("创建目录失败: %v", err)
+				return fmt.Errorf("创建目录失败: %v", err)
 			}
 			continue
 		}
 
 		// 创建目录
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return themeInfo, fmt.Errorf("创建目录失败: %v", err)
+			return fmt.Errorf("创建目录失败: %v", err)
 		}
 
 		// 解压文件
 		rc, err := f.Open()
 		if err != nil {
-			return themeInfo, fmt.Errorf("打开压缩文件失败: %v", err)
+			return fmt.Errorf("打开压缩文件失败: %v", err)
 		}
 
 		outFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
 		if err != nil {
 			rc.Close()
-			return themeInfo, fmt.Errorf("创建文件失败: %v", err)
+			return fmt.Errorf("创建文件失败: %v", err)
 		}
 
 		_, err = io.Copy(outFile, rc)
@@ -83,11 +103,32 @@ func InstallZip(zipPath string) (models.Theme, error) {
 		rc.Close()
 
 		if err != nil {
-			return themeInfo, fmt.Errorf("解压文件失败: %v", err)
+			return fmt.Errorf("解压文件失败: %v", err)
 		}
 	}
 
-	return themeInfo, nil
+	return nil
+}
+
+// writeTempThemeZip saves downloaded theme data to a randomly named temp
+// file (pattern must contain a single "*"), so concurrent update/import
+// requests can't collide on or predict each other's temp path.
+func writeTempThemeZip(pattern string, data []byte) (string, error) {
+	f, err := os.CreateTemp("", pattern)
+	if err != nil {
+		return "", err
+	}
+	path := f.Name()
+	if _, err := f.Write(data); err != nil {
+		_ = f.Close()
+		_ = os.Remove(path)
+		return "", err
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(path)
+		return "", err
+	}
+	return path, nil
 }
 
 func validateThemeArchive(files []*zip.File) error {
@@ -160,7 +201,7 @@ func getGitHubReleaseDownloadURL(owner, repo string) (string, error) {
 	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
 
 	// 发送HTTP GET请求
-	resp, err := http.Get(apiURL)
+	resp, err := githubAPIClient.Get(apiURL)
 	if err != nil {
 		return "", fmt.Errorf("获取GitHub release信息失败: %v", err)
 	}

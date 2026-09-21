@@ -251,9 +251,9 @@ func UpdateTheme(c *gin.Context) {
 	// 3. 用户提供的新URL下载
 	// 4. 用户提供的GitHub仓库信息，获取最新release下载
 
-	// 临时文件名
-	tempFile := filepath.Join(os.TempDir(), "downloaded_theme.zip")
-	if err := os.WriteFile(tempFile, themeData, 0644); err != nil {
+	// 保存到临时文件（随机文件名，避免并发更新时互相覆盖或被可预测路径攻击）
+	tempFile, err := writeTempThemeZip("komari-update-theme-*.zip", themeData)
+	if err != nil {
 		respond.Error(c, http.StatusInternalServerError, "保存文件失败: "+err.Error())
 		return
 	}
@@ -302,9 +302,9 @@ func ImportTheme(c *gin.Context) {
 		return
 	}
 
-	// 保存到临时文件
-	tempFile := filepath.Join(os.TempDir(), "import_theme.zip")
-	if err := os.WriteFile(tempFile, themeData, 0644); err != nil {
+	// 保存到临时文件（随机文件名，避免并发导入时互相覆盖或被可预测路径攻击）
+	tempFile, err := writeTempThemeZip("komari-import-theme-*.zip", themeData)
+	if err != nil {
 		respond.Error(c, http.StatusInternalServerError, "保存文件失败: "+err.Error())
 		return
 	}
