@@ -5,15 +5,15 @@ import (
 	"sync"
 	"time"
 
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
 
 var (
 	connectedClients = make(map[string]*wsconn.SafeConn)
 	v2Clients        = make(map[string]struct{})
-	latestReport     = make(map[string]*v2.Report)
-	recentReports    = make(map[string][]v2.Report)
+	latestReport     = make(map[string]*protocol.Report)
+	recentReports    = make(map[string][]protocol.Report)
 	// presenceOnly stores online state for non-WebSocket agents.
 	// value keeps connectionID and a soft expiration to avoid flicker
 	presenceOnly = make(map[string]struct {
@@ -122,10 +122,10 @@ func GetAllOnlineUUIDs() []string {
 	}
 	return res
 }
-func GetLatestReport() map[string]*v2.Report {
+func GetLatestReport() map[string]*protocol.Report {
 	connMu.RLock()
 	defer connMu.RUnlock()
-	reportCopy := make(map[string]*v2.Report)
+	reportCopy := make(map[string]*protocol.Report)
 	for k, v := range latestReport {
 		if v == nil {
 			continue
@@ -138,7 +138,7 @@ func GetLatestReport() map[string]*v2.Report {
 
 // RecordReport updates the latest runtime state and keeps only the short raw
 // window used by recent-status compatibility endpoints.
-func RecordReport(report v2.Report) {
+func RecordReport(report protocol.Report) {
 	if report.UUID == "" {
 		return
 	}
@@ -162,30 +162,30 @@ func RecordReport(report v2.Report) {
 	insertAt := sort.Search(len(reports), func(i int) bool {
 		return reports[i].UpdatedAt.After(report.UpdatedAt)
 	})
-	reports = append(reports, v2.Report{})
+	reports = append(reports, protocol.Report{})
 	copy(reports[insertAt+1:], reports[insertAt:])
 	reports[insertAt] = report
 	recentReports[report.UUID] = reports
 }
 
-func GetRecentReports(uuid string) []v2.Report {
+func GetRecentReports(uuid string) []protocol.Report {
 	connMu.Lock()
 	defer connMu.Unlock()
 	reports := reportsAfter(recentReports[uuid], time.Now().UTC().Add(-recentReportRetention))
 	if len(reports) == 0 {
 		delete(recentReports, uuid)
-		return []v2.Report{}
+		return []protocol.Report{}
 	}
 	recentReports[uuid] = reports
-	return append([]v2.Report(nil), reports...)
+	return append([]protocol.Report(nil), reports...)
 }
 
-func reportsAfter(reports []v2.Report, cutoff time.Time) []v2.Report {
+func reportsAfter(reports []protocol.Report, cutoff time.Time) []protocol.Report {
 	first := 0
 	for first < len(reports) && reports[first].UpdatedAt.Before(cutoff) {
 		first++
 	}
-	out := make([]v2.Report, len(reports)-first)
+	out := make([]protocol.Report, len(reports)-first)
 	copy(out, reports[first:])
 	return out
 }

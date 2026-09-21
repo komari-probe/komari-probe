@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
-func reportMetricPoints(report v2.Report, trafficUp, trafficDown int64) []tsdb.Point {
+func reportMetricPoints(report protocol.Report, trafficUp, trafficDown int64) []tsdb.Point {
 	entityID := report.UUID
 	ts := report.UpdatedAt
 	points := []tsdb.Point{

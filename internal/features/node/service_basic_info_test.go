@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	geoipprovider "github.com/komari-monitor/komari/pkg/geoip"
 	"github.com/komari-monitor/komari/pkg/kv"
@@ -62,9 +62,9 @@ func TestV2BasicInfoFillsRegionFromGeoIP(t *testing.T) {
 		t.Fatalf("create client: %v", err)
 	}
 
-	resp := handleV2RPC(clientUUID, v2.Request{
-		JSONRPC: v2.Version,
-		Method:  v2.MethodAgentBasicInfo,
+	resp := handleV2RPC(clientUUID, protocol.Request{
+		JSONRPC: protocol.Version,
+		Method:  protocol.MethodAgentBasicInfo,
 		Params: map[string]interface{}{
 			"info": map[string]interface{}{
 				"ipv4": "8.8.8.8",

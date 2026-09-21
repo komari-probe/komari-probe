@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/features/auth"
 	"github.com/komari-monitor/komari/internal/platform/dbcore"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 )
 
@@ -56,12 +56,12 @@ func GetClients(c *gin.Context) {
 	// 请求
 	for {
 		var resp struct {
-			Online []string             `json:"online"` // 已建立连接的客户端uuid列表
-			Data   map[string]v2.Report `json:"data"`   // 最后上报的数据
+			Online []string                   `json:"online"` // 已建立连接的客户端uuid列表
+			Data   map[string]protocol.Report `json:"data"`   // 最后上报的数据
 		}
 
 		resp.Online = []string{}
-		resp.Data = map[string]v2.Report{}
+		resp.Data = map[string]protocol.Report{}
 
 		_, data, err := conn.ReadMessage()
 		if err != nil {

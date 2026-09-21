@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 type v2EventQueue struct {
-	events []v2.Event
+	events []protocol.Event
 	signal chan struct{}
 }
 
@@ -38,7 +38,7 @@ func getV2EventQueueLocked(uuid string) *v2EventQueue {
 
 func DispatchV2Event(uuid, method string, params any) bool {
 	if conn := GetConnectedClients()[uuid]; conn != nil {
-		payload := v2.Request{JSONRPC: v2.Version, Method: method, Params: params}
+		payload := protocol.Request{JSONRPC: protocol.Version, Method: method, Params: params}
 		if conn.WriteJSON(payload) == nil {
 			return true
 		}
@@ -50,9 +50,9 @@ func DispatchV2Event(uuid, method string, params any) bool {
 	return true
 }
 
-func DispatchPing(uuid string, params v2.PingParams) bool {
+func DispatchPing(uuid string, params protocol.PingParams) bool {
 	if conn := GetConnectedClients()[uuid]; conn != nil {
-		payload := v2.Request{JSONRPC: v2.Version, Method: v2.MethodAgentPing, Params: params}
+		payload := protocol.Request{JSONRPC: protocol.Version, Method: protocol.MethodAgentPing, Params: params}
 		if conn.WriteJSON(payload) == nil {
 			return true
 		}
@@ -60,7 +60,7 @@ func DispatchPing(uuid string, params v2.PingParams) bool {
 	if !IsV2Client(uuid) {
 		return false
 	}
-	EnqueueV2Event(uuid, v2.MethodAgentPing, params)
+	EnqueueV2Event(uuid, protocol.MethodAgentPing, params)
 	return true
 }
 
@@ -71,13 +71,13 @@ func IsAgentOnline(uuid string) bool {
 	return IsV2Client(uuid)
 }
 
-func EnqueueV2Event(uuid, method string, params any) v2.Event {
+func EnqueueV2Event(uuid, method string, params any) protocol.Event {
 	now := time.Now().UTC()
 	ttl := v2EventTTL
-	if method == v2.MethodAgentPing {
+	if method == protocol.MethodAgentPing {
 		ttl = v2PingEventTTL
 	}
-	event := v2.Event{
+	event := protocol.Event{
 		ID:        newV2EventID(),
 		Method:    method,
 		Params:    params,
@@ -108,7 +108,7 @@ func newV2EventID() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
-func coalesceV2EventLocked(q *v2EventQueue, event v2.Event) {
+func coalesceV2EventLocked(q *v2EventQueue, event protocol.Event) {
 	key := v2EventCoalesceKey(event)
 	if key == "" {
 		return
@@ -122,11 +122,11 @@ func coalesceV2EventLocked(q *v2EventQueue, event v2.Event) {
 	q.events = filtered
 }
 
-func v2EventCoalesceKey(event v2.Event) string {
-	if event.Method != v2.MethodAgentPing {
+func v2EventCoalesceKey(event protocol.Event) string {
+	if event.Method != protocol.MethodAgentPing {
 		return ""
 	}
-	var params v2.PingParams
+	var params protocol.PingParams
 	if err := bindV2EventParams(event.Params, &params); err != nil || params.TaskID == 0 {
 		return ""
 	}
@@ -176,7 +176,7 @@ func pruneExpiredV2EventsLocked(q *v2EventQueue) {
 	q.events = filtered
 }
 
-func TakeV2Events(uuid string, ackIDs []string, limit int) []v2.Event {
+func TakeV2Events(uuid string, ackIDs []string, limit int) []protocol.Event {
 	v2EventMu.Lock()
 	defer v2EventMu.Unlock()
 
@@ -200,16 +200,16 @@ func AckV2Events(uuid string, ackIDs []string) {
 	ackV2EventsLocked(q, ackIDs)
 }
 
-func takeV2EventsLocked(q *v2EventQueue, limit int) []v2.Event {
+func takeV2EventsLocked(q *v2EventQueue, limit int) []protocol.Event {
 	if limit <= 0 || limit > len(q.events) {
 		limit = len(q.events)
 	}
-	events := make([]v2.Event, limit)
+	events := make([]protocol.Event, limit)
 	copy(events, q.events[:limit])
 	return events
 }
 
-func WaitV2Events(uuid string, ackIDs []string, timeout time.Duration) []v2.Event {
+func WaitV2Events(uuid string, ackIDs []string, timeout time.Duration) []protocol.Event {
 	v2EventMu.Lock()
 	q := getV2EventQueueLocked(uuid)
 	ackV2EventsLocked(q, ackIDs)

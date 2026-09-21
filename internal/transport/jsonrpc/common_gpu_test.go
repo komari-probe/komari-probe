@@ -3,22 +3,22 @@ package jsonrpc
 import (
 	"testing"
 
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 )
 
 func TestGpuUsageFromReport(t *testing.T) {
 	if gpuUsageFromReport(nil) != 0 {
 		t.Fatalf("nil report should be 0")
 	}
-	if gpuUsageFromReport(&v2.Report{}) != 0 {
+	if gpuUsageFromReport(&protocol.Report{}) != 0 {
 		t.Fatalf("missing GPU should be 0")
 	}
 
-	got := gpuUsageFromReport(&v2.Report{
-		GPU: &v2.GPUDetailReport{
+	got := gpuUsageFromReport(&protocol.Report{
+		GPU: &protocol.GPUDetailReport{
 			Count:        1,
 			AverageUsage: 87.5,
-			DetailedInfo: []v2.GPUDeviceInfo{{
+			DetailedInfo: []protocol.GPUDeviceInfo{{
 				Name:        "Phoenix1",
 				Utilization: 87.5,
 			}},

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
@@ -572,15 +572,15 @@ func TestGetRecordsByClientAndTimeReadsRollupsAfterRawCompaction(t *testing.T) {
 		Connections:    321,
 		ConnectionsUDP: 12,
 	}
-	if _, err := WriteReport(ctx, v2.Report{
+	if _, err := WriteReport(ctx, protocol.Report{
 		UUID:      rec.Client,
 		UpdatedAt: ts,
-		CPU:       v2.CPUReport{Usage: float64(rec.CPU)},
-		RAM:       v2.RAMReport{Used: rec.RAM, Total: rec.RAMTotal},
-		Load:      v2.LoadReport{Load1: float64(rec.Load)},
-		Disk:      v2.DiskReport{Used: rec.Disk, Total: rec.DiskTotal},
+		CPU:       protocol.CPUReport{Usage: float64(rec.CPU)},
+		RAM:       protocol.RAMReport{Used: rec.RAM, Total: rec.RAMTotal},
+		Load:      protocol.LoadReport{Load1: float64(rec.Load)},
+		Disk:      protocol.DiskReport{Used: rec.Disk, Total: rec.DiskTotal},
 		Process:   rec.Process,
-		Connections: v2.ConnectionsReport{
+		Connections: protocol.ConnectionsReport{
 			TCP: rec.Connections,
 			UDP: rec.ConnectionsUDP,
 		},

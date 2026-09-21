@@ -4,15 +4,15 @@ import (
 	"testing"
 	"time"
 
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 )
 
 func TestRecordReportKeepsLatestAndShortRecentWindow(t *testing.T) {
 	connMu.Lock()
 	previousLatest := latestReport
 	previousRecent := recentReports
-	latestReport = make(map[string]*v2.Report)
-	recentReports = make(map[string][]v2.Report)
+	latestReport = make(map[string]*protocol.Report)
+	recentReports = make(map[string][]protocol.Report)
 	connMu.Unlock()
 	t.Cleanup(func() {
 		connMu.Lock()
@@ -22,9 +22,9 @@ func TestRecordReportKeepsLatestAndShortRecentWindow(t *testing.T) {
 	})
 
 	now := time.Now().UTC()
-	RecordReport(v2.Report{UUID: "node-a", UpdatedAt: now.Add(-2 * time.Minute), CPU: v2.CPUReport{Usage: 10}})
-	RecordReport(v2.Report{UUID: "node-a", UpdatedAt: now.Add(-30 * time.Second), CPU: v2.CPUReport{Usage: 20}})
-	RecordReport(v2.Report{UUID: "node-a", UpdatedAt: now.Add(-45 * time.Second), CPU: v2.CPUReport{Usage: 15}})
+	RecordReport(protocol.Report{UUID: "node-a", UpdatedAt: now.Add(-2 * time.Minute), CPU: protocol.CPUReport{Usage: 10}})
+	RecordReport(protocol.Report{UUID: "node-a", UpdatedAt: now.Add(-30 * time.Second), CPU: protocol.CPUReport{Usage: 20}})
+	RecordReport(protocol.Report{UUID: "node-a", UpdatedAt: now.Add(-45 * time.Second), CPU: protocol.CPUReport{Usage: 15}})
 
 	recent := GetRecentReports("node-a")
 	if len(recent) != 2 || recent[0].CPU.Usage != 15 || recent[1].CPU.Usage != 20 {

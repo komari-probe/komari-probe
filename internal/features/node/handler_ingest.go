@@ -8,7 +8,7 @@ import (
 	"github.com/komari-monitor/komari/internal/platform/clients"
 	"github.com/komari-monitor/komari/internal/platform/metricruntime"
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 )
 
 // ingest.go
@@ -17,7 +17,7 @@ import (
 
 // ingestReport 保存一次负载上报并刷新运行时状态。
 // markPresence 为 true 时按 POST 上报会话刷新在线状态（WS 连接自行管理在线状态，应传 false）。
-func ingestReport(uuid string, report v2.Report, markPresence bool) error {
+func ingestReport(uuid string, report protocol.Report, markPresence bool) error {
 	report.UUID = uuid
 	report.UpdatedAt = time.Now().UTC()
 	if err := clients.ReportVerify(report); err != nil {

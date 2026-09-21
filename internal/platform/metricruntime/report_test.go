@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
@@ -127,14 +127,14 @@ func TestReportBatchCounterRestoreFailureInitializesStateOnce(t *testing.T) {
 	s, fault := useReportCounterFailureStore(t)
 	ctx := context.Background()
 	base := time.Now().UTC().Truncate(time.Second)
-	first := v2.Report{
+	first := protocol.Report{
 		UUID:      "counter-restore-failure",
 		UpdatedAt: base,
-		CPU:       v2.CPUReport{Usage: 10},
-		Network:   v2.NetworkReport{TotalUp: 100, TotalDown: 200},
+		CPU:       protocol.CPUReport{Usage: 10},
+		Network:   protocol.NetworkReport{TotalUp: 100, TotalDown: 200},
 	}
 
-	if _, err := writeReportBatch(ctx, []v2.Report{first}); err != nil {
+	if _, err := writeReportBatch(ctx, []protocol.Report{first}); err != nil {
 		t.Fatalf("write first report after counter restore failure: %v", err)
 	}
 	if fault.denied.Load() != 2 {
@@ -156,7 +156,7 @@ func TestReportBatchCounterRestoreFailureInitializesStateOnce(t *testing.T) {
 	second.UpdatedAt = base.Add(time.Second)
 	second.Network.TotalUp = 150
 	second.Network.TotalDown = 260
-	if _, err := writeReportBatch(ctx, []v2.Report{second}); err != nil {
+	if _, err := writeReportBatch(ctx, []protocol.Report{second}); err != nil {
 		t.Fatalf("write second report: %v", err)
 	}
 	if fault.denied.Load() != 2 {
@@ -173,20 +173,20 @@ func TestWriteReportStoresMinuteMetricsAndResetAwareTraffic(t *testing.T) {
 	base := time.Now().UTC().Truncate(time.Minute).Add(5 * time.Second)
 	now := base.Add(45 * time.Second)
 
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:        "node-a",
 		UpdatedAt:   base,
-		CPU:         v2.CPUReport{Usage: 12.5},
-		RAM:         v2.RAMReport{Used: 100, Total: 1000},
-		Swap:        v2.RAMReport{Used: 20, Total: 200},
-		Load:        v2.LoadReport{Load1: 0.5},
-		Disk:        v2.DiskReport{Used: 300, Total: 3000},
-		Network:     v2.NetworkReport{Up: 3, Down: 4, TotalUp: 100, TotalDown: 200},
+		CPU:         protocol.CPUReport{Usage: 12.5},
+		RAM:         protocol.RAMReport{Used: 100, Total: 1000},
+		Swap:        protocol.RAMReport{Used: 20, Total: 200},
+		Load:        protocol.LoadReport{Load1: 0.5},
+		Disk:        protocol.DiskReport{Used: 300, Total: 3000},
+		Network:     protocol.NetworkReport{Up: 3, Down: 4, TotalUp: 100, TotalDown: 200},
 		Process:     7,
-		Connections: v2.ConnectionsReport{TCP: 8, UDP: 9},
-		GPU: &v2.GPUDetailReport{
+		Connections: protocol.ConnectionsReport{TCP: 8, UDP: 9},
+		GPU: &protocol.GPUDetailReport{
 			AverageUsage: 25,
-			DetailedInfo: []v2.GPUDeviceInfo{{
+			DetailedInfo: []protocol.GPUDeviceInfo{{
 				Name: "GPU 0", MemoryUsed: 400, MemoryTotal: 800, Utilization: 30, Temperature: 55,
 			}},
 		},
@@ -248,7 +248,7 @@ func TestWriteReportSkipsMetricsWithoutAgentData(t *testing.T) {
 	ctx := context.Background()
 	s := useReportTestStore(t, nil)
 	timestamp := time.Now().UTC()
-	if _, err := WriteReport(ctx, v2.Report{
+	if _, err := WriteReport(ctx, protocol.Report{
 		UUID: "node-without-gpu", UpdatedAt: timestamp,
 	}); err != nil {
 		t.Fatalf("write report: %v", err)
@@ -276,11 +276,11 @@ func TestReportBatcherFlushesQueuedReports(t *testing.T) {
 	})
 
 	base := time.Now().UTC().Truncate(time.Minute).Add(10 * time.Second)
-	first := v2.Report{
+	first := protocol.Report{
 		UUID:      "batched-node",
 		UpdatedAt: base,
-		CPU:       v2.CPUReport{Usage: 10},
-		Network:   v2.NetworkReport{TotalUp: 100, TotalDown: 200},
+		CPU:       protocol.CPUReport{Usage: 10},
+		Network:   protocol.NetworkReport{TotalUp: 100, TotalDown: 200},
 	}
 	second := first
 	second.UpdatedAt = base.Add(3 * time.Second)
@@ -393,11 +393,11 @@ func TestReportBatchKeepsEverySample(t *testing.T) {
 	ctx := context.Background()
 	s := useReportTestStore(t, nil)
 	base := time.Now().UTC().Truncate(time.Second)
-	pending := []v2.Report{
-		{UUID: "node-a", UpdatedAt: base, CPU: v2.CPUReport{Usage: 10}, Network: v2.NetworkReport{TotalUp: 100}},
-		{UUID: "node-a", UpdatedAt: base, CPU: v2.CPUReport{Usage: 20}, Network: v2.NetworkReport{TotalUp: 150}},
-		{UUID: "node-b", UpdatedAt: base, CPU: v2.CPUReport{Usage: 30}, Network: v2.NetworkReport{TotalUp: 200}},
-		{UUID: "node-b", UpdatedAt: base.Add(time.Second), CPU: v2.CPUReport{Usage: 40}, Network: v2.NetworkReport{TotalUp: 260}},
+	pending := []protocol.Report{
+		{UUID: "node-a", UpdatedAt: base, CPU: protocol.CPUReport{Usage: 10}, Network: protocol.NetworkReport{TotalUp: 100}},
+		{UUID: "node-a", UpdatedAt: base, CPU: protocol.CPUReport{Usage: 20}, Network: protocol.NetworkReport{TotalUp: 150}},
+		{UUID: "node-b", UpdatedAt: base, CPU: protocol.CPUReport{Usage: 30}, Network: protocol.NetworkReport{TotalUp: 200}},
+		{UUID: "node-b", UpdatedAt: base.Add(time.Second), CPU: protocol.CPUReport{Usage: 40}, Network: protocol.NetworkReport{TotalUp: 260}},
 	}
 
 	if err := writePendingReports(ctx, &pending); err != nil {
@@ -414,11 +414,11 @@ func TestReportQueueFullReturnsError(t *testing.T) {
 	ctx := context.Background()
 	useReportTestStore(t, nil)
 	worker := &reportBatchWorker{
-		queue:    make(chan v2.Report, 1),
+		queue:    make(chan protocol.Report, 1),
 		requests: make(chan reportBatchRequest, 1),
 		done:     make(chan struct{}),
 	}
-	worker.queue <- v2.Report{UUID: "already-queued"}
+	worker.queue <- protocol.Report{UUID: "already-queued"}
 	reportBatcherMu.Lock()
 	reportBatcher = worker
 	reportBatcherMu.Unlock()
@@ -430,7 +430,7 @@ func TestReportQueueFullReturnsError(t *testing.T) {
 		reportBatcherMu.Unlock()
 	})
 
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "realtime-node",
 		UpdatedAt: time.Now().UTC(),
 	}
@@ -505,11 +505,11 @@ func TestWriteReportRebasesTrafficAfterAgentRestart(t *testing.T) {
 	ctx := context.Background()
 	s := useReportTestStore(t, nil)
 	base := time.Now().UTC().Truncate(time.Minute).Add(5 * time.Second)
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "restarted-node",
 		UpdatedAt: base,
 		Uptime:    1000,
-		Network:   v2.NetworkReport{TotalUp: 100, TotalDown: 200},
+		Network:   protocol.NetworkReport{TotalUp: 100, TotalDown: 200},
 	}
 	if _, err := WriteReport(ctx, report); err != nil {
 		t.Fatalf("write first report: %v", err)
@@ -551,11 +551,11 @@ func TestWriteReportCountsTBScaleTrafficDeltas(t *testing.T) {
 	ctx := context.Background()
 	s := useReportTestStore(t, nil)
 	base := time.Now().UTC().Truncate(time.Minute).Add(5 * time.Second)
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "tb-node",
 		UpdatedAt: base,
 		Uptime:    10_000,
-		Network:   v2.NetworkReport{TotalUp: 2 * oneTB, TotalDown: 3 * oneTB},
+		Network:   protocol.NetworkReport{TotalUp: 2 * oneTB, TotalDown: 3 * oneTB},
 	}
 	if _, err := WriteReport(ctx, report); err != nil {
 		t.Fatalf("write first report: %v", err)
@@ -583,11 +583,11 @@ func TestWriteReportRestoresTBScaleCountersFromStore(t *testing.T) {
 	s := useReportTestStore(t, &policy)
 	base := time.Now().UTC().Truncate(time.Minute).Add(5 * time.Second)
 	now := base.Add(45 * time.Second)
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "tb-restore-node",
 		UpdatedAt: base,
 		Uptime:    10_000,
-		Network:   v2.NetworkReport{TotalUp: 2*oneTB + 123, TotalDown: 4*oneTB + 456},
+		Network:   protocol.NetworkReport{TotalUp: 2*oneTB + 123, TotalDown: 4*oneTB + 456},
 	}
 	if _, err := WriteReport(ctx, report); err != nil {
 		t.Fatalf("write first report: %v", err)
@@ -628,11 +628,11 @@ func TestWriteReportCountsTrafficAfterHighRateCounterWrap(t *testing.T) {
 	ctx := context.Background()
 	s := useReportTestStore(t, nil)
 	base := time.Now().UTC().Truncate(time.Minute).Add(5 * time.Second)
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "wrap-node",
 		UpdatedAt: base,
 		Uptime:    10_000,
-		Network:   v2.NetworkReport{TotalUp: 3*oneGB + 900_000_000, TotalDown: 3*oneGB + 800_000_000},
+		Network:   protocol.NetworkReport{TotalUp: 3*oneGB + 900_000_000, TotalDown: 3*oneGB + 800_000_000},
 	}
 	if _, err := WriteReport(ctx, report); err != nil {
 		t.Fatalf("write first report: %v", err)
@@ -658,11 +658,11 @@ func TestWriteReportIgnoresTinyDipOfTBScaleCounter(t *testing.T) {
 	ctx := context.Background()
 	s := useReportTestStore(t, nil)
 	base := time.Now().UTC().Truncate(time.Minute).Add(5 * time.Second)
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "tb-jitter-node",
 		UpdatedAt: base,
 		Uptime:    10_000,
-		Network:   v2.NetworkReport{TotalUp: 2 * oneTB, TotalDown: 3 * oneTB},
+		Network:   protocol.NetworkReport{TotalUp: 2 * oneTB, TotalDown: 3 * oneTB},
 	}
 	if _, err := WriteReport(ctx, report); err != nil {
 		t.Fatalf("write first report: %v", err)
@@ -701,11 +701,11 @@ func TestWriteReportNormalizesReceiveTimeToUTC(t *testing.T) {
 	s := useReportTestStore(t, nil)
 	local := time.FixedZone("UTC+8", 8*60*60)
 	receiveTime := time.Now().In(local).Add(-10 * time.Second)
-	report := v2.Report{
+	report := protocol.Report{
 		UUID:      "utc-report",
 		UpdatedAt: receiveTime,
-		CPU:       v2.CPUReport{Usage: 10},
-		Network:   v2.NetworkReport{TotalUp: 1, TotalDown: 2},
+		CPU:       protocol.CPUReport{Usage: 10},
+		Network:   protocol.NetworkReport{TotalUp: 1, TotalDown: 2},
 	}
 
 	saved, err := WriteReport(ctx, report)

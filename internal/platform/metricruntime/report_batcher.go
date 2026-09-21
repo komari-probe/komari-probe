@@ -10,7 +10,7 @@ import (
 	"github.com/komari-monitor/komari/pkg/logger"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/pkg/tsdb"
 )
 
@@ -57,7 +57,7 @@ type reportBatchRequest struct {
 
 type reportBatchWorker struct {
 	mu        sync.Mutex
-	queue     chan v2.Report
+	queue     chan protocol.Report
 	pingQueue chan models.PingRecord
 	requests  chan reportBatchRequest
 	done      chan struct{}
@@ -73,7 +73,7 @@ func StartReportBatcher() {
 		return
 	}
 	worker := &reportBatchWorker{
-		queue:     make(chan v2.Report, reportBatchQueueSize),
+		queue:     make(chan protocol.Report, reportBatchQueueSize),
 		pingQueue: make(chan models.PingRecord, reportBatchQueueSize),
 		requests:  make(chan reportBatchRequest, 1),
 		done:      make(chan struct{}),
@@ -150,16 +150,16 @@ func FlushReportBatch(ctx context.Context) error {
 // WriteReport persists one agent report and adds it to in-memory minute
 // summaries using the same server receive time. Traffic deltas remain summable
 // after rollup.
-func WriteReport(ctx context.Context, report v2.Report) (v2.Report, error) {
+func WriteReport(ctx context.Context, report protocol.Report) (protocol.Report, error) {
 	if report.UUID == "" {
-		return v2.Report{}, fmt.Errorf("report UUID is required")
+		return protocol.Report{}, fmt.Errorf("report UUID is required")
 	}
 	if report.UpdatedAt.IsZero() {
-		return v2.Report{}, fmt.Errorf("report receive time is required")
+		return protocol.Report{}, fmt.Errorf("report receive time is required")
 	}
 	report.UpdatedAt = report.UpdatedAt.UTC()
 	if GetStore() == nil {
-		return v2.Report{}, fmt.Errorf("metric store not enabled")
+		return protocol.Report{}, fmt.Errorf("metric store not enabled")
 	}
 
 	reportBatcherMu.Lock()
@@ -167,19 +167,19 @@ func WriteReport(ctx context.Context, report v2.Report) (v2.Report, error) {
 	reportBatcherMu.Unlock()
 	if worker != nil {
 		if err := worker.enqueue(ctx, report); err != nil {
-			return v2.Report{}, err
+			return protocol.Report{}, err
 		}
 		return report, nil
 	}
 
-	saved, err := writeReportBatch(ctx, []v2.Report{report})
+	saved, err := writeReportBatch(ctx, []protocol.Report{report})
 	if err != nil {
-		return v2.Report{}, err
+		return protocol.Report{}, err
 	}
 	return saved[0], nil
 }
 
-func (w *reportBatchWorker) enqueue(ctx context.Context, report v2.Report) error {
+func (w *reportBatchWorker) enqueue(ctx context.Context, report protocol.Report) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if w.stopping {
@@ -200,7 +200,7 @@ func (w *reportBatchWorker) run() {
 	ticker := time.NewTicker(reportBatchInterval)
 	defer ticker.Stop()
 
-	var pending []v2.Report
+	var pending []protocol.Report
 	var pendingPings []models.PingRecord
 	for {
 		select {
@@ -274,7 +274,7 @@ func drainQueue[T any](queue <-chan T, limit int) []T {
 	return items
 }
 
-func writePendingReports(ctx context.Context, pending *[]v2.Report) error {
+func writePendingReports(ctx context.Context, pending *[]protocol.Report) error {
 	if len(*pending) == 0 {
 		return nil
 	}
@@ -311,7 +311,7 @@ func writePendingPingRecords(ctx context.Context, pending *[]models.PingRecord) 
 	return nil
 }
 
-func writeReportBatch(ctx context.Context, reports []v2.Report) ([]v2.Report, error) {
+func writeReportBatch(ctx context.Context, reports []protocol.Report) ([]protocol.Report, error) {
 	if len(reports) == 0 {
 		return nil, nil
 	}
@@ -325,7 +325,7 @@ func writeReportBatch(ctx context.Context, reports []v2.Report) ([]v2.Report, er
 		return nil, fmt.Errorf("metric store not enabled")
 	}
 
-	prepared := make([]v2.Report, len(reports))
+	prepared := make([]protocol.Report, len(reports))
 	copy(prepared, reports)
 	points := make([]tsdb.Point, 0, len(reports)*20)
 	pendingStates := make(map[*reportTrafficState]reportTrafficValues)

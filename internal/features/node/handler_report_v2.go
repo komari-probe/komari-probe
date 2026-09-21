@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"github.com/komari-monitor/komari/pkg/logger"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/komari-monitor/komari/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/komari-monitor/komari/internal/platform/clients"
-	v2 "github.com/komari-monitor/komari/internal/platform/protocol/v2"
+	"github.com/komari-monitor/komari/internal/platform/protocol"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/pkg/wsconn"
 )
@@ -39,45 +40,45 @@ func bindV2Params[T any](raw any, target *T) error {
 	return json.Unmarshal(b, target)
 }
 
-func handleV2RPC(uuid string, req v2.Request, allowWait bool) v2.Response {
-	if req.JSONRPC != v2.Version {
-		return v2.Error(req.ID, -32600, "invalid jsonrpc version", nil)
+func handleV2RPC(uuid string, req protocol.Request, allowWait bool) protocol.Response {
+	if req.JSONRPC != protocol.Version {
+		return protocol.Error(req.ID, -32600, "invalid jsonrpc version", nil)
 	}
 	switch req.Method {
-	case v2.MethodAgentReport:
-		var params v2.ReportParams
+	case protocol.MethodAgentReport:
+		var params protocol.ReportParams
 		if err := bindV2Params(req.Params, &params); err != nil {
-			return v2.Error(req.ID, -32602, "invalid report params", err.Error())
+			return protocol.Error(req.ID, -32602, "invalid report params", err.Error())
 		}
 		if err := ingestReport(uuid, params.Report, true); err != nil {
-			return v2.Error(req.ID, -32000, "failed to save report", err.Error())
+			return protocol.Error(req.ID, -32000, "failed to save report", err.Error())
 		}
-		return v2.Success(req.ID, gin.H{
+		return protocol.Success(req.ID, gin.H{
 			"status": "success",
 			"events": TakeV2Events(uuid, params.AckEventIDs, 8),
 		})
-	case v2.MethodAgentBasicInfo:
-		var params v2.BasicInfoParams
+	case protocol.MethodAgentBasicInfo:
+		var params protocol.BasicInfoParams
 		if err := bindV2Params(req.Params, &params); err != nil {
-			return v2.Error(req.ID, -32602, "invalid basic info params", err.Error())
+			return protocol.Error(req.ID, -32602, "invalid basic info params", err.Error())
 		}
 		if err := ingestBasicInfo(uuid, params.Info, ""); err != nil {
-			return v2.Error(req.ID, -32000, "failed to save basic info", err.Error())
+			return protocol.Error(req.ID, -32000, "failed to save basic info", err.Error())
 		}
-		return v2.Success(req.ID, gin.H{"status": "success"})
-	case v2.MethodAgentPingResult:
-		var params v2.PingResultParams
+		return protocol.Success(req.ID, gin.H{"status": "success"})
+	case protocol.MethodAgentPingResult:
+		var params protocol.PingResultParams
 		if err := bindV2Params(req.Params, &params); err != nil {
-			return v2.Error(req.ID, -32602, "invalid ping result params", err.Error())
+			return protocol.Error(req.ID, -32602, "invalid ping result params", err.Error())
 		}
 		if err := ingestPingResult(uuid, params.TaskID, params.Value); err != nil {
-			return v2.Error(req.ID, -32000, "failed to save ping result", err.Error())
+			return protocol.Error(req.ID, -32000, "failed to save ping result", err.Error())
 		}
-		return v2.Success(req.ID, gin.H{"status": "success"})
-	case v2.MethodAgentPull:
-		var params v2.PullParams
+		return protocol.Success(req.ID, gin.H{"status": "success"})
+	case protocol.MethodAgentPull:
+		var params protocol.PullParams
 		if err := bindV2Params(req.Params, &params); err != nil {
-			return v2.Error(req.ID, -32602, "invalid pull params", err.Error())
+			return protocol.Error(req.ID, -32602, "invalid pull params", err.Error())
 		}
 		refreshPostPresence(uuid)
 		MarkV2Client(uuid)
@@ -85,28 +86,28 @@ func handleV2RPC(uuid string, req v2.Request, allowWait bool) v2.Response {
 		if allowWait {
 			timeout = 25 * time.Second
 		}
-		return v2.Success(req.ID, gin.H{
+		return protocol.Success(req.ID, gin.H{
 			"events": WaitV2Events(uuid, params.AckEventIDs, timeout),
 		})
 	default:
-		return v2.Error(req.ID, -32601, "method not found", req.Method)
+		return protocol.Error(req.ID, -32601, "method not found", req.Method)
 	}
 }
 
 func UploadV2RPC(c *gin.Context) {
 	bytesBody, err := readMaybeCompressedBody(c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, v2.Error(nil, -32700, "invalid compressed body", err.Error()))
+		c.JSON(http.StatusBadRequest, protocol.Error(nil, -32700, "invalid compressed body", err.Error()))
 		return
 	}
-	var req v2.Request
+	var req protocol.Request
 	if err := json.Unmarshal(bytesBody, &req); err != nil {
-		c.JSON(http.StatusBadRequest, v2.Error(nil, -32700, "parse error", err.Error()))
+		c.JSON(http.StatusBadRequest, protocol.Error(nil, -32700, "parse error", err.Error()))
 		return
 	}
 	uuid, ok := clientUUIDFromContext(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, v2.Error(req.ID, -32001, "invalid token", nil))
+		c.JSON(http.StatusUnauthorized, protocol.Error(req.ID, -32001, "invalid token", nil))
 		return
 	}
 	resp := handleV2RPC(uuid, req, true)
@@ -131,7 +132,7 @@ func WebSocketV2RPC(c *gin.Context) {
 
 	uuid, ok := clientUUIDFromContext(c)
 	if !ok {
-		conn.WriteJSON(v2.Error(nil, -32001, "invalid token", nil))
+		conn.WriteJSON(protocol.Error(nil, -32001, "invalid token", nil))
 		return
 	}
 	if oldConn, exists := GetConnectedClients()[uuid]; exists {
@@ -158,9 +159,9 @@ func WebSocketV2RPC(c *gin.Context) {
 			return
 		}
 		message = bytes.TrimSpace(message)
-		var req v2.Request
+		var req protocol.Request
 		if err := json.Unmarshal(message, &req); err != nil {
-			conn.WriteJSON(v2.Error(nil, -32700, "parse error", err.Error()))
+			conn.WriteJSON(protocol.Error(nil, -32700, "parse error", err.Error()))
 			continue
 		}
 		resp := handleV2RPC(uuid, req, false)
@@ -180,7 +181,7 @@ func pushQueuedV2Events(conn *wsconn.SafeConn, uuid string) bool {
 	}
 	ackIDs := make([]string, 0, len(events))
 	for _, event := range events {
-		payload := v2.Request{JSONRPC: v2.Version, Method: event.Method, Params: event.Params}
+		payload := protocol.Request{JSONRPC: protocol.Version, Method: event.Method, Params: event.Params}
 		if err := conn.WriteJSON(payload); err != nil {
 			AckV2Events(uuid, ackIDs)
 			logger.Errorf("client-api", "failed to push queued v2 event %s to client %s: %v", event.ID, uuid, err)
