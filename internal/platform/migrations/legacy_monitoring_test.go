@@ -77,27 +77,28 @@ func TestLegacyMonitoringTablesMigratedByOneShotMigration(t *testing.T) {
 
 	markDoneCalls := 0
 	var lastProgress LegacyMonitoringProgress
-	if _, err := MigrateLegacyMonitoring(ctx, mainDB, metricStore, func(progress LegacyMonitoringProgress) {
+	stats, err := MigrateLegacyMonitoring(ctx, mainDB, metricStore, func(progress LegacyMonitoringProgress) {
 		lastProgress = progress
-	}); err != nil {
+	})
+	if err != nil {
 		t.Fatalf("migrate legacy monitoring with progress: %v", err)
 	}
 	if lastProgress.SourceRowsDone != 5 || lastProgress.SourceRowsTotal != 5 || lastProgress.WrittenPoints != 21 {
 		t.Fatalf("unexpected final migration progress: %#v", lastProgress)
 	}
+	if stats.Records != 2 || stats.GPU != 1 || stats.Ping != 2 {
+		t.Fatalf("unexpected stats: %#v", stats)
+	}
 
-	stats, err := runLegacyMonitoringMigration(ctx, mainDB, metricStore, false, func() error {
+	kv.SetDb(mainDB)
+	if err := CompleteLegacyMonitoringMigration(mainDB, func() error {
 		markDoneCalls++
 		return nil
-	})
-	if err != nil {
-		t.Fatalf("run legacy monitoring migration: %v", err)
+	}); err != nil {
+		t.Fatalf("complete legacy monitoring migration: %v", err)
 	}
 	if markDoneCalls != 1 {
 		t.Fatalf("expected migration marker to be written once, got %d", markDoneCalls)
-	}
-	if stats.Records != 2 || stats.GPU != 1 || stats.Ping != 2 {
-		t.Fatalf("unexpected stats: %#v", stats)
 	}
 
 	hour := base.Truncate(time.Hour)
@@ -125,20 +126,6 @@ func TestLegacyMonitoringTablesMigratedByOneShotMigration(t *testing.T) {
 		if mainDB.Migrator().HasTable(table) {
 			t.Fatalf("legacy table %s still exists", table)
 		}
-	}
-
-	stats, err = runLegacyMonitoringMigration(ctx, mainDB, metricStore, true, func() error {
-		markDoneCalls++
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("rerun completed legacy monitoring migration: %v", err)
-	}
-	if stats != (LegacyMonitoringStats{}) {
-		t.Fatalf("completed migration should not scan legacy tables, got %#v", stats)
-	}
-	if markDoneCalls != 1 {
-		t.Fatalf("completed migration rewrote marker, calls=%d", markDoneCalls)
 	}
 }
 

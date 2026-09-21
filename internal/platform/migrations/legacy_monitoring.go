@@ -195,34 +195,6 @@ func CompleteLegacyMonitoringMigration(db *gorm.DB, finalize func() error) error
 	return nil
 }
 
-func runLegacyMonitoringMigration(ctx context.Context, db *gorm.DB, s *tsdb.Store, done bool, markDone func() error) (LegacyMonitoringStats, error) {
-	var stats LegacyMonitoringStats
-	if done {
-		return stats, nil
-	}
-	if db == nil {
-		return stats, fmt.Errorf("migration database is nil")
-	}
-	if s == nil {
-		return stats, fmt.Errorf("metric store is nil")
-	}
-	if markDone == nil {
-		return stats, fmt.Errorf("migration marker writer is nil")
-	}
-
-	stats, err := migrateLegacyMonitoringTables(ctx, db, s, nil)
-	if err != nil {
-		return stats, err
-	}
-	if err := dropLegacyMonitoringTables(db); err != nil {
-		return stats, err
-	}
-	if err := markDone(); err != nil {
-		return stats, fmt.Errorf("mark legacy monitoring migration done: %w", err)
-	}
-	return stats, nil
-}
-
 func migrateLegacyMonitoringTables(ctx context.Context, db *gorm.DB, s *tsdb.Store, progress func(LegacyMonitoringProgress)) (LegacyMonitoringStats, error) {
 	var stats LegacyMonitoringStats
 	summary, err := InspectLegacyMonitoring(db)
