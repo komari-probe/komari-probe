@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: |
         set -euxo pipefail
-        mkdir -p web/public/defaultTheme
-        rm -rf web/public/defaultTheme/*
-        tar -xzf "$RUNNER_TEMP/frontend-artifact/${{ inputs.artifact-name }}.tar.gz" -C web/public/defaultTheme
-        test -s web/public/defaultTheme/dist.tar.zst
+        mkdir -p internal/platform/frontend/defaultTheme
+        rm -rf internal/platform/frontend/defaultTheme/*
+        tar -xzf "$RUNNER_TEMP/frontend-artifact/${{ inputs.artifact-name }}.tar.gz" -C internal/platform/frontend/defaultTheme
+        test -s internal/platform/frontend/defaultTheme/dist.tar.zst
