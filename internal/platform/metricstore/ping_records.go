@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
@@ -99,8 +100,10 @@ func GetPingRecords(ctx context.Context, clientUUID string, taskID int, start, e
 	for _, p := range points {
 		taskIDVal := uint(0)
 		if tid, ok := p.Tags["task_id"]; ok {
-			var t uint64
-			fmt.Sscanf(tid, "%d", &t)
+			t, err := strconv.ParseUint(tid, 10, 64)
+			if err != nil {
+				continue // malformed task_id tag; don't misattribute this point to task 0
+			}
 			taskIDVal = uint(t)
 		}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/komari-monitor/komari/internal/platform/models"
@@ -269,7 +270,11 @@ func GetGPURecordsByClientAndTime(ctx context.Context, clientUUID string, start,
 			deviceIndex := 0
 			deviceName := ""
 			if idx, ok := p.Tags["device_index"]; ok {
-				fmt.Sscanf(idx, "%d", &deviceIndex)
+				parsed, err := strconv.Atoi(idx)
+				if err != nil {
+					continue // malformed device_index tag; don't misattribute this point to device 0
+				}
+				deviceIndex = parsed
 			}
 			if name, ok := p.Tags["device_name"]; ok {
 				deviceName = name

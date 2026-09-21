@@ -307,9 +307,17 @@ func maskDSN(dsn string) string {
 	if at := strings.LastIndex(dsn, "@"); at > 0 {
 		head := dsn[:at]
 		tail := dsn[at:]
-		if colon := strings.LastIndex(head, ":"); colon >= 0 {
+		// Only look for the password separator after the scheme, so a
+		// passwordless DSN like "mysql://user@host/db" isn't mangled by
+		// matching the "://" colon instead (which used to turn it into
+		// "mysql:***@host/db", destroying the scheme).
+		userinfoStart := 0
+		if schemeEnd := strings.Index(head, "://"); schemeEnd >= 0 {
+			userinfoStart = schemeEnd + len("://")
+		}
+		if colon := strings.LastIndex(head[userinfoStart:], ":"); colon >= 0 {
 			// 保留 scheme://user，屏蔽密码。
-			return head[:colon] + ":***" + tail
+			return head[:userinfoStart+colon] + ":***" + tail
 		}
 	}
 	return dsn
