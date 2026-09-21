@@ -53,7 +53,7 @@ func hasClientIP(info map[string]any) bool {
 }
 
 func appendClientRegionFromGeoIP(info map[string]any) {
-	cfg, err := kv.GetAs[bool](settings.GeoIPEnabledKey)
+	cfg, err := kv.GetAs[bool](settings.GeoIPEnabledKey, true)
 	if err != nil || !cfg {
 		return
 	}

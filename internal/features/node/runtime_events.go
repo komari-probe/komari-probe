@@ -186,6 +186,16 @@ func TakeV2Events(uuid string, ackIDs []string, limit int) []protocol.Event {
 	return takeV2EventsLocked(q, limit)
 }
 
+// DeleteV2EventQueue drops a client's pull-based event queue. Callers must
+// invoke this when a client is deleted; the queue is otherwise never removed
+// on its own, since an empty queue with no pending events looks the same as
+// one that simply hasn't been pruned yet.
+func DeleteV2EventQueue(uuid string) {
+	v2EventMu.Lock()
+	defer v2EventMu.Unlock()
+	delete(v2EventQueues, uuid)
+}
+
 func AckV2Events(uuid string, ackIDs []string) {
 	if len(ackIDs) == 0 {
 		return

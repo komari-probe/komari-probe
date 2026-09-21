@@ -140,10 +140,10 @@ func WebSocketV2RPC(c *gin.Context) {
 	}
 	SetConnectedClients(uuid, conn)
 	MarkV2Client(uuid)
-	go notifierOnline(uuid, conn.ID)
+	go notifyOnline(uuid, conn.ID)
 	defer func() {
 		DeleteClientConditionally(uuid, conn)
-		notifierOffline(uuid, conn.ID)
+		notifyOffline(uuid, conn.ID)
 	}()
 	if !pushQueuedV2Events(conn, uuid) {
 		return
@@ -205,16 +205,4 @@ func clientUUIDFromContext(c *gin.Context) (string, bool) {
 	}
 	uuid, err := clients.GetClientUUIDByToken(token)
 	return uuid, err == nil && uuid != ""
-}
-
-func notifierOnline(uuid string, connID int64) {
-	go func() {
-		defer func() { _ = recover() }()
-		notifyOnline(uuid, connID)
-	}()
-}
-
-func notifierOffline(uuid string, connID int64) {
-	defer func() { _ = recover() }()
-	notifyOffline(uuid, connID)
 }

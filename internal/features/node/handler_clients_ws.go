@@ -47,7 +47,13 @@ func GetClients(c *gin.Context) {
 	if !isLogin {
 		var hiddenClients []models.Client
 		db := dbcore.GetDBInstance()
-		_ = db.Select("uuid").Where("hidden = ?", true).Find(&hiddenClients).Error
+		if err := db.Select("uuid").Where("hidden = ?", true).Find(&hiddenClients).Error; err != nil {
+			// 查询失败时不能假装"没有隐藏节点"直接放行——那会把隐藏节点暴露给
+			// 未登录访客。这里已经完成了 WebSocket 升级，只能通过 WS 帧报错并
+			// 关闭连接，不能再写 HTTP 响应。
+			_ = conn.WriteJSON(gin.H{"status": "error", "error": "Failed to load visibility settings"})
+			return
+		}
 		for _, cli := range hiddenClients {
 			hiddenMap[cli.UUID] = true
 		}

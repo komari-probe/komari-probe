@@ -19,7 +19,9 @@ func AdminAddClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.Jso
 	var params struct {
 		Name string `json:"name"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request params: "+err.Error(), nil)
+	}
 
 	uuid, token, err := createClientWithDefaults(params.Name)
 	if err != nil {
@@ -53,7 +55,9 @@ func AdminRemoveClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 	var params struct {
 		UUID string `json:"uuid"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request params: "+err.Error(), nil)
+	}
 	if params.UUID == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid or missing UUID", nil)
 	}
@@ -65,6 +69,7 @@ func AdminRemoveClient(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 	auditlog.Log(ip, actor, "delete client:"+params.UUID, "warn")
 	DeleteConnectedClients(params.UUID)
 	DeleteLatestReport(params.UUID)
+	DeleteV2EventQueue(params.UUID)
 	return nil, nil
 }
 
@@ -72,7 +77,9 @@ func AdminGetClient(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonR
 	var params struct {
 		UUID string `json:"uuid"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request params: "+err.Error(), nil)
+	}
 	if params.UUID == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid or missing UUID", nil)
 	}
@@ -95,7 +102,9 @@ func AdminGetClientToken(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.
 	var params struct {
 		UUID string `json:"uuid"`
 	}
-	req.BindParams(&params)
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request params: "+err.Error(), nil)
+	}
 	if params.UUID == "" {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid or missing UUID", nil)
 	}

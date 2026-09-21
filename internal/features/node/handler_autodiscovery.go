@@ -1,6 +1,8 @@
 package node
 
 import (
+	"crypto/subtle"
+
 	"github.com/gin-gonic/gin"
 	"github.com/komari-monitor/komari/internal/platform/respond"
 	"github.com/komari-monitor/komari/internal/platform/settings"
@@ -19,9 +21,10 @@ func RegisterClient(c *gin.Context) {
 		respond.Error(c, 500, "Failed to get AutoDiscovery Key: "+err.Error())
 		return
 	}
+	expected := "Bearer " + AutoDiscoveryKey
 	if AutoDiscoveryKey == "" ||
 		len(AutoDiscoveryKey) < 12 ||
-		"Bearer "+AutoDiscoveryKey != auth {
+		subtle.ConstantTimeCompare([]byte(auth), []byte(expected)) != 1 {
 
 		respond.Error(c, 403, "Invalid AutoDiscovery Key")
 		return
