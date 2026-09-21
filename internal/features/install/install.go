@@ -35,6 +35,16 @@ type Status struct {
 	Required bool   `json:"required"`
 }
 
+// IsRequired reports whether the instance still needs the first-run install
+// guide: true as long as no user account has been created yet.
+func IsRequired(db *gorm.DB) (bool, error) {
+	var count int64
+	if err := db.Model(&models.User{}).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count == 0, nil
+}
+
 type completeRequest struct {
 	Username    string `json:"username"`
 	Password    string `json:"password"`
@@ -165,11 +175,11 @@ func (c *Controller) fail() {
 }
 
 func (c *Controller) createAccountAndSettings(request *completeRequest, cfg *metricstore.MetricStoreConfig) error {
-	var count int64
-	if err := c.db.Model(&models.User{}).Count(&count).Error; err != nil {
+	required, err := IsRequired(c.db)
+	if err != nil {
 		return err
 	}
-	if count != 0 {
+	if !required {
 		return fmt.Errorf("installation is already completed")
 	}
 	user, err := auth.CreateAccountWithDB(c.db, request.Username, request.Password)

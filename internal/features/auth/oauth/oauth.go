@@ -7,10 +7,15 @@ import (
 	"sync"
 
 	"github.com/komari-monitor/komari/internal/features/auth/oauth/factory"
+	"github.com/komari-monitor/komari/internal/platform/auditlog"
 	"github.com/komari-monitor/komari/internal/platform/models"
 	"github.com/komari-monitor/komari/internal/platform/settings"
 	"github.com/komari-monitor/komari/pkg/kv"
 )
+
+// defaultProviderName is used whenever no OIDC provider is configured, or the
+// configured provider can no longer be found.
+const defaultProviderName = "github"
 
 var (
 	currentProvider factory.IOidcProvider
@@ -59,6 +64,24 @@ func LoadProvider(name string, configJson string) error {
 		return fmt.Errorf("failed to initialize provider %s: %w", name, err)
 	}
 	return nil
+}
+
+// ReloadProviderByName loads the given OIDC provider, falling back to
+// defaultProviderName when providerName is empty, "none", or not found. It is
+// the entry point for reacting to a change of settings.OAuthProviderKey.
+func ReloadProviderByName(providerName string) {
+	if providerName == "" || providerName == "none" {
+		providerName = defaultProviderName
+	}
+	oidcProvider, err := GetOidcConfigByName(providerName)
+	if err != nil {
+		logger.Errorf("oauth", "Failed to get OIDC provider config: %v", err)
+		return
+	}
+	logger.Infof("oauth", "Using %s as OIDC provider", oidcProvider.Name)
+	if err := LoadProvider(oidcProvider.Name, oidcProvider.Addition); err != nil {
+		auditlog.EventLog("error", fmt.Sprintf("Failed to load OIDC provider: %v", err))
+	}
 }
 
 func Initialize() error {
