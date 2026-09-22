@@ -135,7 +135,6 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 		// 内置管理应用不属于可替换主题。它与默认主题一起打包，
 		// 但使用自己的入口与 assets，避免第三方主题影响控制台。
 		isAdminApp := strings.HasPrefix(reqPath, "/admin") ||
-			strings.HasPrefix(reqPath, "/terminal") ||
 			strings.HasPrefix(reqPath, "/manage") ||
 			reqPath == "/install" ||
 			strings.HasPrefix(reqPath, "/database-recovery")
