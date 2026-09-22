@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
-# webhook 自动部署已配置（2026-09-22，coolify 容器内部端口是 8080 不是 8000），push 到 test 分支会自动触发
 #
-# 仅供内部测试环境使用（Coolify 从源码构建），不用于正式发布。
+# 仅供内部测试环境使用（Coolify 从源码构建），不用于正式发布。push 到这个仓库
+# 的 test 分支会通过 Forgejo webhook 自动触发 Coolify 重新构建部署。
 # 正式发布走 .github/workflows 里的交叉编译 + Dockerfile 流程，不要改那一套。
 #
 # 这个文件比正式流程多做一步：正式发布是先在 CI 里单独编译好前端
@@ -69,4 +69,3 @@ ENV KOMARI_LISTEN=0.0.0.0:25774
 EXPOSE 25774
 
 CMD ["/app/komari", "server"]
-# retest 1790054280
