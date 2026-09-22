@@ -881,7 +881,11 @@ install_dependencies() {
 # Get download URL based on channel
 get_download_url() {
     local arch=$1
-    local file_name="komari-linux-${arch}"
+    local target_ver="${VERSION:-${KOMARI_VERSION:-}}"
+    if [ -n "$target_ver" ]; then
+        echo "https://github.com/${REPO}/releases/download/${target_ver}/${file_name}"
+        return 0
+    fi
 
     if [ "$CHANNEL" = "snapshot" ]; then
         # 获取最新的 snapshot 预发布版本
@@ -896,8 +900,18 @@ get_download_url() {
         log_info "$(msg snapshot_found "$latest_snapshot")" >&2
         echo "https://github.com/${REPO}/releases/download/${latest_snapshot}/${file_name}"
     else
-        # 稳定版：使用 latest
-        echo "https://github.com/${REPO}/releases/latest/download/${file_name}"
+        # 稳定版：优先使用 latest；若 latest 尚不存在（如仅有 prerelease 阶段），自动回退到最新发布的 release
+        local latest_url="https://github.com/${REPO}/releases/latest/download/${file_name}"
+        if curl -fsIL --connect-timeout 5 "$latest_url" >/dev/null 2>&1; then
+            echo "$latest_url"
+        else
+            local fallback_tag=$(curl -s "https://api.github.com/repos/${REPO}/releases" | grep '"tag_name"' | head -1 | sed -e 's/.*"tag_name": *"//' -e 's/".*//')
+            if [ -n "$fallback_tag" ]; then
+                echo "https://github.com/${REPO}/releases/download/${fallback_tag}/${file_name}"
+            else
+                echo "$latest_url"
+            fi
+        fi
     fi
 }
 
