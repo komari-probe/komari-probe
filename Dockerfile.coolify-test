@@ -1,5 +1,5 @@
-# webhook 自动部署已配置（2026-09-22），push 到 test 分支会自动触发
 # syntax=docker/dockerfile:1
+# webhook 自动部署已配置（2026-09-22），push 到 test 分支会自动触发
 #
 # 仅供内部测试环境使用（Coolify 从源码构建），不用于正式发布。
 # 正式发布走 .github/workflows 里的交叉编译 + Dockerfile 流程，不要改那一套。
