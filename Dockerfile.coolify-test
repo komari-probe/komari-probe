@@ -31,7 +31,7 @@ COPY --from=web-build /web/komari-theme.json ./komari-theme.json
 RUN tar -cf dist.tar -C dist . && zstd -19 -T0 -f dist.tar -o dist.tar.zst
 
 # ---- 阶段三：编译 Go 二进制（内嵌前端） ----
-FROM golang:1.23-alpine AS go-build
+FROM golang:1.27-alpine AS go-build
 RUN apk add --no-cache build-base
 WORKDIR /src
 COPY . .
