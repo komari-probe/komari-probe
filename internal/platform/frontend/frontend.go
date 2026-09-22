@@ -16,7 +16,7 @@ import (
 	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
-//go:embed defaultTheme/komari-theme.json
+//go:embed defaultTheme/sonar-theme.json defaultTheme/komari-theme.json
 var PublicFS embed.FS
 
 //go:embed defaultTheme/dist.tar.zst
@@ -69,7 +69,7 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 			settings.DescriptionKey: "A simple server monitor tool.",
 			settings.CustomHeadKey:  "",
 			settings.CustomBodyKey:  "",
-			settings.SitenameKey:    "Komari Monitor",
+			settings.SitenameKey:    "Sonar",
 			settings.ThemeKey:       DefaultTheme,
 		})
 		return cfg
@@ -177,6 +177,7 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 
 		// 执行 HTML 内容替换
 		replacer := strings.NewReplacer(
+			"<title>Sonar</title>", "<title>"+cfg[settings.SitenameKey].(string)+"</title>",
 			"<title>Komari Monitor</title>", "<title>"+cfg[settings.SitenameKey].(string)+"</title>",
 			"A simple server monitor tool.", cfg[settings.DescriptionKey].(string),
 			"</head>", cfg[settings.CustomHeadKey].(string)+"</head>",

@@ -14,11 +14,20 @@ type Plugin struct {
 	Version       string            `json:"version"`
 	URL           string            `json:"url"`
 	Icon          string            `json:"icon"`
-	Komari        string            `json:"komari"` // supported server version constraint, e.g. ">=0.0.1"
+	Sonar         string            `json:"sonar"`  // supported server version constraint, e.g. ">=0.0.1"
+	Komari        string            `json:"komari"` // supported server version constraint fallback for legacy plugins
 	Entry         string            `json:"entry"`  // entry script, defaults to "script.js"
 	Permissions   PluginPermissions `json:"permissions"`
 	Configuration Configuration     `json:"configuration"`   // declared config items, same shape as themes
 	Pages         []PluginPage      `json:"pages,omitempty"` // injected admin pages
+}
+
+// VersionConstraint returns the declared server version constraint, preferring "sonar" over legacy "komari".
+func (p Plugin) VersionConstraint() string {
+	if p.Sonar != "" {
+		return p.Sonar
+	}
+	return p.Komari
 }
 
 // PluginPermissions declares the plugin capabilities that require admin

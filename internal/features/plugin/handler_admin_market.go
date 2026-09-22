@@ -44,6 +44,7 @@ type PluginMarketPlugin struct {
 	URL         string `json:"url"`
 	Download    string `json:"download"`
 	SHA256      string `json:"sha256"`
+	Sonar       string `json:"sonar"`
 	Komari      string `json:"komari"`
 	Installable bool   `json:"installable"`
 	SourceID    string `json:"source_id,omitempty"`
@@ -76,7 +77,7 @@ var pluginMarketCache = struct {
 func defaultPluginMarketSources() []PluginMarketSource {
 	return []PluginMarketSource{{
 		ID:      "official",
-		Name:    "Komari Official",
+		Name:    "Sonar Official",
 		URL:     defaultPluginMarketURL,
 		Enabled: true,
 	}}
@@ -368,8 +369,12 @@ func fetchPluginMarketCatalog(source PluginMarketSource, force bool) ([]PluginMa
 			return nil, fmt.Errorf("plugin %q: %w", plugins[i].Short, err)
 		}
 		plugins[i].SHA256 = strings.TrimPrefix(strings.ToLower(plugins[i].SHA256), "sha256:")
+		constraint := plugins[i].Sonar
+		if constraint == "" {
+			constraint = plugins[i].Komari
+		}
 		plugins[i].Installable = plugins[i].Download != "" && plugins[i].SHA256 != "" &&
-			CheckKomariVersion(plugins[i].Komari) == nil
+			CheckSonarVersion(constraint) == nil
 		plugins[i].SourceID = source.ID
 		plugins[i].SourceName = source.Name
 	}

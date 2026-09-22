@@ -251,7 +251,7 @@ func (m *Manager) load(short string) error {
 	if err != nil {
 		return err
 	}
-	if err := CheckKomariVersion(info.Komari); err != nil {
+	if err := CheckSonarVersion(info.VersionConstraint()); err != nil {
 		return err
 	}
 	script, err := os.ReadFile(filepath.Join(dir, info.Entry))

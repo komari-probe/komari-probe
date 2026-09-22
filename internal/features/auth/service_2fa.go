@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	TwoFactorIssuer = "Komari Monitor"
+	TwoFactorIssuer = "Sonar"
 )
 
 func generateTwoFactorSecret() (string, image.Image, error) {
 	otp, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      TwoFactorIssuer,
-		AccountName: "komari",
+		AccountName: "sonar",
 	})
 	if err != nil {
 		return "", nil, err

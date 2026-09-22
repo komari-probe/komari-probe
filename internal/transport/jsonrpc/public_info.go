@@ -37,10 +37,10 @@ func assemblePublicInfo() (map[string]any, error) {
 
 	// Apply defaults only when a key is missing.
 	if !hasKey("sitename") {
-		cst.Sitename = "Komari"
+		cst.Sitename = "Sonar"
 	}
 	if !hasKey("description") {
-		cst.Description = "Komari Monitor, a simple server monitoring tool."
+		cst.Description = "Sonar, a simple server monitoring tool."
 	}
 	if !hasKey("theme") {
 		cst.Theme = "default"
@@ -52,10 +52,10 @@ func assemblePublicInfo() (map[string]any, error) {
 	// Fallback defaults if we couldn't enumerate keys.
 	if allErr != nil {
 		if cst.Sitename == "" {
-			cst.Sitename = "Komari"
+			cst.Sitename = "Sonar"
 		}
 		if cst.Description == "" {
-			cst.Description = "Komari Monitor, a simple server monitoring tool."
+			cst.Description = "Sonar, a simple server monitoring tool."
 		}
 	}
 	retention, err := metricruntime.GetRetentionSummary(context.Background())

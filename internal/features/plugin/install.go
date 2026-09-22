@@ -63,7 +63,7 @@ func InstallZip(zipPath string) (models.Plugin, error) {
 	if err := validateManifest(&info); err != nil {
 		return info, err
 	}
-	if err := CheckKomariVersion(info.Komari); err != nil {
+	if err := CheckSonarVersion(info.VersionConstraint()); err != nil {
 		return info, err
 	}
 

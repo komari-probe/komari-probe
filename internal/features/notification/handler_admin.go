@@ -39,7 +39,7 @@ func AdminTestSendMessage(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.J
 	if err := messagesender.SendNotification(models.EventMessage{
 		Event:   "Test",
 		Time:    time.Now().UTC(),
-		Message: "This is a test message from Komari.",
+		Message: "This is a test message from Sonar.",
 	}); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, "Failed to send message: "+err.Error(), nil)
 	}

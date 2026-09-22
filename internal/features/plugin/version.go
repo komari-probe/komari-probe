@@ -8,11 +8,11 @@ import (
 	"github.com/sonar-probe/sonar/internal/version"
 )
 
-// CheckKomariVersion validates a manifest komari constraint against the
+// CheckSonarVersion validates a manifest version constraint against the
 // running server version. Supported constraints: empty (any version),
 // "x.y.z" (exact), and ">=x.y.z", ">x.y.z", "<=x.y.z", "<x.y.z". An optional
 // leading "v" is accepted.
-func CheckKomariVersion(constraint string) error {
+func CheckSonarVersion(constraint string) error {
 	constraint = strings.TrimSpace(constraint)
 	if constraint == "" {
 		return nil
@@ -28,7 +28,7 @@ func CheckKomariVersion(constraint string) error {
 	}
 	want, err := parseSemver(rest)
 	if err != nil {
-		return fmt.Errorf("invalid komari version constraint %q: %w", constraint, err)
+		return fmt.Errorf("invalid server version constraint %q: %w", constraint, err)
 	}
 	have, err := parseSemver(version.CurrentVersion)
 	if err != nil {
@@ -36,9 +36,14 @@ func CheckKomariVersion(constraint string) error {
 		return nil
 	}
 	if !satisfies(compareSemver(have, want), op) {
-		return fmt.Errorf("plugin requires komari %s, running %s", constraint, version.CurrentVersion)
+		return fmt.Errorf("plugin requires server %s, running %s", constraint, version.CurrentVersion)
 	}
 	return nil
+}
+
+// CheckKomariVersion is a backward-compatible alias for CheckSonarVersion.
+func CheckKomariVersion(constraint string) error {
+	return CheckSonarVersion(constraint)
 }
 
 func satisfies(cmp int, op string) bool {

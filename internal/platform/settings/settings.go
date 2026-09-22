@@ -2,7 +2,7 @@ package settings
 
 type Settings struct {
 	ID                     uint   `json:"id,omitempty"`                                        // 1
-	Sitename               string `json:"sitename" default:"Komari"`                           // 站点名称，默认 "Komari"
+	Sitename               string `json:"sitename" default:"Sonar"`                            // 站点名称，默认 "Sonar"
 	Description            string `json:"description" default:"A simple server monitor tool."` // 站点描述
 	CorsOriginCheckEnabled bool   `json:"cors_origin_check_enabled" default:"true"`            // 是否启用 API CORS 跨域请求校验，默认 true
 	CorsAllowedOrigins     string `json:"cors_allowed_origins" default:""`                     // API 跨域允许列表
