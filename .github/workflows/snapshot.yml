@@ -194,6 +194,7 @@ jobs:
           set -euxo pipefail
           echo "Snapshot version: ${VERSION}"
           ls -alR artifacts
+          (cd artifacts && sha256sum komari-* > checksums.txt)
 
           # 如果同名 release/tag 已存在（例如重跑），先删除避免创建冲突
           if gh release view "${VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
@@ -208,7 +209,7 @@ jobs:
             --title "${VERSION}" \
             --notes "Automated snapshot build (${VERSION}) from commit ${{ github.sha }}." \
             --prerelease \
-            artifacts/komari-*
+            artifacts/komari-* artifacts/checksums.txt
 
           gh workflow run generate-release-notes.yml \
             --repo "${{ github.repository }}" \

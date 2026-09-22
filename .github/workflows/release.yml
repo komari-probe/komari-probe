@@ -142,8 +142,27 @@ jobs:
           gh release upload ${{ github.event.release.tag_name }} $BINARY_NAME --repo ${{ github.repository }}
         shell: bash
 
-  build-and-push-docker:
+  attach-checksums:
     needs: build-and-attach-binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all release binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create and upload checksum manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          (cd artifacts && sha256sum komari-* > checksums.txt)
+          gh release upload "${{ github.event.release.tag_name }}" artifacts/checksums.txt --clobber --repo "${{ github.repository }}"
+
+  build-and-push-docker:
+    needs: [build-and-attach-binaries, attach-checksums]
     runs-on: ubuntu-latest
     permissions:
       contents: read
