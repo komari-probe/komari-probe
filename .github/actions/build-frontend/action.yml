@@ -1,15 +1,15 @@
 name: Build frontend theme
-description: Clone komari-web, build the default theme, and optionally upload it as an artifact.
+description: Clone sonar-web, build the default theme, and optionally upload it as an artifact.
 
 inputs:
   node-version:
-    description: Node.js version used to build komari-web.
+    description: Node.js version used to build sonar-web.
     default: "23"
   repository:
-    description: komari-web repository URL.
-    default: https://github.com/komari-probe/komari-probe-web
+    description: sonar-web repository URL.
+    default: https://github.com/sonar-probe/sonar-web
   ref:
-    description: Optional komari-web ref to build. Uses the repository default branch when empty.
+    description: Optional sonar-web ref to build. Uses the repository default branch when empty.
     default: ""
   artifact-name:
     description: Optional artifact name for the packed frontend theme.
@@ -36,27 +36,28 @@ runs:
       shell: bash
       run: |
         set -euxo pipefail
-        rm -rf komari-web
+        rm -rf sonar-web
         if [ -n "${{ inputs.ref }}" ]; then
-          git clone --depth=1 --branch "${{ inputs.ref }}" "${{ inputs.repository }}" komari-web
+          git clone --depth=1 --branch "${{ inputs.ref }}" "${{ inputs.repository }}" sonar-web
         else
-          git clone --depth=1 "${{ inputs.repository }}" komari-web
+          git clone --depth=1 "${{ inputs.repository }}" sonar-web
         fi
-        cd komari-web
+        cd sonar-web
         npm install
         npm run build
         cd ..
 
         mkdir -p internal/platform/frontend/defaultTheme
         rm -rf internal/platform/frontend/defaultTheme/dist internal/platform/frontend/defaultTheme/dist.tar.zst
-        test -f komari-web/dist/index.html
-        test -f komari-web/dist/admin/admin.html
-        tar -cf "$RUNNER_TEMP/komari-default-dist.tar" -C komari-web/dist .
-        zstd -19 -T0 -q -f "$RUNNER_TEMP/komari-default-dist.tar" -o internal/platform/frontend/defaultTheme/dist.tar.zst
-        rm -f "$RUNNER_TEMP/komari-default-dist.tar"
-        cp -f komari-web/komari-theme.json internal/platform/frontend/defaultTheme/
-        if [ -f komari-web/preview.png ]; then cp -f komari-web/preview.png internal/platform/frontend/defaultTheme/; fi
-        if [ -f komari-web/perview.png ]; then cp -f komari-web/perview.png internal/platform/frontend/defaultTheme/; fi
+        test -f sonar-web/dist/index.html
+        test -f sonar-web/dist/admin/admin.html
+        tar -cf "$RUNNER_TEMP/sonar-default-dist.tar" -C sonar-web/dist .
+        zstd -19 -T0 -q -f "$RUNNER_TEMP/sonar-default-dist.tar" -o internal/platform/frontend/defaultTheme/dist.tar.zst
+        rm -f "$RUNNER_TEMP/sonar-default-dist.tar"
+        if [ -f sonar-web/sonar-theme.json ]; then cp -f sonar-web/sonar-theme.json internal/platform/frontend/defaultTheme/; fi
+        if [ -f sonar-web/komari-theme.json ]; then cp -f sonar-web/komari-theme.json internal/platform/frontend/defaultTheme/; fi
+        if [ -f sonar-web/preview.png ]; then cp -f sonar-web/preview.png internal/platform/frontend/defaultTheme/; fi
+        if [ -f sonar-web/perview.png ]; then cp -f sonar-web/perview.png internal/platform/frontend/defaultTheme/; fi
         if [ -f internal/platform/frontend/defaultTheme/preview.png ] && [ ! -f internal/platform/frontend/defaultTheme/perview.png ]; then cp -f internal/platform/frontend/defaultTheme/preview.png internal/platform/frontend/defaultTheme/perview.png; fi
         if [ -f internal/platform/frontend/defaultTheme/perview.png ] && [ ! -f internal/platform/frontend/defaultTheme/preview.png ]; then cp -f internal/platform/frontend/defaultTheme/perview.png internal/platform/frontend/defaultTheme/preview.png; fi
 

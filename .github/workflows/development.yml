@@ -28,13 +28,13 @@ jobs:
           GOARCH: amd64
         run: |
           VERSION_SHA="${{ github.sha }}"
-          go build -ldflags "-X github.com/komari-monitor/komari/internal/version.CurrentVersion=dev -X github.com/komari-monitor/komari/internal/version.VersionHash=${VERSION_SHA}" -o komari .
+          go build -ldflags "-X github.com/sonar-probe/sonar/internal/version.CurrentVersion=dev -X github.com/sonar-probe/sonar/internal/version.VersionHash=${VERSION_SHA}" -o sonar .
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: komari
-          path: komari
+          name: sonar
+          path: sonar
 
   deploy-to-production:
     needs: build-binaries
@@ -47,7 +47,7 @@ jobs:
       - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: komari
+          name: sonar
 
       - name: Setup SSH Key
         uses: webfactory/ssh-agent@v0.8.0
@@ -61,10 +61,9 @@ jobs:
 
       - name: Deploy to production
         run: |
-          chmod +x komari
-          ssh root@${{ env.PRODUCTION_SERVER }} 'mkdir -p /opt/komari/'
-          ssh root@${{ env.PRODUCTION_SERVER }} 'systemctl stop komari.service || true'
-          ssh root@${{ env.PRODUCTION_SERVER }} 'rm -f /opt/komari/komari.old'
-          ssh root@${{ env.PRODUCTION_SERVER }} 'mv /opt/komari/komari /opt/komari/komari.old || true'
-          scp komari root@${{ env.PRODUCTION_SERVER }}:/opt/komari/komari
-          ssh root@${{ env.PRODUCTION_SERVER }} 'systemctl start komari.service'
+          chmod +x sonar
+          ssh root@${{ env.PRODUCTION_SERVER }} 'mkdir -p /opt/sonar/ && systemctl stop sonar.service 2>/dev/null || systemctl stop komari.service 2>/dev/null || true'
+          ssh root@${{ env.PRODUCTION_SERVER }} 'mv /opt/sonar/sonar /opt/sonar/sonar.old 2>/dev/null || true'
+          scp sonar root@${{ env.PRODUCTION_SERVER }}:/opt/sonar/sonar
+          ssh root@${{ env.PRODUCTION_SERVER }} 'if [ -d /opt/komari ]; then cp -f /opt/sonar/sonar /opt/komari/komari 2>/dev/null || true; fi'
+          ssh root@${{ env.PRODUCTION_SERVER }} 'systemctl start sonar.service 2>/dev/null || systemctl start komari.service 2>/dev/null || true'

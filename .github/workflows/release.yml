@@ -40,7 +40,7 @@ jobs:
       - name: Build frontend artifact
         uses: ./.github/actions/build-frontend
         with:
-          artifact-name: komari-frontend
+          artifact-name: sonar-frontend
           ref: ${{ needs.resolve-release.outputs.frontend_ref }}
 
   build-and-attach-binaries:
@@ -115,26 +115,26 @@ jobs:
           CC: zig cc -target ${{ matrix.zig_target_triple }}
           GIN_MODE: release
         run: |
-          BINARY_NAME=komari-${{ matrix.goos }}-${{ matrix.goarch }}
+          BINARY_NAME=sonar-${{ matrix.goos }}-${{ matrix.goarch }}
           if [ "${{ matrix.binary_extension }}" != "" ]; then
             BINARY_NAME=${BINARY_NAME}${{ matrix.binary_extension }}
           fi
           VERSION="${{ github.event.release.tag_name }}"
           VERSION_HASH="${{ github.sha }}" # Use commit SHA for hash
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/internal/version.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/internal/version.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
+          go build -trimpath -ldflags="-s -w -X github.com/sonar-probe/sonar/internal/version.CurrentVersion=${VERSION} -X github.com/sonar-probe/sonar/internal/version.VersionHash=${VERSION_HASH}" -o $BINARY_NAME
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: komari-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: komari-${{ matrix.goos }}-${{ matrix.goarch }}*
+          name: sonar-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: sonar-${{ matrix.goos }}-${{ matrix.goarch }}*
 
       - name: Upload binary to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Define the binary name for upload
-          BINARY_NAME=komari-${{ matrix.goos }}-${{ matrix.goarch }}
+          BINARY_NAME=sonar-${{ matrix.goos }}-${{ matrix.goarch }}
           if [ "${{ matrix.goos }}" = "windows" ]; then
             BINARY_NAME=${BINARY_NAME}.exe
           fi
@@ -158,7 +158,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          (cd artifacts && sha256sum komari-* > checksums.txt)
+          (cd artifacts && sha256sum sonar-* > checksums.txt)
           gh release upload "${{ github.event.release.tag_name }}" artifacts/checksums.txt --clobber --repo "${{ github.repository }}"
 
   build-and-push-docker:
@@ -175,7 +175,7 @@ jobs:
       - name: Download Docker binaries
         uses: actions/download-artifact@v4
         with:
-          pattern: komari-linux-*
+          pattern: sonar-linux-*
           path: .
           merge-multiple: true
 

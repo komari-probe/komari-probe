@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Docker Compose Server migration. No Coolify dependency.
+# Docker Compose Server migration to Sonar. No Coolify dependency.
 set -u -o pipefail
 
 COMPOSE_FILE=""; SERVICE=""; TARGET_IMAGE=""; PROJECT=""; DATA_PATH="/app/data"; PORT="25774"
-BACKUP_ROOT="/var/backups/komari-server-docker-migration"; OVERRIDE_FILE=""; CLEANUP_ID=""; DRY_RUN=0
+BACKUP_ROOT="/var/backups/sonar-server-docker-migration"; OVERRIDE_FILE=""; CLEANUP_ID=""; DRY_RUN=0
 BACKUP_DIR=""; OVERRIDE_CREATED=0; MOUNT_TYPE=""; MOUNT_NAME=""; MOUNT_SOURCE=""
 
 usage() { cat <<'EOF'
@@ -17,20 +17,20 @@ If the replacement fails, it restores the data and recreates the old service.
 Required:
   --compose-file FILE       Existing Docker Compose file
   --service NAME            Server service in that Compose project
-  --target-image IMAGE      New Komari Probe image (prefer an immutable digest)
+  --target-image IMAGE      New Sonar image (prefer an immutable digest)
 
 Options:
   --project NAME            Compose project name, if not inferred
   --data-path PATH          Container data mount; default: /app/data
   --port PORT               Container health port; default: 25774
-  --backup-root PATH        Default: /var/backups/komari-server-docker-migration
+  --backup-root PATH        Default: /var/backups/sonar-server-docker-migration
   --override-file FILE      Persistent image override file (default beside Compose file)
   --dry-run                 Validate and print the plan only
   --cleanup-backup ID       Explicitly delete one completed backup
 EOF
 }
-log() { printf '[komari-server-docker] %s\n' "$*"; }
-die() { printf '[komari-server-docker] ERROR: %s\n' "$*" >&2; exit 1; }
+log() { printf '[sonar-server-docker] %s\n' "$*"; }
+die() { printf '[sonar-server-docker] ERROR: %s\n' "$*" >&2; exit 1; }
 need() { command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"; }
 compose() { if [ -n "$PROJECT" ]; then docker compose -p "$PROJECT" -f "$COMPOSE_FILE" "$@"; else docker compose -f "$COMPOSE_FILE" "$@"; fi; }
 compose_target() { if [ -n "$PROJECT" ]; then docker compose -p "$PROJECT" -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" "$@"; else docker compose -f "$COMPOSE_FILE" -f "$OVERRIDE_FILE" "$@"; fi; }
@@ -49,7 +49,7 @@ while [ "$#" -gt 0 ]; do case "$1" in --compose-file) COMPOSE_FILE=$2; shift;; -
 compose config --services | grep -Fx "$SERVICE" >/dev/null || die "Service not found in Compose file: $SERVICE"
 CID=$(compose ps -q "$SERVICE"); [ -n "$CID" ] || die "Service is not running: $SERVICE"
 mount_for_path "$CID" "$DATA_PATH" || die "No persistent mount at $DATA_PATH. Refusing to migrate container-local Server data."
-BACKUP_ID=$(date -u +%Y%m%dT%H%M%SZ); BACKUP_DIR="$BACKUP_ROOT/$BACKUP_ID"; OVERRIDE_FILE=${OVERRIDE_FILE:-"$(dirname "$COMPOSE_FILE")/.komari-probe-${SERVICE}.override.yml"}
+BACKUP_ID=$(date -u +%Y%m%dT%H%M%SZ); BACKUP_DIR="$BACKUP_ROOT/$BACKUP_ID"; OVERRIDE_FILE=${OVERRIDE_FILE:-"$(dirname "$COMPOSE_FILE")/.sonar-${SERVICE}.override.yml"}
 [ ! -e "$OVERRIDE_FILE" ] || die "Override already exists: $OVERRIDE_FILE. Use that Compose configuration or choose --override-file."
 log "Plan: service=$SERVICE; old-image=$(docker inspect --format '{{.Config.Image}}' "$CID"); target=$TARGET_IMAGE; data=$MOUNT_TYPE:$MOUNT_SOURCE; backup=$BACKUP_DIR"
 [ "$DRY_RUN" -eq 0 ] || { log "Dry run finished; no changes were made."; exit 0; }

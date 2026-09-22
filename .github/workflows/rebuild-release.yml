@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       frontend_ref:
-        description: komari-web commit, branch, or tag to build.
+        description: sonar-web commit, branch, or tag to build.
         required: true
         type: string
 
@@ -35,7 +35,7 @@ jobs:
       - name: Build selected frontend artifact
         uses: ./.github/actions/build-frontend
         with:
-          artifact-name: komari-frontend
+          artifact-name: sonar-frontend
           ref: ${{ inputs.frontend_ref }}
 
   build-and-attach-binaries:
@@ -81,7 +81,7 @@ jobs:
           ref: ${{ inputs.server_ref }}
 
       - name: Restore frontend artifact
-        uses: komari-probe/komari-probe/.github/actions/restore-frontend@main
+        uses: sonar-probe/sonar/.github/actions/restore-frontend@main
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -89,7 +89,7 @@ jobs:
           go-version: "1.23"
 
       - name: Install Zig cross-compiler toolchain
-        uses: komari-probe/komari-probe/.github/actions/setup-zig@main
+        uses: sonar-probe/sonar/.github/actions/setup-zig@main
 
       - name: Build binary
         env:
@@ -100,23 +100,23 @@ jobs:
           GIN_MODE: release
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          BINARY_NAME=komari-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
+          BINARY_NAME=sonar-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
           VERSION_HASH="$(git rev-parse HEAD)"
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/internal/version.CurrentVersion=${RELEASE_TAG} -X github.com/komari-monitor/komari/internal/version.VersionHash=${VERSION_HASH}" -o "$BINARY_NAME"
+          go build -trimpath -ldflags="-s -w -X github.com/sonar-probe/sonar/internal/version.CurrentVersion=${RELEASE_TAG} -X github.com/sonar-probe/sonar/internal/version.VersionHash=${VERSION_HASH}" -o "$BINARY_NAME"
 
       - name: Upload binary to release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          BINARY_NAME=komari-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
+          BINARY_NAME=sonar-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
           gh release upload "$RELEASE_TAG" "$BINARY_NAME" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: komari-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: komari-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
+          name: sonar-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: sonar-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
 
   attach-checksums:
     needs: build-and-attach-binaries
@@ -134,7 +134,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          (cd artifacts && sha256sum komari-* > checksums.txt)
+          (cd artifacts && sha256sum sonar-* > checksums.txt)
           gh release upload "${{ inputs.release_tag }}" artifacts/checksums.txt --clobber --repo "$GITHUB_REPOSITORY"
 
   build-and-push-docker:
@@ -150,7 +150,7 @@ jobs:
       - name: Download Docker binaries
         uses: actions/download-artifact@v4
         with:
-          pattern: komari-linux-*
+          pattern: sonar-linux-*
           path: .
           merge-multiple: true
 

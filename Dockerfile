@@ -8,11 +8,13 @@ ARG TARGETARCH
 
 RUN apk add --no-cache ca-certificates curl tzdata
 
-COPY --chmod=755 komari-${TARGETOS}-${TARGETARCH} /app/komari
+COPY --chmod=755 sonar-${TARGETOS}-${TARGETARCH} /app/sonar
+RUN ln -sf /app/sonar /app/komari
 
 ENV GIN_MODE=release
+ENV SONAR_LISTEN=0.0.0.0:25774
 ENV KOMARI_LISTEN=0.0.0.0:25774
 
 EXPOSE 25774
 
-CMD ["/app/komari", "server"]
+CMD ["/app/sonar", "server"]
