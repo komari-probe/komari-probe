@@ -55,7 +55,13 @@ log "Plan: service=$SERVICE; old-image=$(docker inspect --format '{{.Config.Imag
 [ "$DRY_RUN" -eq 0 ] || { log "Dry run finished; no changes were made."; exit 0; }
 mkdir -p "$BACKUP_DIR" || die "Cannot create backup directory."; cp -a "$COMPOSE_FILE" "$BACKUP_DIR/compose.before.yml" || die "Cannot back up Compose file."; docker inspect "$CID" > "$BACKUP_DIR/container.inspect.json" || die "Cannot record container configuration."; printf '%s\n' "$MOUNT_TYPE|$MOUNT_NAME|$MOUNT_SOURCE|$DATA_PATH" > "$BACKUP_DIR/mount.txt"
 log "Archiving Server data mount..."; archive_mount || die "Data backup failed; old service remains running."; sha256sum "$BACKUP_DIR/data.tar.gz" > "$BACKUP_DIR/data.tar.gz.sha256" || die "Cannot checksum data backup."
-docker pull "$TARGET_IMAGE" || die "Could not pull target image; old service remains running."
+if ! docker pull "$TARGET_IMAGE"; then
+    if docker image inspect "$TARGET_IMAGE" >/dev/null 2>&1; then
+        log "Warning: docker pull failed, but target image exists locally. Proceeding with local image."
+    else
+        die "Could not pull target image; old service remains running."
+    fi
+fi
 printf 'services:\n  %s:\n    image: %s\n' "$SERVICE" "$TARGET_IMAGE" > "$OVERRIDE_FILE" || die "Could not create image override."; OVERRIDE_CREATED=1
 compose_target up -d --no-build "$SERVICE" || abort "Compose could not recreate the target service"; sleep 3
 CID=$(compose_target ps -q "$SERVICE"); [ -n "$CID" ] || abort "target container was not created"; [ "$(docker inspect --format '{{.State.Running}}' "$CID")" = true ] || abort "target container is not running"; docker exec "$CID" curl -fsS --max-time 10 "http://127.0.0.1:$PORT/" >/dev/null || abort "target Server health endpoint did not respond"
