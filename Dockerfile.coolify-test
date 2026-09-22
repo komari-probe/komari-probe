@@ -1,0 +1,56 @@
+# 仅供内部测试环境使用（Coolify 从源码构建），不用于正式发布。
+# 正式发布走 .github/workflows 里的交叉编译 + Dockerfile 流程，不要改那一套。
+#
+# 这个文件比正式流程多做一步：正式发布是先在 CI 里单独编译好前端
+# （komari-probe-web）打包成 dist.tar.zst 再喂给 Dockerfile；这里为了让
+# Coolify 能直接从 server 仓库的源码独立构建出完整可用的镜像，把"拉前端仓库
+# 并编译打包"这一步也内置进多阶段构建里。
+
+# ---- 阶段一：编译前端 ----
+FROM node:23-alpine AS web-build
+RUN apk add --no-cache git
+WORKDIR /web
+ARG WEB_REPO=https://forgejo.whimglow.com/steve/komari-probe-web.git
+ARG WEB_REF=test
+RUN git clone --depth=1 -b ${WEB_REF} ${WEB_REPO} .
+RUN npm ci
+RUN npm run build
+
+# ---- 阶段二：把前端产物打包成 server 期望的 dist.tar.zst ----
+FROM alpine:3.21 AS web-pack
+RUN apk add --no-cache tar zstd
+WORKDIR /pack
+COPY --from=web-build /web/dist ./dist
+COPY --from=web-build /web/komari-theme.json ./komari-theme.json
+RUN tar -cf dist.tar -C dist . && zstd -19 -T0 -f dist.tar -o dist.tar.zst
+
+# ---- 阶段三：编译 Go 二进制（内嵌前端） ----
+FROM golang:1.23-alpine AS go-build
+RUN apk add --no-cache build-base
+WORKDIR /src
+COPY . .
+COPY --from=web-pack /pack/dist.tar.zst internal/platform/frontend/defaultTheme/dist.tar.zst
+COPY --from=web-pack /pack/komari-theme.json internal/platform/frontend/defaultTheme/komari-theme.json
+ENV CGO_ENABLED=1
+ENV GIN_MODE=release
+ARG VERSION=test-local
+ARG VERSION_HASH=unknown
+RUN go build -trimpath \
+    -ldflags="-s -w -X github.com/komari-monitor/komari/internal/version.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/internal/version.VersionHash=${VERSION_HASH}" \
+    -o /out/komari .
+
+# ---- 阶段四：运行镜像 ----
+FROM alpine:3.21
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates curl tzdata
+
+COPY --from=go-build /out/komari /app/komari
+
+ENV GIN_MODE=release
+ENV KOMARI_LISTEN=0.0.0.0:25774
+
+EXPOSE 25774
+
+CMD ["/app/komari", "server"]
