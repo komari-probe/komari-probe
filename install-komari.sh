@@ -401,6 +401,14 @@ msg() {
             en_text='The service failed to start after the upgrade. Check the logs.'
             zh_text='服务在升级后未能启动，请检查日志。'
             ;;
+        upgrade_start_failed_restored)
+            en_text='The service failed to start after the upgrade. The previous version was restored and restarted.'
+            zh_text='服务在升级后未能启动，已恢复并重启到升级前的版本。'
+            ;;
+        upgrade_start_failed_restore_failed)
+            en_text='The service failed to start after the upgrade, and restoring the previous version also failed. The backup is kept at %s.'
+            zh_text='服务在升级后未能启动，回滚到升级前版本也失败了。备份文件保留在 %s。'
+            ;;
         uninstall_start)
             en_text='Uninstalling Komari...'
             zh_text='卸载 Komari...'
@@ -1248,7 +1256,13 @@ upgrade_komari() {
         progress_add "$(msg progress_complete)"
         ui_msgbox "$(msg title_upgrade_complete)" "$(msg upgrade_success "$EDITION_NAME" "$CHANNEL_NAME")"
     else
-        ui_msgbox "$(msg title_error)" "$(msg upgrade_start_failed)"
+        log_error "$(msg upgrade_start_failed)"
+        systemctl stop ${SERVICE_NAME}.service >/dev/null 2>&1
+        if mv "$backup_path" "$BINARY_PATH" && systemctl start ${SERVICE_NAME}.service && systemctl is-active --quiet ${SERVICE_NAME}.service; then
+            ui_msgbox "$(msg title_error)" "$(msg upgrade_start_failed_restored)"
+        else
+            ui_msgbox "$(msg title_error)" "$(msg upgrade_start_failed_restore_failed "$backup_path")"
+        fi
     fi
 }
 
