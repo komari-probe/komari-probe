@@ -92,26 +92,39 @@ docker run -d \
 
 ### 2. Agent Installation
 
-After deploying the Server, add a node in the Admin Panel (`/admin` -> Node Management) to generate an **Agent Token**. Then install the Agent on target client machines:
+Connecting client nodes to your server takes only three simple steps:
 
-#### Method A: Host Installation (Recommended)
+1. **Open Admin Panel**: Navigate to `http://<YOUR_SERVER_IP>:25774/` and log in to the Admin Dashboard (`/admin`);
+2. **Add Node**: Click **Node Management** in the left sidebar $\rightarrow$ click **Add Node**;
+3. **One-Click Copy & Deploy**: In the install modal, **the system automatically generates the complete command containing your panel URL and token**. Simply click **Copy** and paste it into your target machine terminal — no manual configuration needed!
+
+*(The Admin Panel natively supports auto-generating commands for Linux, Windows PowerShell, macOS, and Docker)*
+
+---
+
+<details>
+<summary><b>🛠️ Manual Command Reference (For CI/CD & Automated Scripts)</b></summary>
+
+If you need to install agents silently via automation scripts without using the web UI:
+
+#### Host Installation (Linux / macOS)
 - **Stable Release**:
   ```bash
   curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
     -e "http://<SERVER_IP>:25774" \
-    -t "<YOUR_AGENT_TOKEN>"
+    -t "<AGENT_TOKEN>"
   ```
 - **Preview / Beta Release**:
   ```bash
   curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
     -e "http://<SERVER_IP>:25774" \
-    -t "<YOUR_AGENT_TOKEN>" \
+    -t "<AGENT_TOKEN>" \
     -v "v1.0.0-beta.1"
   ```
 
-#### Method B: Docker Container
+#### Docker Container
 > [!IMPORTANT]
-> The Agent container **must run with `--net=host`**, otherwise metrics will be collected from Docker's virtual bridge instead of the physical host.
+> The Agent container **must run with `--net=host`**, otherwise metrics will be collected from Docker's virtual bridge rather than the physical host.
 
 ```bash
 docker run -d \
@@ -119,10 +132,11 @@ docker run -d \
   --restart unless-stopped \
   --net=host \
   ghcr.io/komari-probe/komari-probe-agent:v1.0.0-beta.1 \
-  -e "http://<SERVER_IP>:25774" -t "<YOUR_AGENT_TOKEN>"
+  -e "http://<SERVER_IP>:25774" -t "<AGENT_TOKEN>"
 ```
 
-For more details on CLI options and configuration files, see the [komari-probe-agent repository](https://github.com/komari-probe/komari-probe-agent).
+For configuration files and parameter details, see the [komari-probe-agent repository](https://github.com/komari-probe/komari-probe-agent).
+</details>
 
 ---
 

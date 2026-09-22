@@ -92,24 +92,37 @@ docker run -d \
 
 ### 2. 探针客户端全新接入（Agent）
 
-部署完服务端后，在后台管理面板（`/admin`）的“节点管理”中添加节点，获取对应的 **Agent Token**。然后在被监控机器上运行：
+部署并启动服务端后，接入被监控节点只需三步：
 
-#### 方式 A：宿主机安装 Agent（推荐）
+1. **进入管理后台**：浏览器打开 `http://<服务器IP>:25774/`，登录后进入后台管理（`/admin`）；
+2. **添加节点**：点击左侧导航栏的 **【节点管理】** $\rightarrow$ **【添加节点】**；
+3. **一键复制部署**：在弹出的安装窗口中，**系统已自动拼接好当前面板地址与专属 Token 的一键安装指令**，直接点击**【复制】**并粘贴到被监控机器终端运行即可，无需手动替换任何参数！
+
+*(后台已原生支持 Linux 一键命令、Windows PowerShell、macOS 及 Docker 指令的自动生成与复制)*
+
+---
+
+<details>
+<summary><b>🛠️ 附：手动安装命令参考（供自动化脚本 / 无面板环境备查）</b></summary>
+
+若需在 CI/CD 或批量运维脚本中静默安装，可手动拼接参数执行：
+
+#### 宿主机安装（Linux / macOS）
 - **正式稳定版（Stable）**：
   ```bash
   curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
     -e "http://<服务端IP或域名>:25774" \
-    -t "<你的AGENT_TOKEN>"
+    -t "<AGENT_TOKEN>"
   ```
 - **预览体验版（Beta）**：
   ```bash
   curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
     -e "http://<服务端IP或域名>:25774" \
-    -t "<你的AGENT_TOKEN>" \
+    -t "<AGENT_TOKEN>" \
     -v "v1.0.0-beta.1"
   ```
 
-#### 方式 B：Docker 运行 Agent
+#### Docker 容器运行
 > [!IMPORTANT]
 > Agent 容器**必须使用 `--net=host`**，否则采集到的将是 Docker 虚拟网桥指标而非物理主机的真实 CPU、内存及网络数据。
 
@@ -119,10 +132,11 @@ docker run -d \
   --restart unless-stopped \
   --net=host \
   ghcr.io/komari-probe/komari-probe-agent:v1.0.0-beta.1 \
-  -e "http://<服务端IP或域名>:25774" -t "<你的AGENT_TOKEN>"
+  -e "http://<服务端IP或域名>:25774" -t "<AGENT_TOKEN>"
 ```
 
-更多参数细节请参阅 [komari-probe-agent 仓库说明](https://github.com/komari-probe/komari-probe-agent)。
+更多配置项与 CLI 字典请参阅 [komari-probe-agent 仓库说明](https://github.com/komari-probe/komari-probe-agent)。
+</details>
 
 ---
 
