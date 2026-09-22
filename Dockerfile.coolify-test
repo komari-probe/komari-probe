@@ -7,12 +7,18 @@
 # 并编译打包"这一步也内置进多阶段构建里。
 
 # ---- 阶段一：编译前端 ----
+# WEB_REPO_TOKEN 通过 Coolify 的构建时变量注入（构建时环境变量，非 Dockerfile
+# 里写死）。这个仓库私有，且 Forgejo 实例本身对匿名 git 操作也要求登录
+# （REQUIRE_SIGNIN_VIEW），所以公开/私有都得认证，只能带 token。
 FROM node:23-alpine AS web-build
 RUN apk add --no-cache git
 WORKDIR /web
-ARG WEB_REPO=https://forgejo.whimglow.com/steve/komari-probe-web.git
+ARG WEB_REPO_HOST=forgejo.whimglow.com
+ARG WEB_REPO_PATH=steve/komari-probe-web.git
 ARG WEB_REF=test
-RUN git clone --depth=1 -b ${WEB_REF} ${WEB_REPO} .
+ARG WEB_REPO_TOKEN
+RUN git clone --depth=1 -b ${WEB_REF} "https://steve:${WEB_REPO_TOKEN}@${WEB_REPO_HOST}/${WEB_REPO_PATH}" . \
+    && git remote set-url origin "https://${WEB_REPO_HOST}/${WEB_REPO_PATH}"
 RUN npm ci
 RUN npm run build
 
