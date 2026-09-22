@@ -118,8 +118,27 @@ jobs:
           name: komari-${{ matrix.goos }}-${{ matrix.goarch }}
           path: komari-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_extension }}
 
-  build-and-push-docker:
+  attach-checksums:
     needs: build-and-attach-binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all release binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create and upload checksum manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          (cd artifacts && sha256sum komari-* > checksums.txt)
+          gh release upload "${{ inputs.release_tag }}" artifacts/checksums.txt --clobber --repo "$GITHUB_REPOSITORY"
+
+  build-and-push-docker:
+    needs: [build-and-attach-binaries, attach-checksums]
     runs-on: ubuntu-latest
 
     steps:
