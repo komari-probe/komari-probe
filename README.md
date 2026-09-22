@@ -1,13 +1,13 @@
-# Komari Probe
+# Sonar
 
-<img src="docs/images/logo.svg" alt="Komari Probe logo" width="120">
+<img src="docs/images/logo.svg" alt="Sonar logo" width="120">
 
 [English](./README.md) | [简体中文](./README_zh-cn.md)
 
-Komari Probe is a pure, lightweight, and secure self-hosted server monitoring solution. It provides a simple and efficient way to track server performance through a modern web interface, with metrics collected by a lightweight agent.
+Sonar is a pure, lightweight, and secure self-hosted server monitoring solution. It provides a simple and efficient way to track server performance through a modern web interface, with metrics collected by a lightweight agent.
 
 > [!WARNING]
-> Komari Probe is a self-hosted monitoring and control application. Deploy it only on systems you own or are authorized to manage. You are solely responsible for how you deploy and use Komari Probe. The developers accept no liability for unauthorized access, persistence, command execution, other misuse, or any resulting consequences.
+> Sonar is a self-hosted monitoring and control application. Deploy it only on systems you own or are authorized to manage. You are solely responsible for how you deploy and use Sonar. The developers accept no liability for unauthorized access, persistence, command execution, other misuse, or any resulting consequences.
 
 [Documentation](https://www.komari.wiki/) | [Telegram Group](https://t.me/komari_probe)
 
@@ -44,15 +44,15 @@ Supported on Ubuntu, Debian, CentOS, Alpine, etc. Runs as a systemd service. Def
 
 - **Stable Release**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/install-komari.sh | sudo bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo bash
   ```
 - **Preview / Beta Release (e.g., `v1.0.0-beta.1`)**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/install-komari.sh | sudo VERSION=v1.0.0-beta.1 bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo VERSION=v1.0.0-beta.1 bash
   ```
 - **Snapshot Release**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/install-komari.sh | sudo CHANNEL=snapshot bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo CHANNEL=snapshot bash
   ```
 
 #### Method B: Docker Compose
@@ -60,10 +60,10 @@ Create a `docker-compose.yml` file:
 
 ```yaml
 services:
-  komari:
+  sonar:
     # Use :v1.0.0-beta.1 during the beta phase, or :latest once stable is published
-    image: ghcr.io/komari-probe/komari-probe:v1.0.0-beta.1
-    container_name: komari
+    image: ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+    container_name: sonar
     restart: unless-stopped
     ports:
       - "25774:25774"
@@ -79,11 +79,11 @@ docker compose up -d
 #### Method C: Docker CLI Single Container
 ```bash
 docker run -d \
-  --name komari \
+  --name sonar \
   --restart unless-stopped \
   -p 25774:25774 \
   -v /opt/komari/data:/app/data \
-  ghcr.io/komari-probe/komari-probe:v1.0.0-beta.1
+  ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
 ```
 
 > Once installed, access `http://<YOUR_SERVER_IP>:25774/` in your browser and complete the initial administrator setup.
@@ -110,13 +110,13 @@ If you need to install agents silently via automation scripts without using the 
 #### Host Installation (Linux / macOS)
 - **Stable Release**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/install.sh | sudo bash -s -- \
     -e "http://<SERVER_IP>:25774" \
     -t "<AGENT_TOKEN>"
   ```
 - **Preview / Beta Release**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/install.sh | sudo bash -s -- \
     -e "http://<SERVER_IP>:25774" \
     -t "<AGENT_TOKEN>" \
     -v "v1.0.0-beta.1"
@@ -128,21 +128,21 @@ If you need to install agents silently via automation scripts without using the 
 
 ```bash
 docker run -d \
-  --name komari-agent \
+  --name sonar-agent \
   --restart unless-stopped \
   --net=host \
-  ghcr.io/komari-probe/komari-probe-agent:v1.0.0-beta.1 \
+  ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1 \
   -e "http://<SERVER_IP>:25774" -t "<AGENT_TOKEN>"
 ```
 
-For configuration files and parameter details, see the [komari-probe-agent repository](https://github.com/komari-probe/komari-probe-agent).
+For configuration files and parameter details, see the [komari-probe-agent repository](https://github.com/sonar-probe/sonar-agent).
 </details>
 
 ---
 
 ## Migration from Komari Monitor
 
-If you are already running an upstream **Komari Monitor** instance, automated, non-destructive migration scripts are provided to upgrade smoothly to Komari Probe.
+If you are already running an upstream **Komari Monitor** instance, automated, non-destructive migration scripts are provided to upgrade smoothly to Sonar.
 
 ### Safety & Guardrails
 1. **Automated Full Backup**: Persistent data, databases, and ping tasks are tar-gzipped to `/var/backups/` with a SHA-256 manifest before any modification.
@@ -158,7 +158,7 @@ For instances deployed directly on bare-metal or VPS systems:
 
 ```bash
 # 1. Download migration script
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/scripts/migrate-server-host.sh -o migrate-server-host.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migrate-server-host.sh -o migrate-server-host.sh
 
 # 2. Dry run (validates environment and outputs plan without making changes)
 sudo bash migrate-server-host.sh --tag v1.0.0-beta.1 --dry-run
@@ -179,16 +179,16 @@ For instances running via `docker compose`:
 
 ```bash
 # 1. Download Docker migration script
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/scripts/migrate-server-docker.sh -o migrate-server-docker.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migrate-server-docker.sh -o migrate-server-docker.sh
 
 # 2. Perform migration (pass existing compose file and service name)
 sudo bash migrate-server-docker.sh \
   --compose-file /path/to/docker-compose.yml \
-  --service komari \
-  --target-image ghcr.io/komari-probe/komari-probe:v1.0.0-beta.1
+  --service sonar \
+  --target-image ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
 ```
 
-> **Note**: Backs up the data mount to `/var/backups/komari-server-docker-migration/` and generates a non-destructive `.komari-probe-<SERVICE>.override.yml` override file. Your original `docker-compose.yml` remains untouched.
+> **Note**: Backs up the data mount to `/var/backups/sonar-server-docker-migration/` and generates a non-destructive `.sonar-<SERVICE>.override.yml` override file. Your original `docker-compose.yml` remains untouched.
 
 ---
 
@@ -198,16 +198,16 @@ To migrate existing upstream Agent nodes while **preserving `auto-discovery.json
 
 #### Host Agent:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/scripts/migrate-agent-host.sh -o migrate-agent-host.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-host.sh -o migrate-agent-host.sh
 sudo bash migrate-agent-host.sh --tag v1.0.0-beta.1
 ```
 
 #### Docker Agent:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/scripts/migrate-agent-docker.sh -o migrate-agent-docker.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-docker.sh -o migrate-agent-docker.sh
 sudo bash migrate-agent-docker.sh \
-  --container komari-agent \
-  --target-image ghcr.io/komari-probe/komari-probe-agent:v1.0.0-beta.1
+  --container sonar-agent \
+  --target-image ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1
 ```
 
 ---
@@ -216,16 +216,16 @@ sudo bash migrate-agent-docker.sh \
 
 ### systemd Management
 ```bash
-sudo systemctl status komari   # Check status
-sudo systemctl restart komari  # Restart server
-sudo journalctl -u komari -f   # View live logs
+sudo systemctl status sonar   # Check status
+sudo systemctl restart sonar  # Restart server
+sudo journalctl -u sonar -f   # View live logs
 ```
 
 ### Docker Management
 ```bash
 docker compose ps              # Check container status
-docker compose logs -f komari  # View live logs
-docker compose restart komari  # Restart container
+docker compose logs -f sonar  # View live logs
+docker compose restart sonar  # Restart container
 ```
 
 ---
@@ -245,8 +245,8 @@ docker compose restart komari  # Restart container
 
 ## Contributors & Credits
 
-Komari Probe began as a fork of [Komari Monitor](https://github.com/komari-monitor/komari). Thanks to everyone who built and contributed to the original project.
+Sonar began as a fork of [Komari Monitor](https://github.com/komari-monitor/komari). Thanks to everyone who built and contributed to the original project.
 
-Thanks also to everyone who has contributed code, themes, plugins, documentation, translations, bug reports, or feedback to Komari Probe.
+Thanks also to everyone who has contributed code, themes, plugins, documentation, translations, bug reports, or feedback to Sonar.
 
-<a href="https://github.com/komari-probe/komari-probe/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=komari-probe/komari-probe" alt="Komari Probe contributors" width="600"></a>
+<a href="https://github.com/sonar-probe/sonar/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=sonar-probe/sonar" alt="Sonar contributors" width="600"></a>

@@ -1,13 +1,13 @@
-# Komari Probe
+# Sonar
 
-<img src="docs/images/logo.svg" alt="Komari Probe logo" width="120">
+<img src="docs/images/logo.svg" alt="Sonar logo" width="120">
 
 [English](./README.md) | [简体中文](./README_zh-cn.md)
 
-Komari Probe 是一款纯粹、轻量、安全的自托管服务器监控工具，旨在提供简单、高效的服务器性能监控解决方案。它支持通过 Web 界面查看服务器状态，并通过轻量级 Agent 收集数据。
+Sonar 是一款纯粹、轻量、安全的自托管服务器监控工具，旨在提供简单、高效的服务器性能监控解决方案。它支持通过 Web 界面查看服务器状态，并通过轻量级 Agent 收集数据。
 
 > [!WARNING]
-> Komari Probe 是一款自托管的监控/控制程序，仅应部署在你拥有或已获得授权管理的系统上。在未获授权的情况下部署、访问、持久化、执行命令及从事其他滥用行为，用户需要自行承担部署和使用 Komari Probe 的责任。开发者不对未经授权或滥用行为及其后果承担责任。
+> Sonar 是一款自托管的监控/控制程序，仅应部署在你拥有或已获得授权管理的系统上。在未获授权的情况下部署、访问、持久化、执行命令及从事其他滥用行为，用户需要自行承担部署和使用 Sonar 的责任。开发者不对未经授权或滥用行为及其后果承担责任。
 
 [文档](https://www.komari.wiki/) | [Telegram 群](https://t.me/komari_probe)
 
@@ -44,15 +44,15 @@ Komari Probe 是一款纯粹、轻量、安全的自托管服务器监控工具�
 
 - **正式稳定版（Stable）**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/install-komari.sh | sudo bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo bash
   ```
 - **预览体验版（Pre-release / Beta，如 `v1.0.0-beta.1`）**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/install-komari.sh | sudo VERSION=v1.0.0-beta.1 bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo VERSION=v1.0.0-beta.1 bash
   ```
 - **开发快照版（Snapshot）**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/install-komari.sh | sudo CHANNEL=snapshot bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo CHANNEL=snapshot bash
   ```
 
 #### 方式 B：Docker Compose 部署
@@ -60,10 +60,10 @@ Komari Probe 是一款纯粹、轻量、安全的自托管服务器监控工具�
 
 ```yaml
 services:
-  komari:
+  sonar:
     # 预览版使用 :v1.0.0-beta.1；正式版发布后可使用 :latest
-    image: ghcr.io/komari-probe/komari-probe:v1.0.0-beta.1
-    container_name: komari
+    image: ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+    container_name: sonar
     restart: unless-stopped
     ports:
       - "25774:25774"
@@ -79,11 +79,11 @@ docker compose up -d
 #### 方式 C：Docker CLI 单容器运行
 ```bash
 docker run -d \
-  --name komari \
+  --name sonar \
   --restart unless-stopped \
   -p 25774:25774 \
   -v /opt/komari/data:/app/data \
-  ghcr.io/komari-probe/komari-probe:v1.0.0-beta.1
+  ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
 ```
 
 > 安装完成后，在浏览器中访问 `http://<服务器IP>:25774/`，按照初始引导设置管理员账号密码即可开始使用。
@@ -110,13 +110,13 @@ docker run -d \
 #### 宿主机安装（Linux / macOS）
 - **正式稳定版（Stable）**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/install.sh | sudo bash -s -- \
     -e "http://<服务端IP或域名>:25774" \
     -t "<AGENT_TOKEN>"
   ```
 - **预览体验版（Beta）**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/install.sh | sudo bash -s -- \
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/install.sh | sudo bash -s -- \
     -e "http://<服务端IP或域名>:25774" \
     -t "<AGENT_TOKEN>" \
     -v "v1.0.0-beta.1"
@@ -128,21 +128,21 @@ docker run -d \
 
 ```bash
 docker run -d \
-  --name komari-agent \
+  --name sonar-agent \
   --restart unless-stopped \
   --net=host \
-  ghcr.io/komari-probe/komari-probe-agent:v1.0.0-beta.1 \
+  ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1 \
   -e "http://<服务端IP或域名>:25774" -t "<AGENT_TOKEN>"
 ```
 
-更多配置项与 CLI 字典请参阅 [komari-probe-agent 仓库说明](https://github.com/komari-probe/komari-probe-agent)。
+更多配置项与 CLI 字典请参阅 [komari-probe-agent 仓库说明](https://github.com/sonar-probe/sonar-agent)。
 </details>
 
 ---
 
 ## 从原版 Komari Monitor 平滑迁移指南 (Migration)
 
-如果你此前已经部署了原版 **Komari Monitor**，本项目提供经过全量数据实测验证的**全自动无感迁移工具**，助你无损切换至 Komari Probe。
+如果你此前已经部署了原版 **Komari Monitor**，本项目提供经过全量数据实测验证的**全自动无感迁移工具**，助你无损切换至 Sonar。
 
 ### 安全保障机制
 1. **自动归档备份**：迁移前自动打包全部节点数据、Ping 任务、配置及历史时序数据库 `metrics.db` 至 `/var/backups/`，并生成 SHA-256 校验和；
@@ -158,7 +158,7 @@ docker run -d \
 
 ```bash
 # 1. 下载服务端宿主机迁移脚本
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/scripts/migrate-server-host.sh -o migrate-server-host.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migrate-server-host.sh -o migrate-server-host.sh
 
 # 2. 预检执行（Dry-Run，仅评估升级路径与备份目录，不作修改）
 sudo bash migrate-server-host.sh --tag v1.0.0-beta.1 --dry-run
@@ -179,16 +179,16 @@ sudo bash migrate-server-host.sh --tag v1.0.0-beta.1
 
 ```bash
 # 1. 下载 Docker 迁移脚本
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe/main/scripts/migrate-server-docker.sh -o migrate-server-docker.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migrate-server-docker.sh -o migrate-server-docker.sh
 
 # 2. 执行平滑迁移（指定原始 docker-compose.yml 路径与 service 名称）
 sudo bash migrate-server-docker.sh \
   --compose-file /path/to/docker-compose.yml \
-  --service komari \
-  --target-image ghcr.io/komari-probe/komari-probe:v1.0.0-beta.1
+  --service sonar \
+  --target-image ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
 ```
 
-> **说明**：脚本会自动归档数据卷至 `/var/backups/komari-server-docker-migration/`，并在 Compose 目录生成轻量级 `.komari-probe-<SERVICE>.override.yml` 覆盖文件。原始的 `docker-compose.yml` 保持原样零污染，后续 Compose 指令将自动平滑运行 Komari Probe 镜像。
+> **说明**：脚本会自动归档数据卷至 `/var/backups/sonar-server-docker-migration/`，并在 Compose 目录生成轻量级 `.sonar-<SERVICE>.override.yml` 覆盖文件。原始的 `docker-compose.yml` 保持原样零污染，后续 Compose 指令将自动平滑运行 Sonar 镜像。
 
 ---
 
@@ -198,16 +198,16 @@ sudo bash migrate-server-docker.sh \
 
 #### 宿主机 Agent 迁移：
 ```bash
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/scripts/migrate-agent-host.sh -o migrate-agent-host.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-host.sh -o migrate-agent-host.sh
 sudo bash migrate-agent-host.sh --tag v1.0.0-beta.1
 ```
 
 #### Docker Agent 迁移：
 ```bash
-curl -fsSL https://raw.githubusercontent.com/komari-probe/komari-probe-agent/main/scripts/migrate-agent-docker.sh -o migrate-agent-docker.sh
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-docker.sh -o migrate-agent-docker.sh
 sudo bash migrate-agent-docker.sh \
-  --container komari-agent \
-  --target-image ghcr.io/komari-probe/komari-probe-agent:v1.0.0-beta.1
+  --container sonar-agent \
+  --target-image ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1
 ```
 
 ---
@@ -216,16 +216,16 @@ sudo bash migrate-agent-docker.sh \
 
 ### 宿主机管理（systemd）
 ```bash
-sudo systemctl status komari   # 查看服务端状态
-sudo systemctl restart komari  # 重启服务端
-sudo journalctl -u komari -f   # 跟踪实时日志
+sudo systemctl status sonar   # 查看服务端状态
+sudo systemctl restart sonar  # 重启服务端
+sudo journalctl -u sonar -f   # 跟踪实时日志
 ```
 
 ### Docker 容器管理
 ```bash
 docker compose ps              # 查看运行状态
-docker compose logs -f komari  # 查看实时日志
-docker compose restart komari  # 重启服务容器
+docker compose logs -f sonar  # 查看实时日志
+docker compose restart sonar  # 重启服务容器
 ```
 
 ---
@@ -245,8 +245,8 @@ docker compose restart komari  # 重启服务容器
 
 ## 贡献者与致谢
 
-Komari Probe 最初 fork 自 [Komari Monitor](https://github.com/komari-monitor/komari)，衷心感谢所有构建和贡献过原项目的朋友。
+Sonar 最初 fork 自 [Komari Monitor](https://github.com/komari-monitor/komari)，衷心感谢所有构建和贡献过原项目的朋友。
 
-也感谢所有为 Komari Probe 贡献代码、主题、插件、文档、翻译、问题报告或反馈的朋友。
+也感谢所有为 Sonar 贡献代码、主题、插件、文档、翻译、问题报告或反馈的朋友。
 
-<a href="https://github.com/komari-probe/komari-probe/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=komari-probe/komari-probe" alt="Komari Probe 贡献者" width="600"></a>
+<a href="https://github.com/sonar-probe/sonar/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=sonar-probe/sonar" alt="Sonar 贡献者" width="600"></a>
