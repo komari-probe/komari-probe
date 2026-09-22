@@ -49,17 +49,27 @@ func resolveDatabaseFile() string {
 	if dbFile == "" {
 		dbFile = "./data/sonar.db"
 	}
-	// 兼容平滑迁移：如果使用默认的 ./data/sonar.db 但不存在，而旧版 ./data/komari.db 存在，则自动接管迁移
-	if dbFile == "./data/sonar.db" {
-		if _, err := os.Stat("./data/sonar.db"); os.IsNotExist(err) {
-			if _, errOld := os.Stat("./data/komari.db"); errOld == nil {
-				logger.Infof("dbcore", "[migration] Detected legacy komari.db, migrating to sonar.db...")
-				_ = os.Rename("./data/komari.db", "./data/sonar.db")
-				if _, errWal := os.Stat("./data/komari.db-wal"); errWal == nil {
-					_ = os.Rename("./data/komari.db-wal", "./data/sonar.db-wal")
+	// 确保父目录存在
+	if dir := filepath.Dir(dbFile); dir != "" && dir != "." {
+		_ = os.MkdirAll(dir, 0755)
+	}
+	// 兼容平滑迁移：如果目标路径文件名是 sonar.db 且不存在，而同目录下 komari.db 存在，则自动接管迁移
+	if filepath.Base(dbFile) == "sonar.db" {
+		if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+			dir := filepath.Dir(dbFile)
+			oldFile := filepath.Join(dir, "komari.db")
+			if _, errOld := os.Stat(oldFile); errOld == nil {
+				logger.Infof("dbcore", "[migration] Detected legacy komari.db at %s, migrating to %s...", oldFile, dbFile)
+				_ = os.Rename(oldFile, dbFile)
+				oldWal := filepath.Join(dir, "komari.db-wal")
+				newWal := filepath.Join(dir, "sonar.db-wal")
+				if _, errWal := os.Stat(oldWal); errWal == nil {
+					_ = os.Rename(oldWal, newWal)
 				}
-				if _, errShm := os.Stat("./data/komari.db-shm"); errShm == nil {
-					_ = os.Rename("./data/komari.db-shm", "./data/sonar.db-shm")
+				oldShm := filepath.Join(dir, "komari.db-shm")
+				newShm := filepath.Join(dir, "sonar.db-shm")
+				if _, errShm := os.Stat(oldShm); errShm == nil {
+					_ = os.Rename(oldShm, newShm)
 				}
 			}
 		}
