@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/ping"
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/recordquery"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/features/ping"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/recordquery"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // admin_misc.go

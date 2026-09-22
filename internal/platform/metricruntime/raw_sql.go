@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 // QueryContext runs a raw read query against the active metric store. The

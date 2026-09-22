@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/komari-monitor/komari/pkg/jsruntime"
-	"github.com/komari-monitor/komari/pkg/jsruntime/httpbody"
+	"github.com/sonar-probe/sonar/pkg/jsruntime"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/httpbody"
 )
 
 // hookKind identifies the HTTP hook phase.

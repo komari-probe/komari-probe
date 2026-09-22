@@ -6,13 +6,13 @@ import (
 	"net"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/random"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/geoipruntime"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/random"
 )
 
 // GetAllSessions 获取所有会话

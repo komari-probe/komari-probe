@@ -1,4 +1,4 @@
-module github.com/komari-monitor/komari
+module github.com/sonar-probe/sonar
 
 go 1.27.1
 

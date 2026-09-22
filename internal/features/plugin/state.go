@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 // State persists the enabled flag, the approved permissions hash and the

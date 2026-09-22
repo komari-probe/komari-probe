@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	nodefeature "github.com/komari-monitor/komari/internal/features/node"
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/logger"
+	nodefeature "github.com/sonar-probe/sonar/internal/features/node"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender"
+	"github.com/sonar-probe/sonar/internal/platform/clients"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/logger"
 	cache "github.com/patrickmn/go-cache"
 )
 

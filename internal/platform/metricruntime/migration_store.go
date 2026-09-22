@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/komari-monitor/komari/pkg/logger"
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 const storeMigrationBatchSize = 500

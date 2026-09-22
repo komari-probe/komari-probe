@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 const (

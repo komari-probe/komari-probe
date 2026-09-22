@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 )
 
 // TestMain wires a shared in-memory SQLite database for the whole package's

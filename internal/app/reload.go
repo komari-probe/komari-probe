@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
 // reloadHandler 是单个配置热重载处理器。

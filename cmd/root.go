@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 
 	"github.com/spf13/cobra"
 )
@@ -18,10 +18,9 @@ func GetEnv(key, defaultValue string) string {
 }
 
 var RootCmd = &cobra.Command{
-	Use:   "Komari",
-	Short: "Komari is a simple server monitoring tool",
-	Long: `Komari is a simple server monitoring tool. 
-Made by Akizon77 with love.`,
+	Use:   "sonar",
+	Short: "Sonar is a simple, lightweight server monitoring tool",
+	Long:  `Sonar is a simple, lightweight server monitoring tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.SetArgs([]string{"server"})
 		cmd.Execute()
@@ -37,5 +36,5 @@ func Execute() {
 
 func init() {
 	RootCmd.PersistentFlags().StringVarP(&dbcore.DatabaseType, "db-type", "t", "sqlite", "Database type (sqlite)")
-	RootCmd.PersistentFlags().StringVarP(&dbcore.DatabaseFile, "database", "d", "./data/komari.db", "SQLite database file path")
+	RootCmd.PersistentFlags().StringVarP(&dbcore.DatabaseFile, "database", "d", "./data/sonar.db", "SQLite database file path")
 }

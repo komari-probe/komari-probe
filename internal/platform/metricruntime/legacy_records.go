@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 // GetRecordsByClientAndTime 从 metric store 查询记录并重构为 models.Record

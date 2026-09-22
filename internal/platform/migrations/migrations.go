@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 	"gorm.io/gorm"
 )
 

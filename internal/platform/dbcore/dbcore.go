@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/migrations"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/pkg/archive"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/logger"
-	"github.com/komari-monitor/komari/pkg/sqlitetune"
+	"github.com/sonar-probe/sonar/internal/platform/migrations"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/pkg/archive"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/sqlitetune"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -47,7 +47,22 @@ func SetVersionID(id string) {
 func resolveDatabaseFile() string {
 	dbFile := DatabaseFile
 	if dbFile == "" {
-		dbFile = "./data/komari.db"
+		dbFile = "./data/sonar.db"
+	}
+	// 兼容平滑迁移：如果使用默认的 ./data/sonar.db 但不存在，而旧版 ./data/komari.db 存在，则自动接管迁移
+	if dbFile == "./data/sonar.db" {
+		if _, err := os.Stat("./data/sonar.db"); os.IsNotExist(err) {
+			if _, errOld := os.Stat("./data/komari.db"); errOld == nil {
+				logger.Infof("dbcore", "[migration] Detected legacy komari.db, migrating to sonar.db...")
+				_ = os.Rename("./data/komari.db", "./data/sonar.db")
+				if _, errWal := os.Stat("./data/komari.db-wal"); errWal == nil {
+					_ = os.Rename("./data/komari.db-wal", "./data/sonar.db-wal")
+				}
+				if _, errShm := os.Stat("./data/komari.db-shm"); errShm == nil {
+					_ = os.Rename("./data/komari.db-shm", "./data/sonar.db-shm")
+				}
+			}
+		}
 	}
 	return dbFile
 }
@@ -205,11 +220,8 @@ func doInitialize() error {
 				logger.Infof("dbcore", "[restore] backup.zip removed")
 			}
 			// 8. 删除标记
-			if rmErr := os.Remove("./data/komari-backup-markup"); rmErr != nil {
-				logger.Errorf("dbcore", "[restore] failed to remove komari-backup-markup: %v", rmErr)
-			} else {
-				logger.Infof("dbcore", "[restore] komari-backup-markup removed")
-			}
+			_ = os.Remove("./data/sonar-backup-markup")
+			_ = os.Remove("./data/komari-backup-markup")
 		}
 	}()
 

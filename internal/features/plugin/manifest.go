@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 // urlSchemeRE matches a leading URL scheme such as "http:" or "javascript:",
@@ -19,7 +19,10 @@ var urlSchemeRE = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+\-.]*:`)
 // directory.
 func readManifest(dir string) (models.Plugin, error) {
 	var info models.Plugin
-	data, err := os.ReadFile(filepath.Join(dir, manifestFile))
+	data, err := os.ReadFile(filepath.Join(dir, "sonar-plugin.json"))
+	if err != nil {
+		data, err = os.ReadFile(filepath.Join(dir, "komari-plugin.json"))
+	}
 	if err != nil {
 		return info, fmt.Errorf("read plugin manifest: %w", err)
 	}

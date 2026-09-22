@@ -5,12 +5,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/ping"
-	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/recordquery"
-	"github.com/komari-monitor/komari/pkg/downsample"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/features/ping"
+	"github.com/sonar-probe/sonar/internal/platform/clients"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/recordquery"
+	"github.com/sonar-probe/sonar/pkg/downsample"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 func init() {

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 // InstallZip validates a plugin ZIP and extracts it into DataDir/<short>.
@@ -33,13 +33,16 @@ func InstallZip(zipPath string) (models.Plugin, error) {
 
 	var manifest *zip.File
 	for _, f := range r.File {
-		if f.Name == manifestFile {
+		if f.Name == "sonar-plugin.json" {
 			manifest = f
 			break
 		}
+		if f.Name == "komari-plugin.json" && manifest == nil {
+			manifest = f
+		}
 	}
 	if manifest == nil {
-		return info, fmt.Errorf("plugin manifest %s not found, not a valid plugin package", manifestFile)
+		return info, fmt.Errorf("plugin manifest (sonar-plugin.json or komari-plugin.json) not found, not a valid plugin package")
 	}
 
 	rc, err := manifest.Open()

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/protocol"
-	"github.com/komari-monitor/komari/pkg/wsconn"
+	"github.com/sonar-probe/sonar/internal/platform/protocol"
+	"github.com/sonar-probe/sonar/pkg/wsconn"
 )
 
 var (

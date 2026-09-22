@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

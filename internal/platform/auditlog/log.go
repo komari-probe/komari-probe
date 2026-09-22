@@ -3,9 +3,9 @@ package auditlog
 import (
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 // Log persists an audit log entry. Failures are logged and otherwise

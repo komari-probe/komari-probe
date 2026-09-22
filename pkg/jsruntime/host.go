@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/bridge"
 )
 
 // Host is the host-facing service boundary of a Runtime. It deliberately

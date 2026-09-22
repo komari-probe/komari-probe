@@ -9,13 +9,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/features/notification"
-	"github.com/komari-monitor/komari/internal/features/ping"
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/pkg/logger"
-	"github.com/komari-monitor/komari/pkg/scheduler"
+	"github.com/sonar-probe/sonar/internal/features/auth"
+	"github.com/sonar-probe/sonar/internal/features/notification"
+	"github.com/sonar-probe/sonar/internal/features/ping"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/scheduler"
 )
 
 // StartBackground starts scheduled work after all stores are ready.

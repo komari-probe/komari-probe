@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
 )
 
 const structureProgressCeiling = 80.0

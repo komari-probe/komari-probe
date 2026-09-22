@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
 )
 
 // DownloadBackup 使用白名单打包 ./data 及数据库文件为 zip 并下载，

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/komari-monitor/komari/internal/platform/origincheck"
-	"github.com/komari-monitor/komari/pkg/wsconn"
+	"github.com/sonar-probe/sonar/internal/platform/origincheck"
+	"github.com/sonar-probe/sonar/pkg/wsconn"
 )
 
 // WebSocketUpgradeOption customizes the upgrader used by UpgradeWebSocket.

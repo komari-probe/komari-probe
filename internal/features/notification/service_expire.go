@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	"github.com/komari-monitor/komari/internal/features/renewal"
-	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/timeutil"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender"
+	"github.com/sonar-probe/sonar/internal/features/renewal"
+	"github.com/sonar-probe/sonar/internal/platform/clients"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/timeutil"
 )
 
 func CheckExpireScheduledWork() {

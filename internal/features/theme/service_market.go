@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/marketutil"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/marketutil"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
-const defaultThemeMarketURL = "https://raw.githubusercontent.com/komari-probe/theme-market/main/v1.json"
+const defaultThemeMarketURL = "https://raw.githubusercontent.com/sonar-probe/theme-market/main/v1.json"
 
 type ThemeMarketSource struct {
 	ID      string `json:"id"`

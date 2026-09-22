@@ -3,10 +3,10 @@ package router
 import (
 	"path/filepath"
 
-	"github.com/komari-monitor/komari/internal/features/backup"
-	"github.com/komari-monitor/komari/internal/features/plugin"
-	"github.com/komari-monitor/komari/internal/features/theme"
-	"github.com/komari-monitor/komari/internal/platform/upload"
+	"github.com/sonar-probe/sonar/internal/features/backup"
+	"github.com/sonar-probe/sonar/internal/features/plugin"
+	"github.com/sonar-probe/sonar/internal/features/theme"
+	"github.com/sonar-probe/sonar/internal/platform/upload"
 )
 
 func NewArchiveUploadHandler() *upload.Handler {

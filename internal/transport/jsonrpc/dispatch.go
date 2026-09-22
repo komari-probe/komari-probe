@@ -3,9 +3,9 @@ package jsonrpc
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // privateSiteLoginWhitelist 私有站点模式下仍允许匿名访问的方法白名单。

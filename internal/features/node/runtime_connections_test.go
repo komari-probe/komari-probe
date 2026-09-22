@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/protocol"
+	"github.com/sonar-probe/sonar/internal/platform/protocol"
 )
 
 func TestRecordReportKeepsLatestAndShortRecentWindow(t *testing.T) {

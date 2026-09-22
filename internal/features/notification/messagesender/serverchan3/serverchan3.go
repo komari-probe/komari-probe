@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender/outboundhttp"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender/factory"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender/outboundhttp"
 )
 
 // ServerChan3Sender 为 Server酱³ 推送实现

@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/protocol"
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/protocol"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 type reportTrafficState struct {

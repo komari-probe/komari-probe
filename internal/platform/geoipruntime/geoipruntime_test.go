@@ -4,8 +4,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
-	provider "github.com/komari-monitor/komari/pkg/geoip"
+	"github.com/sonar-probe/sonar/internal/platform/geoipruntime"
+	provider "github.com/sonar-probe/sonar/pkg/geoip"
 )
 
 // 测试GeoIP数据库的初始化和更新功能

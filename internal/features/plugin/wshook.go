@@ -5,7 +5,7 @@ import (
 
 	"github.com/dop251/goja"
 	"github.com/gorilla/websocket"
-	"github.com/komari-monitor/komari/pkg/wsconn"
+	"github.com/sonar-probe/sonar/pkg/wsconn"
 )
 
 // WebSocket hook kinds. wsConnect runs right after the upgrade and may deny

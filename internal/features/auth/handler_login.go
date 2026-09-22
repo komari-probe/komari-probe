@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
 
 	"github.com/gin-gonic/gin"
 )

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/features/auth/oauth/factory"
-	"github.com/komari-monitor/komari/pkg/mask"
-	"github.com/komari-monitor/komari/pkg/random"
+	"github.com/sonar-probe/sonar/internal/features/auth/oauth/factory"
+	"github.com/sonar-probe/sonar/pkg/mask"
+	"github.com/sonar-probe/sonar/pkg/random"
 	"github.com/patrickmn/go-cache"
 )
 

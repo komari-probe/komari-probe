@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/marketutil"
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/marketutil"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 const (
@@ -315,15 +315,18 @@ func readThemeManifestFromZip(zipPath string) (*zip.ReadCloser, models.Theme, er
 
 	var themeConfigFile *zip.File
 	for _, f := range r.File {
-		if f.Name == "komari-theme.json" {
+		if f.Name == "sonar-theme.json" {
 			themeConfigFile = f
 			break
+		}
+		if f.Name == "komari-theme.json" && themeConfigFile == nil {
+			themeConfigFile = f
 		}
 	}
 
 	if themeConfigFile == nil {
 		_ = r.Close()
-		return nil, themeInfo, fmt.Errorf("主题配置文件 komari-theme.json 不存在，不是合法的主题包")
+		return nil, themeInfo, fmt.Errorf("主题配置文件 sonar-theme.json 或 komari-theme.json 不存在，不是合法的主题包")
 	}
 
 	rc, err := themeConfigFile.Open()

@@ -5,10 +5,10 @@ import (
 	"sort"
 	"time"
 
-	nodefeature "github.com/komari-monitor/komari/internal/features/node"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/models"
+	nodefeature "github.com/sonar-probe/sonar/internal/features/node"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 	"gorm.io/gorm"
 )
 

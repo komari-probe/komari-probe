@@ -7,7 +7,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // principalContextKey 是 principal 在 gin.Context 中的存储键。

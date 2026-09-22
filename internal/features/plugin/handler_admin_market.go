@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/marketutil"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/marketutil"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
 // handler_admin_market.go
@@ -26,7 +26,7 @@ import (
 // publish ZIP packages containing komari-plugin.json. The generic URL
 // download/validation helpers are shared with the theme marketutil.
 
-const defaultPluginMarketURL = "https://raw.githubusercontent.com/komari-probe/plugin-market/main/v1.json"
+const defaultPluginMarketURL = "https://raw.githubusercontent.com/sonar-probe/plugin-market/main/v1.json"
 
 type PluginMarketSource struct {
 	ID      string `json:"id"`

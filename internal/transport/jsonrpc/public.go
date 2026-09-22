@@ -5,16 +5,16 @@ import (
 	"strconv"
 	"time"
 
-	nodefeature "github.com/komari-monitor/komari/internal/features/node"
-	"github.com/komari-monitor/komari/internal/features/ping"
-	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/recordquery"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/internal/version"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	nodefeature "github.com/sonar-probe/sonar/internal/features/node"
+	"github.com/sonar-probe/sonar/internal/features/ping"
+	"github.com/sonar-probe/sonar/internal/platform/clients"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/recordquery"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/internal/version"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // public.go

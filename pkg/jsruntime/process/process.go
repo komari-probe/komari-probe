@@ -13,10 +13,10 @@ import (
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/buffer"
 	"github.com/dop251/goja_nodejs/require"
-	"github.com/komari-monitor/komari/pkg/jsruntime/events"
-	"github.com/komari-monitor/komari/pkg/jsruntime/fs"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/metrics"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/events"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/fs"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/bridge"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/metrics"
 )
 
 type nodeNextTick struct {

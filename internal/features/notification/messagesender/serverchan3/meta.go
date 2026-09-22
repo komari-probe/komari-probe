@@ -1,7 +1,7 @@
 package serverchan3
 
 import (
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender/factory"
 )
 
 // Addition 为 Server酱³ 推送通道的配置项

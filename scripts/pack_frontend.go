@@ -14,8 +14,6 @@ import (
 func main() {
 	distDir := filepath.Join("..", "web", "dist")
 	outputFile := filepath.Join("internal", "platform", "frontend", "defaultTheme", "dist.tar.zst")
-	themeJsonSrc := filepath.Join("..", "web", "komari-theme.json")
-	themeJsonDst := filepath.Join("internal", "platform", "frontend", "defaultTheme", "komari-theme.json")
 
 	if _, err := os.Stat(distDir); err != nil {
 		fmt.Fprintf(os.Stderr, "dist directory not found at %s: %v\n", distDir, err)
@@ -83,16 +81,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Copy komari-theme.json
-	themeData, err := os.ReadFile(themeJsonSrc)
-	if err != nil {
+	// Copy theme json (both sonar-theme.json and komari-theme.json for full compatibility)
+	themeJsonSrcSonar := filepath.Join("..", "web", "sonar-theme.json")
+	themeJsonSrcKomari := filepath.Join("..", "web", "komari-theme.json")
+	var themeData []byte
+	if data, err := os.ReadFile(themeJsonSrcSonar); err == nil {
+		themeData = data
+	} else if data, err := os.ReadFile(themeJsonSrcKomari); err == nil {
+		themeData = data
+	} else {
 		fmt.Fprintf(os.Stderr, "failed to read theme json: %v\n", err)
 		os.Exit(1)
 	}
-	if err := os.WriteFile(themeJsonDst, themeData, 0644); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to write theme json: %v\n", err)
-		os.Exit(1)
-	}
+
+	_ = os.WriteFile(filepath.Join("internal", "platform", "frontend", "defaultTheme", "sonar-theme.json"), themeData, 0644)
+	_ = os.WriteFile(filepath.Join("internal", "platform", "frontend", "defaultTheme", "komari-theme.json"), themeData, 0644)
 
 	fmt.Printf("Successfully packed frontend into %s (%d bytes)\n", outputFile, len(compressed))
 }

@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	"github.com/komari-monitor/komari/internal/platform/clients"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/recordquery"
-	"github.com/komari-monitor/komari/pkg/logger"
-	"github.com/komari-monitor/komari/pkg/scheduler"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender"
+	"github.com/sonar-probe/sonar/internal/platform/clients"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/recordquery"
+	"github.com/sonar-probe/sonar/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/scheduler"
 )
 
 // LoadNotificationService 管理定时器和任务

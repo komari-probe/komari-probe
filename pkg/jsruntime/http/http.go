@@ -14,9 +14,9 @@ import (
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/buffer"
 	"github.com/dop251/goja_nodejs/require"
-	"github.com/komari-monitor/komari/pkg/jsruntime/events"
-	"github.com/komari-monitor/komari/pkg/jsruntime/httpbody"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/events"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/httpbody"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/bridge"
 )
 
 type nodeHTTPResponse struct {

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 const (

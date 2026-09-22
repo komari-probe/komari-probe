@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/internal/version"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/internal/version"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
 // Bootstrap initializes the primary database and settings. Feature-owned data

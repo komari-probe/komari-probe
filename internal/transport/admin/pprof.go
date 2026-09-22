@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
 )
 
 const (

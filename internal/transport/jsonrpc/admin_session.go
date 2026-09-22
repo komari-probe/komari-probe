@@ -1,8 +1,8 @@
 package jsonrpc
 
 import (
-	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/features/auth"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // admin_session.go

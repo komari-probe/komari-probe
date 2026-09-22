@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/lifecycle"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/lifecycle"
 )
 
 // configKeys are the settings keys that belong to the metric store's own

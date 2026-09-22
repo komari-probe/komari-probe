@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/configform"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/frontend"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/platform/configform"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/frontend"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 // assemblePublicInfo builds the payload shared by the getPublicInfo and
@@ -110,12 +110,18 @@ func assemblePublicInfo() (map[string]any, error) {
 func publicThemeConfigurationItems(short string) []models.ManagedThemeConfigurationItem {
 	var manifest models.Theme
 	if short == "default" {
-		data, err := frontend.PublicFS.ReadFile("defaultTheme/komari-theme.json")
+		data, err := frontend.PublicFS.ReadFile("defaultTheme/sonar-theme.json")
+		if err != nil {
+			data, err = frontend.PublicFS.ReadFile("defaultTheme/komari-theme.json")
+		}
 		if err != nil || json.Unmarshal(data, &manifest) != nil {
 			return nil
 		}
 	} else {
-		data, err := os.ReadFile(filepath.Join("./data/theme", short, "komari-theme.json"))
+		data, err := os.ReadFile(filepath.Join("./data/theme", short, "sonar-theme.json"))
+		if err != nil {
+			data, err = os.ReadFile(filepath.Join("./data/theme", short, "komari-theme.json"))
+		}
 		if err != nil || json.Unmarshal(data, &manifest) != nil {
 			return nil
 		}

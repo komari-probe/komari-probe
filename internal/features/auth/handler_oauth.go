@@ -5,11 +5,11 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/features/auth/oauth"
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/features/auth/oauth"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
 // GetCallbackURL 构造 OIDC provider 回调地址（固定路径 /api/oauth_callback）。

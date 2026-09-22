@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/jsruntime/xhr"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/xhr"
 )
 
 // JavaScript compatibility: injects bounded timer APIs, console, Fetch API,

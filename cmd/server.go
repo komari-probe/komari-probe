@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/komari-monitor/komari/internal/app"
+	"github.com/sonar-probe/sonar/internal/app"
 
 	"github.com/spf13/cobra"
 )
@@ -20,8 +20,8 @@ var ServerCmd = &cobra.Command{
 }
 
 func init() {
-	// 从环境变量获取监听地址
-	listenAddr := GetEnv("KOMARI_LISTEN", "0.0.0.0:25774")
-	ServerCmd.PersistentFlags().StringVarP(&listen, "listen", "l", listenAddr, "监听地址 [env: KOMARI_LISTEN]")
+	// 从环境变量获取监听地址 (优先 SONAR_LISTEN，回退 KOMARI_LISTEN)
+	listenAddr := GetEnv("SONAR_LISTEN", GetEnv("KOMARI_LISTEN", "0.0.0.0:25774"))
+	ServerCmd.PersistentFlags().StringVarP(&listen, "listen", "l", listenAddr, "监听地址 [env: SONAR_LISTEN, KOMARI_LISTEN]")
 	RootCmd.AddCommand(ServerCmd)
 }

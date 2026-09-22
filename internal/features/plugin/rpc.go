@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // registerRPC registers a plugin-owned RPC method. The handler is a

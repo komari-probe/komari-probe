@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 )
 
 func TestMain(m *testing.M) {

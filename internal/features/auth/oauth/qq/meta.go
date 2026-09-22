@@ -1,7 +1,7 @@
 package qq
 
 import (
-	"github.com/komari-monitor/komari/internal/features/auth/oauth/factory"
+	"github.com/sonar-probe/sonar/internal/features/auth/oauth/factory"
 	"github.com/patrickmn/go-cache"
 )
 

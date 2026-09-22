@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	nodefeature "github.com/komari-monitor/komari/internal/features/node"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/protocol"
-	"github.com/komari-monitor/komari/pkg/scheduler"
+	nodefeature "github.com/sonar-probe/sonar/internal/features/node"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/protocol"
+	"github.com/sonar-probe/sonar/pkg/scheduler"
 )
 
 // pingTaskManager 管理定时器和任务

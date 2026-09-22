@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 const demoManifest = `{"name":"Demo","short":"demo","version":"1.0.0","komari":">=0.0.1","permissions":{"node":true,"timeout":5,"allowRoutes":true,"allowSystemRPC":true}}`

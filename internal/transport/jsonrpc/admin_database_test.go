@@ -3,7 +3,7 @@ package jsonrpc
 import (
 	"testing"
 
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 func TestLocalDatabaseTotalRequiresTwoKnownLocalSizes(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 )
 
 // copyFile 复制单个文件到目标路径（会确保父目录存在）
@@ -82,17 +82,21 @@ func walkDirToZip(zipWriter *zip.Writer, contentDir string) error {
 // writeBackupMarkup 追加备份标记文件到 zip。
 func writeBackupMarkup(zipWriter *zip.Writer) error {
 	now := time.Now().UTC()
-	markupContent := "此文件为 Komari 备份标记文件，请勿删除。\nThis is a Komari backup markup file, please do not delete.\n\n备份时间 / Backup Time: " + now.Format(time.RFC3339Nano)
-	markupWriter, err := zipWriter.CreateHeader(&zip.FileHeader{
-		Name:     "komari-backup-markup",
-		Method:   zip.Deflate,
-		Modified: now,
-	})
-	if err != nil {
-		return err
+	markupContent := "此文件为 Sonar 备份标记文件，请勿删除。\nThis is a Sonar backup markup file, please do not delete.\n\n备份时间 / Backup Time: " + now.Format(time.RFC3339Nano)
+	for _, name := range []string{"sonar-backup-markup", "komari-backup-markup"} {
+		markupWriter, err := zipWriter.CreateHeader(&zip.FileHeader{
+			Name:     name,
+			Method:   zip.Deflate,
+			Modified: now,
+		})
+		if err != nil {
+			return err
+		}
+		if _, err := markupWriter.Write([]byte(markupContent)); err != nil {
+			return err
+		}
 	}
-	_, err = markupWriter.Write([]byte(markupContent))
-	return err
+	return nil
 }
 
 // backupSQLiteTo 使用 SQLite VACUUM INTO 将当前数据库一致性备份到指定路径。

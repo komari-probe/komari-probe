@@ -14,12 +14,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	jsonrpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/features/auth"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	jsonrpc "github.com/sonar-probe/sonar/internal/transport/jsonrpc"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
 const (

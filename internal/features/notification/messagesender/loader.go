@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender/factory"
 )
 
 func LoadProvider(name string, addition string) error {

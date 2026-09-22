@@ -33,12 +33,12 @@ import (
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/require"
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/version"
-	"github.com/komari-monitor/komari/pkg/jsruntime"
-	"github.com/komari-monitor/komari/pkg/rpc"
-	"github.com/komari-monitor/komari/pkg/scheduler"
-	"github.com/komari-monitor/komari/pkg/wsconn"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/version"
+	"github.com/sonar-probe/sonar/pkg/jsruntime"
+	"github.com/sonar-probe/sonar/pkg/rpc"
+	"github.com/sonar-probe/sonar/pkg/scheduler"
+	"github.com/sonar-probe/sonar/pkg/wsconn"
 )
 
 // DataDir is the on-disk root for installed plugins, mirroring the theme

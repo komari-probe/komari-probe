@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/protocol"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	geoipprovider "github.com/komari-monitor/komari/pkg/geoip"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/geoipruntime"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/protocol"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	geoipprovider "github.com/sonar-probe/sonar/pkg/geoip"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
 type staticGeoIPProvider struct {

@@ -1,6 +1,6 @@
 package node
 
-import "github.com/komari-monitor/komari/pkg/logger"
+import "github.com/sonar-probe/sonar/pkg/logger"
 
 // PresenceHook is invoked when a client's connectivity state changes.
 // It exists so this package doesn't need to import internal/features/notification

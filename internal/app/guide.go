@@ -16,17 +16,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/features/auth"
-	installweb "github.com/komari-monitor/komari/internal/features/install"
-	migrationweb "github.com/komari-monitor/komari/internal/features/migration"
-	recoveryweb "github.com/komari-monitor/komari/internal/features/recovery"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/frontend"
-	"github.com/komari-monitor/komari/internal/platform/metricruntime"
-	"github.com/komari-monitor/komari/internal/platform/migrations"
-	"github.com/komari-monitor/komari/internal/platform/origincheck"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/features/auth"
+	installweb "github.com/sonar-probe/sonar/internal/features/install"
+	migrationweb "github.com/sonar-probe/sonar/internal/features/migration"
+	recoveryweb "github.com/sonar-probe/sonar/internal/features/recovery"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/frontend"
+	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
+	"github.com/sonar-probe/sonar/internal/platform/migrations"
+	"github.com/sonar-probe/sonar/internal/platform/origincheck"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 // InstallRequired reports whether the instance still needs the first-run guide.

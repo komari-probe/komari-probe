@@ -15,8 +15,8 @@ import (
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/buffer"
 	"github.com/dop251/goja_nodejs/require"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/filepathutil"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/bridge"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/filepathutil"
 )
 
 type nodeFileHandle struct {

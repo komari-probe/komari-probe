@@ -9,13 +9,21 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/frontend"
-	"github.com/komari-monitor/komari/internal/platform/marketutil"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/pkg/kv"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/frontend"
+	"github.com/sonar-probe/sonar/internal/platform/marketutil"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/pkg/kv"
 )
+
+func resolveThemeConfigPath(dir string) string {
+	sonarPath := filepath.Join(dir, "sonar-theme.json")
+	if _, err := os.Stat(sonarPath); err == nil {
+		return sonarPath
+	}
+	return filepath.Join(dir, "komari-theme.json")
+}
 
 // ListThemes 列出所有主题
 func ListThemes(c *gin.Context) {
@@ -34,7 +42,10 @@ func ListThemes(c *gin.Context) {
 	}
 
 	var themes []models.Theme
-	defaultTheme, err := frontend.PublicFS.ReadFile("defaultTheme/komari-theme.json")
+	defaultTheme, err := frontend.PublicFS.ReadFile("defaultTheme/sonar-theme.json")
+	if err != nil {
+		defaultTheme, err = frontend.PublicFS.ReadFile("defaultTheme/komari-theme.json")
+	}
 	if err == nil {
 		dt := models.Theme{}
 		err := json.Unmarshal(defaultTheme, &dt)
@@ -45,7 +56,7 @@ func ListThemes(c *gin.Context) {
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
-			themeConfigPath := filepath.Join(dataDir, entry.Name(), "komari-theme.json")
+			themeConfigPath := resolveThemeConfigPath(filepath.Join(dataDir, entry.Name()))
 			if themeInfo, err := loadThemeConfig(themeConfigPath); err == nil {
 				themes = append(themes, themeInfo)
 			}
@@ -110,7 +121,7 @@ func SetTheme(c *gin.Context) {
 			return
 		}
 		themeDir := filepath.Join("./data/theme", themeName)
-		themeConfigPath := filepath.Join(themeDir, "komari-theme.json")
+		themeConfigPath := resolveThemeConfigPath(themeDir)
 
 		if _, err := os.Stat(themeConfigPath); errors.Is(err, fs.ErrNotExist) {
 			respond.Error(c, http.StatusNotFound, "主题不存在")
@@ -153,7 +164,7 @@ func UpdateTheme(c *gin.Context) {
 
 	// 检查主题是否存在
 	themeDir := filepath.Join("./data/theme", req.Short)
-	themeConfigPath := filepath.Join(themeDir, "komari-theme.json")
+	themeConfigPath := resolveThemeConfigPath(themeDir)
 
 	if _, err := os.Stat(themeConfigPath); errors.Is(err, fs.ErrNotExist) {
 		respond.Error(c, http.StatusNotFound, "主题不存在")

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 // RestructureProgress is the authenticated guide's stable progress payload.

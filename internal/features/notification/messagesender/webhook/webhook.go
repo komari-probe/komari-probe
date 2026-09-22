@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender/outboundhttp"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender/factory"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender/outboundhttp"
 )
 
 type WebhookSender struct {

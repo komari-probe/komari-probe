@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	provider "github.com/komari-monitor/komari/pkg/geoip"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	provider "github.com/sonar-probe/sonar/pkg/geoip"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/logger"
 	"github.com/patrickmn/go-cache"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
-	"github.com/komari-monitor/komari/pkg/jsruntime/internal/bridge"
+	"github.com/sonar-probe/sonar/pkg/jsruntime/internal/bridge"
 )
 
 type Module struct {

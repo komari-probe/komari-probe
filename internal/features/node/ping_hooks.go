@@ -1,6 +1,6 @@
 package node
 
-import "github.com/komari-monitor/komari/internal/platform/models"
+import "github.com/sonar-probe/sonar/internal/platform/models"
 
 // This package and features/ping naturally depend on each other (ping needs
 // to dispatch commands to connected agents; client needs to persist reported

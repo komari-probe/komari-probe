@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // handler_admin_test.go

@@ -3,8 +3,8 @@ package auth
 import (
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 func TestCheckPasswordUpgradesLegacyHashOnSuccess(t *testing.T) {

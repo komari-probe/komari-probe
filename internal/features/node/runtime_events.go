@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/protocol"
+	"github.com/sonar-probe/sonar/internal/platform/protocol"
 )
 
 const (

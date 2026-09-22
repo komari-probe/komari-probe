@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 const (

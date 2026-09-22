@@ -60,7 +60,7 @@ func TestDefaultPluginMarketSourcePointsToOfficialRepo(t *testing.T) {
 	if source.ID != "official" || !source.Enabled {
 		t.Fatalf("defaultPluginMarketSources() = %#v, want enabled official source", source)
 	}
-	if source.URL != "https://raw.githubusercontent.com/komari-probe/plugin-market/main/v1.json" {
+	if source.URL != "https://raw.githubusercontent.com/sonar-probe/plugin-market/main/v1.json" {
 		t.Fatalf("default plugin market URL = %q", source.URL)
 	}
 }

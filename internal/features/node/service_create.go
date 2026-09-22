@@ -1,9 +1,9 @@
 package node
 
 import (
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 
-	"github.com/komari-monitor/komari/internal/platform/clients"
+	"github.com/sonar-probe/sonar/internal/platform/clients"
 )
 
 // service_create.go

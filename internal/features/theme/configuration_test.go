@@ -3,7 +3,7 @@ package theme
 import (
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 func TestValidateThemeConfiguration(t *testing.T) {

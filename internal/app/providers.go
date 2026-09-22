@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/komari-monitor/komari/internal/features/auth/oauth"
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/internal/platform/geoipruntime"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/features/auth/oauth"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/internal/platform/geoipruntime"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 // InitProviders initializes providers needed by the normal application.

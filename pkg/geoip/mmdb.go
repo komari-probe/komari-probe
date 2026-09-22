@@ -3,7 +3,7 @@ package geoip // 与 geoip.go 保持相同的包名，表示它们是同一个�
 import (
 	"errors"
 	"fmt"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 	"io"
 	"io/fs"
 	"net"

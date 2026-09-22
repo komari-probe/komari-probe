@@ -3,12 +3,12 @@ package notification
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/internal/features/notification/messagesender"
-	msfactory "github.com/komari-monitor/komari/internal/features/notification/messagesender/factory"
-	"github.com/komari-monitor/komari/internal/platform/models"
-	"github.com/komari-monitor/komari/internal/platform/settings"
-	"github.com/komari-monitor/komari/pkg/kv"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/features/notification/messagesender"
+	msfactory "github.com/sonar-probe/sonar/internal/features/notification/messagesender/factory"
+	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
+	"github.com/sonar-probe/sonar/pkg/kv"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // handler_provider.go

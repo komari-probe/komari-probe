@@ -5,8 +5,8 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/features/auth"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ var ChpasswdCmd = &cobra.Command{
 	Use:     "chpasswd",
 	Short:   "Force change password",
 	Long:    `Force change password`,
-	Example: `komari chpasswd -p <password>`,
+	Example: `sonar chpasswd -p <password>`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if NewPassword == "" {
 			cmd.Help()

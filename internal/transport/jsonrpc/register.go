@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // auditActor 从上下文提取审计用的 actor UUID 与来源 IP。

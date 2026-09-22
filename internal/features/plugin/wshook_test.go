@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/pkg/wsconn"
+	"github.com/sonar-probe/sonar/pkg/wsconn"
 )
 
 // wsManifest is a plugin manifest that declares the hooks permission (the

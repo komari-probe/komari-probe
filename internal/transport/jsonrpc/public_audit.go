@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/komari-monitor/komari/internal/platform/auditlog"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/platform/auditlog"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 type visitorAuditParams struct {

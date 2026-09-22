@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/komari-monitor/komari/cmd"
-	"github.com/komari-monitor/komari/internal/version"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/cmd"
+	"github.com/sonar-probe/sonar/internal/version"
+	"github.com/sonar-probe/sonar/pkg/logger"
 )
 
 func main() {

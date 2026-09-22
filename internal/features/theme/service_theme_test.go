@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/platform/marketutil"
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/marketutil"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 // TestIsValidThemeShort_PathTraversal 防止 DeleteTheme/UpdateTheme/SetTheme

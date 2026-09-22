@@ -1,9 +1,9 @@
 package factory
 
 import (
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 
-	"github.com/komari-monitor/komari/pkg/formfields"
+	"github.com/sonar-probe/sonar/pkg/formfields"
 )
 
 var (

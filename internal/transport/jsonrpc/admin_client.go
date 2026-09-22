@@ -1,8 +1,8 @@
 package jsonrpc
 
 import (
-	"github.com/komari-monitor/komari/internal/features/node"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/sonar-probe/sonar/internal/features/node"
+	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
 // admin_client.go

@@ -2,14 +2,14 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/features/auth"
-	"github.com/komari-monitor/komari/internal/features/backup"
-	"github.com/komari-monitor/komari/internal/features/node"
-	"github.com/komari-monitor/komari/internal/features/plugin"
-	"github.com/komari-monitor/komari/internal/features/theme"
-	"github.com/komari-monitor/komari/internal/platform/frontend"
-	"github.com/komari-monitor/komari/internal/transport/admin"
-	jsonRpc "github.com/komari-monitor/komari/internal/transport/jsonrpc"
+	"github.com/sonar-probe/sonar/internal/features/auth"
+	"github.com/sonar-probe/sonar/internal/features/backup"
+	"github.com/sonar-probe/sonar/internal/features/node"
+	"github.com/sonar-probe/sonar/internal/features/plugin"
+	"github.com/sonar-probe/sonar/internal/features/theme"
+	"github.com/sonar-probe/sonar/internal/platform/frontend"
+	"github.com/sonar-probe/sonar/internal/transport/admin"
+	jsonRpc "github.com/sonar-probe/sonar/internal/transport/jsonrpc"
 )
 
 // Register binds all HTTP, WebSocket, JSON-RPC and static frontend routes.

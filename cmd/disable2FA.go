@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/komari-monitor/komari/internal/features/auth"
+	"github.com/sonar-probe/sonar/internal/features/auth"
 	"github.com/spf13/cobra"
 )
 

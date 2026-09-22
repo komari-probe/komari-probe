@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 // Example_rollupTags demonstrates tagged rollups with automatic series routing.

@@ -4,8 +4,8 @@ import (
 	"image/png"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/internal/platform/respond"
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/internal/platform/respond"
+	"github.com/sonar-probe/sonar/pkg/logger"
 	"github.com/pquerna/otp/totp"
 )
 

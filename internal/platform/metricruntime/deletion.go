@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/logger"
+	"github.com/sonar-probe/sonar/pkg/logger"
 
-	"github.com/komari-monitor/komari/pkg/tsdb"
+	"github.com/sonar-probe/sonar/pkg/tsdb"
 )
 
 // farFuture 返回一个足够远的未来时间，用于以 DeleteBefore 语义清空某指标的全部数据。

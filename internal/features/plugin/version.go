@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/komari-monitor/komari/internal/version"
+	"github.com/sonar-probe/sonar/internal/version"
 )
 
 // CheckKomariVersion validates a manifest komari constraint against the

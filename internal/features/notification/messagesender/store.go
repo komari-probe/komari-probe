@@ -1,8 +1,8 @@
 package messagesender
 
 import (
-	"github.com/komari-monitor/komari/internal/platform/dbcore"
-	"github.com/komari-monitor/komari/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/dbcore"
+	"github.com/sonar-probe/sonar/internal/platform/models"
 )
 
 func GetConfigByName(name string) (*models.MessageSenderProvider, error) {
