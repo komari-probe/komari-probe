@@ -11,16 +11,19 @@
 # ---- 阶段一：编译前端 ----
 # WEB_REPO_TOKEN 通过 Coolify 的构建时变量注入。这个仓库私有，且 Forgejo 实例
 # 本身对匿名 git 操作也要求登录（REQUIRE_SIGNIN_VIEW），公开/私有都得认证。
-# 用 --mount=type=secret 读取，不用 ARG——ARG 会把值原样留在构建日志和中间层
-# 历史里，secret 挂载不会。
+#
+# 本来想用 --mount=type=secret 避免 token 留痕，实测这套 Coolify（4.3.23）
+# 的自定义应用变量只会传 --build-arg，不会带 --secret，/run/secrets/ 下面
+# 什么都没有——2026-09-22 实测确认，只能退回用 ARG。这个 token 会在 Coolify
+# 自己的部署日志和 BuildKit 中间层历史里留痕，只有我们能看到，风险可接受。
 FROM node:23-alpine AS web-build
 RUN apk add --no-cache git
 WORKDIR /web
 ARG WEB_REPO_HOST=forgejo.whimglow.com
 ARG WEB_REPO_PATH=steve/komari-probe-web.git
 ARG WEB_REF=test
-RUN --mount=type=secret,id=WEB_REPO_TOKEN \
-    git clone --depth=1 -b ${WEB_REF} "https://steve:$(cat /run/secrets/WEB_REPO_TOKEN)@${WEB_REPO_HOST}/${WEB_REPO_PATH}" . \
+ARG WEB_REPO_TOKEN
+RUN git clone --depth=1 -b ${WEB_REF} "https://steve:${WEB_REPO_TOKEN}@${WEB_REPO_HOST}/${WEB_REPO_PATH}" . \
     && git remote set-url origin "https://${WEB_REPO_HOST}/${WEB_REPO_PATH}"
 RUN npm ci
 RUN npm run build
