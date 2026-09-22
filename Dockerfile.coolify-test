@@ -52,6 +52,8 @@ WORKDIR /app
 
 RUN apk add --no-cache ca-certificates curl tzdata
 
+RUN mkdir -p /app/data
+
 COPY --from=go-build /out/komari /app/komari
 
 ENV GIN_MODE=release
