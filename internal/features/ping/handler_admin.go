@@ -2,9 +2,11 @@ package ping
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/pingpresets"
 	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
@@ -82,6 +84,42 @@ func AdminListTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
 	return list, nil
+}
+
+// AdminSyncClientPingNodes 全量同步"这台服务器要监测哪些节点"，供服务器
+// 列表页面的"设置监测节点"弹窗调用：内置节点按省份/运营商代码校验（不信任
+// 前端拼出来的 target 字符串），自建任务按 ID 传入。未出现在这次提交里的
+// 节点，会把这台服务器从对应任务里移除。
+func AdminSyncClientPingNodes(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
+	var params struct {
+		Client   string `json:"client"`
+		Interval int    `json:"interval"`
+		Builtin  []struct {
+			ProvinceCode string `json:"province_code"`
+			CarrierCode  string `json:"carrier_code"`
+		} `json:"builtin"`
+		CustomTaskIDs []uint `json:"custom_task_ids"`
+	}
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
+	if params.Client == "" {
+		return nil, rpc.MakeError(rpc.InvalidParams, "client is required", nil)
+	}
+
+	resolved := make([]pingpresets.Node, 0, len(params.Builtin))
+	for _, n := range params.Builtin {
+		node, ok := pingpresets.Find(n.ProvinceCode, n.CarrierCode, 4)
+		if !ok {
+			return nil, rpc.MakeError(rpc.InvalidParams, fmt.Sprintf("unknown builtin node: %s-%s", n.ProvinceCode, n.CarrierCode), nil)
+		}
+		resolved = append(resolved, node)
+	}
+
+	if err := SyncClientPingNodes(params.Client, resolved, params.Interval, params.CustomTaskIDs); err != nil {
+		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
+	}
+	return nil, nil
 }
 
 func AdminOrderTasks(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {

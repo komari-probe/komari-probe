@@ -78,6 +78,10 @@ jobs:
             goarch: riscv64
             zig_target_triple: riscv64-linux-musl
             binary_extension: ""
+          - goos: linux
+            goarch: loong64
+            zig_target_triple: loongarch64-linux-musl
+            binary_extension: ""
 
     steps:
       - name: Checkout server source
@@ -86,7 +90,9 @@ jobs:
           ref: ${{ inputs.server_ref }}
 
       - name: Restore frontend artifact
-        uses: sonar-probe/sonar/.github/actions/restore-frontend@main
+        uses: ./.github/actions/restore-frontend
+        with:
+          artifact-name: sonar-frontend
 
       - name: Set up Go
         uses: actions/setup-go@v5

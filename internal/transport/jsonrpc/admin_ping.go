@@ -36,4 +36,9 @@ func init() {
 		Summary: "Reorder ping tasks (map of id->weight)",
 		Returns: "null",
 	})
+	RegisterWithGroupAndMeta("syncClientPingNodes", rpc.RoleAdmin, ping.AdminSyncClientPingNodes, &rpc.MethodMeta{
+		Name:    "admin:syncClientPingNodes",
+		Summary: "Sync which built-in/custom ping nodes a single server monitors",
+		Returns: "null",
+	})
 }

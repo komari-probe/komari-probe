@@ -10,6 +10,7 @@ import (
 	"github.com/sonar-probe/sonar/internal/platform/clients"
 	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/pingpresets"
 	"github.com/sonar-probe/sonar/internal/platform/recordquery"
 	"github.com/sonar-probe/sonar/internal/platform/settings"
 	"github.com/sonar-probe/sonar/internal/version"
@@ -31,6 +32,7 @@ func init() {
 	regPublic("getRecordsByUUID", publicGetRecordsByUUID, "Get load records for a client")
 	regPublic("getPingRecords", publicGetPingRecords, "Get ping records")
 	regPublic("getPublicPingTasks", publicGetPublicPingTasks, "List public ping tasks")
+	regPublic("getBuiltinPingPresets", publicGetBuiltinPingPresets, "Get built-in China 31-province/carrier ping node catalog")
 }
 
 func regPublic(name string, h rpc.Handler, summary string) {
@@ -224,6 +226,20 @@ func publicGetPublicPingTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *r
 		}
 	}
 	return out, nil
+}
+
+// publicGetBuiltinPingPresets 返回内置的"全国31省市三网延迟检测"节点目录。
+// 节点数据来自 zstaticcdn.com，管理后台的内置节点选择器和主题地图组件
+// 都通过这个接口拿同一份权威数据，避免两边各维护一份、互相对不上。
+func publicGetBuiltinPingPresets(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
+	return map[string]any{
+		"provinces":  pingpresets.Provinces,
+		"carriers":   pingpresets.Carriers,
+		"nodes_v4":   pingpresets.Nodes(4),
+		"nodes_v6":   pingpresets.Nodes(6),
+		"credit":     "测试节点来源于 zstaticcdn.com",
+		"credit_url": "https://zstaticcdn.com",
+	}, nil
 }
 
 // filterPublicRecordsByLoadType 复刻原 public 接口的字段投影逻辑。

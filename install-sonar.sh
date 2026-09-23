@@ -362,6 +362,10 @@ msg() {
             en_text='Upgrading Sonar...'
             zh_text='升级 Sonar...'
             ;;
+        legacy_install_location_kept)
+            en_text='This installation still uses %s and the %s.service unit. An in-place upgrade updates the binary but keeps these paths and service name. To move the installation to /opt/sonar and sonar.service, run the separate migrate-server-host.sh migration script.'
+            zh_text='当前安装仍使用旧目录 %s 和 %s.service 服务。就地升级只更新程序，不会搬迁目录或重命名服务。若要迁移到 /opt/sonar 和 sonar.service，请另行运行 migrate-server-host.sh 迁移脚本。'
+            ;;
         not_installed)
             en_text='Sonar is not installed. Install it first.'
             zh_text='Sonar 未安装，请先安装。'
@@ -896,6 +900,7 @@ install_dependencies() {
 # Get download URL based on channel
 get_download_url() {
     local arch=$1
+    local file_name="sonar-linux-${arch}"
     local target_ver="${VERSION:-${SONAR_VERSION:-${KOMARI_VERSION}:-}}"
     if [ -n "$target_ver" ]; then
         echo "https://github.com/${REPO}/releases/download/${target_ver}/${file_name}"
@@ -1233,6 +1238,10 @@ upgrade_sonar() {
     if ! check_systemd; then
         ui_msgbox "$(msg title_error)" "$(msg systemd_required)"
         return 1
+    fi
+
+    if [ "$INSTALL_DIR" = "/opt/komari" ] || [ "$SERVICE_NAME" = "komari" ]; then
+        ui_msgbox "$(msg title_notice)" "$(msg legacy_install_location_kept "$INSTALL_DIR" "$SERVICE_NAME")"
     fi
 
     # 选择发行版本和发布通道

@@ -97,6 +97,14 @@ runs:
 
         if [ -f theme-nova/sonar-theme.json ]; then cp -f theme-nova/sonar-theme.json internal/platform/frontend/defaultTheme/; fi
         if [ -f theme-nova/komari-theme.json ]; then cp -f theme-nova/komari-theme.json internal/platform/frontend/defaultTheme/; fi
+        if [ -f internal/platform/frontend/defaultTheme/komari-theme.json ] && [ ! -f internal/platform/frontend/defaultTheme/sonar-theme.json ]; then
+          cp -f internal/platform/frontend/defaultTheme/komari-theme.json internal/platform/frontend/defaultTheme/sonar-theme.json
+        fi
+        if [ -f internal/platform/frontend/defaultTheme/sonar-theme.json ] && [ ! -f internal/platform/frontend/defaultTheme/komari-theme.json ]; then
+          cp -f internal/platform/frontend/defaultTheme/sonar-theme.json internal/platform/frontend/defaultTheme/komari-theme.json
+        fi
+        test -s internal/platform/frontend/defaultTheme/sonar-theme.json
+        test -s internal/platform/frontend/defaultTheme/komari-theme.json
         if [ -f theme-nova/docs/preview.png ]; then cp -f theme-nova/docs/preview.png internal/platform/frontend/defaultTheme/preview.png; fi
         if [ -f internal/platform/frontend/defaultTheme/preview.png ] && [ ! -f internal/platform/frontend/defaultTheme/perview.png ]; then cp -f internal/platform/frontend/defaultTheme/preview.png internal/platform/frontend/defaultTheme/perview.png; fi
         if [ -f internal/platform/frontend/defaultTheme/perview.png ] && [ ! -f internal/platform/frontend/defaultTheme/preview.png ]; then cp -f internal/platform/frontend/defaultTheme/perview.png internal/platform/frontend/defaultTheme/preview.png; fi

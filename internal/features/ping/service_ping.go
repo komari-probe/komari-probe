@@ -2,6 +2,7 @@ package ping
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"time"
 
@@ -9,8 +10,13 @@ import (
 	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
 	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/pingpresets"
 	"gorm.io/gorm"
 )
+
+// builtinPresetInterval 是内置省市三网节点的固定探测间隔（秒）。
+// 持续监控走完整 TCP 握手，礼貌、低频，跟手动大包测试是两套完全独立的机制。
+const builtinPresetInterval = 60
 
 func init() {
 	nodefeature.SetPingResultRecorder(SavePingRecord)
@@ -92,6 +98,124 @@ func EditPingTask(tasks []*models.PingTask) error {
 		}
 	}
 	return ReloadPingSchedule()
+}
+
+// SyncClientPingNodes 全量同步"这台服务器要监测哪些节点"：内置节点按
+// (省份,运营商) 精确匹配 target 判断，自建任务按 ID 判断。选中的要确保这台
+// 服务器在 Clients 里（内置节点不存在对应 PingTask 就新建）；没选中但当前
+// 绑着这台服务器的，就把它从 Clients 里移除——不删任务本身，因为可能还
+// 绑着别的服务器。builtinInterval 是这次勾选的内置节点统一使用的间隔，
+// 会覆盖这些任务原有的 interval（哪怕是别的服务器之前设置的）。
+func SyncClientPingNodes(clientUUID string, selectedBuiltin []pingpresets.Node, builtinInterval int, selectedCustomTaskIDs []uint) error {
+	if clientUUID == "" {
+		return errors.New("client is required")
+	}
+	if builtinInterval <= 0 {
+		builtinInterval = builtinPresetInterval
+	}
+
+	builtinTargetWanted := make(map[string]bool, len(selectedBuiltin))
+	builtinTargetToNode := make(map[string]pingpresets.Node, len(selectedBuiltin))
+	for _, n := range selectedBuiltin {
+		builtinTargetWanted[n.Target] = true
+		builtinTargetToNode[n.Target] = n
+	}
+	customWanted := make(map[uint]bool, len(selectedCustomTaskIDs))
+	for _, id := range selectedCustomTaskIDs {
+		customWanted[id] = true
+	}
+	allBuiltinTargets := make(map[string]bool, len(pingpresets.Nodes(4)))
+	for _, n := range pingpresets.Nodes(4) {
+		allBuiltinTargets[n.Target] = true
+	}
+
+	db := dbcore.GetDBInstance()
+	err := db.Transaction(func(tx *gorm.DB) error {
+		var tasks []models.PingTask
+		if err := tx.Find(&tasks).Error; err != nil {
+			return err
+		}
+
+		seenBuiltinTargets := make(map[string]bool, len(selectedBuiltin))
+		for _, task := range tasks {
+			isBuiltin := allBuiltinTargets[task.Target]
+			var want bool
+			if isBuiltin {
+				want = builtinTargetWanted[task.Target]
+				if want {
+					seenBuiltinTargets[task.Target] = true
+				}
+			} else {
+				want = customWanted[task.ID]
+			}
+
+			has := clientInList(task.Clients, clientUUID)
+			nextClients := task.Clients
+			if want && !has {
+				nextClients = append(append(models.StringArray{}, task.Clients...), clientUUID)
+			} else if !want && has {
+				nextClients = removeClientFromList(task.Clients, clientUUID)
+			}
+
+			updates := map[string]any{}
+			if want != has {
+				updates["clients"] = normalizePingClients(nextClients)
+			}
+			if isBuiltin && want {
+				updates["interval"] = builtinInterval
+			}
+			if len(updates) == 0 {
+				continue
+			}
+			if err := tx.Model(&models.PingTask{}).Where("id = ?", task.ID).Updates(updates).Error; err != nil {
+				return err
+			}
+		}
+
+		// 选中的内置节点里，还没有对应 PingTask 的，新建一条。
+		for _, node := range selectedBuiltin {
+			if seenBuiltinTargets[node.Target] {
+				continue
+			}
+			newTask := models.PingTask{
+				Clients:  models.StringArray{clientUUID},
+				Name:     node.Name,
+				Type:     "tcp",
+				Target:   node.Target,
+				Interval: builtinInterval,
+			}
+			if err := tx.Create(&newTask).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(&models.PingTask{}).Where("id = ?", newTask.ID).Update("weight", int(newTask.ID)).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return ReloadPingSchedule()
+}
+
+func clientInList(list models.StringArray, uuid string) bool {
+	for _, c := range list {
+		if c == uuid {
+			return true
+		}
+	}
+	return false
+}
+
+func removeClientFromList(list models.StringArray, uuid string) models.StringArray {
+	next := make(models.StringArray, 0, len(list))
+	for _, c := range list {
+		if c != uuid {
+			next = append(next, c)
+		}
+	}
+	return next
 }
 
 // normalizePingClients 保持 clients 字段序列化为 JSON 数组，避免空值变成 null。
