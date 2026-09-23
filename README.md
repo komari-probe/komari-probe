@@ -30,7 +30,7 @@ Choose the appropriate release channel based on your environment:
 | Channel | Description | Docker Tag | Use Case |
 | :--- | :--- | :--- | :--- |
 | **Stable** | Thoroughly tested official release for maximum stability | `:latest` or `:1.0.0` | Recommended for production |
-| **Preview / Beta** | Public beta testing releases with the latest refactored UI and features (e.g., `v1.0.0-beta.1`) | `:v1.0.0-beta.1` | Early testing and feature evaluation |
+| **Preview / Beta** | Public beta testing releases with the latest refactored UI and features (e.g., `v1.1.0-beta.3`, check the [Releases](https://github.com/sonar-probe/sonar/releases) page for the current one) | `:v1.1.0-beta.3` | Early testing and feature evaluation |
 | **Snapshot** | Automated builds from the `main` branch containing recent commits and fixes | `:snapshot` | Developers and urgent bug testing |
 
 ---
@@ -42,17 +42,25 @@ Choose the appropriate release channel based on your environment:
 #### Method A: Host / systemd (Recommended)
 Supported on Ubuntu, Debian, CentOS, Alpine, etc. Runs as a systemd service. Default data directory is `/opt/komari/data`, and default port is `25774`.
 
-- **Stable Release**:
+> [!IMPORTANT]
+> `install-sonar.sh` is interactive (it asks you to pick a language, release channel, and listen port) — **download it first, then run it**. Don't pipe it straight into `sudo bash`: the pipe consumes stdin, so the script can never read your keystrokes and gets stuck re-printing "invalid option" at the selection menu.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh -o install-sonar.sh
+sudo bash install-sonar.sh
+```
+
+The script will prompt you to pick a release channel (stable / snapshot) interactively. You can also skip the prompt with an environment variable:
+
+- **Install a specific version**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo bash
-  ```
-- **Preview / Beta Release (e.g., `v1.0.0-beta.1`)**:
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo VERSION=v1.0.0-beta.1 bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh -o install-sonar.sh
+  sudo VERSION=v1.1.0-beta.3 bash install-sonar.sh
   ```
 - **Snapshot Release**:
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo CHANNEL=snapshot bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh -o install-sonar.sh
+  sudo CHANNEL=snapshot bash install-sonar.sh
   ```
 
 #### Method B: Docker Compose
@@ -61,8 +69,8 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   sonar:
-    # Use :v1.0.0-beta.1 during the beta phase, or :latest once stable is published
-    image: ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+    # Use :v1.1.0-beta.3 during the beta phase (check Releases for the current tag), or :latest once stable is published
+    image: ghcr.io/sonar-probe/sonar:v1.1.0-beta.3
     container_name: sonar
     restart: unless-stopped
     ports:
@@ -83,7 +91,7 @@ docker run -d \
   --restart unless-stopped \
   -p 25774:25774 \
   -v /opt/komari/data:/app/data \
-  ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+  ghcr.io/sonar-probe/sonar:v1.1.0-beta.3
 ```
 
 > Once installed, access `http://<YOUR_SERVER_IP>:25774/` in your browser and complete the initial administrator setup.
@@ -119,7 +127,7 @@ If you need to install agents silently via automation scripts without using the 
   curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/install.sh | sudo bash -s -- \
     -e "http://<SERVER_IP>:25774" \
     -t "<AGENT_TOKEN>" \
-    -v "v1.0.0-beta.1"
+    -v "v1.1.0-beta.2"
   ```
 
 #### Docker Container
@@ -131,7 +139,7 @@ docker run -d \
   --name sonar-agent \
   --restart unless-stopped \
   --net=host \
-  ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1 \
+  ghcr.io/sonar-probe/sonar-agent:v1.1.0-beta.2 \
   -e "http://<SERVER_IP>:25774" -t "<AGENT_TOKEN>"
 ```
 
@@ -161,14 +169,14 @@ For instances deployed directly on bare-metal or VPS systems:
 curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migrate-server-host.sh -o migrate-server-host.sh
 
 # 2. Dry run (validates environment and outputs plan without making changes)
-sudo bash migrate-server-host.sh --tag v1.0.0-beta.1 --dry-run
+sudo bash migrate-server-host.sh --tag v1.1.0-beta.3 --dry-run
 
 # 3. Perform migration
-sudo bash migrate-server-host.sh --tag v1.0.0-beta.1
+sudo bash migrate-server-host.sh --tag v1.1.0-beta.3
 ```
 
 > **Options**:
-> - `--tag TAG`: Target release tag (e.g., `v1.0.0-beta.1`; defaults to `latest`).
+> - `--tag TAG`: Target release tag (e.g., `v1.1.0-beta.3`, check [Releases](https://github.com/sonar-probe/sonar/releases) for the current one; defaults to `latest`).
 > - `--service NAME`: systemd service name (default: `komari`).
 > - `--data-dir PATH`: Data directory (default: `/opt/komari/data`).
 > - `--port PORT`: Health check port (default: `25774`).
@@ -185,7 +193,7 @@ curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migr
 sudo bash migrate-server-docker.sh \
   --compose-file /path/to/docker-compose.yml \
   --service sonar \
-  --target-image ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+  --target-image ghcr.io/sonar-probe/sonar:v1.1.0-beta.3
 ```
 
 > **Note**: Backs up the data mount to `/var/backups/sonar-server-docker-migration/` and generates a non-destructive `.sonar-<SERVICE>.override.yml` override file. Your original `docker-compose.yml` remains untouched.
@@ -199,7 +207,7 @@ To migrate existing upstream Agent nodes while **preserving `auto-discovery.json
 #### Host Agent:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-host.sh -o migrate-agent-host.sh
-sudo bash migrate-agent-host.sh --tag v1.0.0-beta.1
+sudo bash migrate-agent-host.sh --tag v1.1.0-beta.2
 ```
 
 #### Docker Agent:
@@ -207,7 +215,7 @@ sudo bash migrate-agent-host.sh --tag v1.0.0-beta.1
 curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-docker.sh -o migrate-agent-docker.sh
 sudo bash migrate-agent-docker.sh \
   --container sonar-agent \
-  --target-image ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1
+  --target-image ghcr.io/sonar-probe/sonar-agent:v1.1.0-beta.2
 ```
 
 ---

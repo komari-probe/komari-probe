@@ -30,7 +30,7 @@ Sonar 是一款纯粹、轻量、安全的自托管服务器监控工具，旨�
 | 通道 | 说明 | Docker 标签 | 适用场景 |
 | :--- | :--- | :--- | :--- |
 | **正式稳定版 (Stable)** | 经过充分测试验证的正式版本，追求极致稳定性 | `:latest` 或 `:1.0.0` | 生产环境推荐 |
-| **预览体验版 (Preview / Beta)** | 包含最新重构界面与最新功能体验（如当前 `v1.0.0-beta.1`） | `:v1.0.0-beta.1` | 公测尝鲜与新特性验证 |
+| **预览体验版 (Preview / Beta)** | 包含最新重构界面与最新功能体验（如当前 `v1.1.0-beta.3`，具体以 [Releases](https://github.com/sonar-probe/sonar/releases) 页面最新版本为准） | `:v1.1.0-beta.3` | 公测尝鲜与新特性验证 |
 | **开发快照版 (Snapshot)** | 主分支自动构建的代码快照，包含最新即时修复 | `:snapshot` | 开发者与抢先排错 |
 
 ---
@@ -42,17 +42,25 @@ Sonar 是一款纯粹、轻量、安全的自托管服务器监控工具，旨�
 #### 方式 A：宿主机一键安装（推荐）
 适用于 Ubuntu / Debian / CentOS / Alpine 等常见 Linux 发行版，以 systemd 服务运行。默认数据目录为 `/opt/komari/data`，默认端口为 `25774`。
 
-- **正式稳定版（Stable）**：
+> [!IMPORTANT]
+> `install-sonar.sh` 是交互式脚本（会让你选语言、发布通道、监听端口），**必须先下载再执行**，不要直接 `curl | sudo bash` 接管道——管道会占用标准输入，脚本读不到你的按键，会卡在选择菜单里反复报"选项无效"。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh -o install-sonar.sh
+sudo bash install-sonar.sh
+```
+
+安装过程中会让你选择发布通道（正式版 / 快照版）；也可以用环境变量跳过交互直接指定：
+
+- **指定某个具体版本**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo bash
-  ```
-- **预览体验版（Pre-release / Beta，如 `v1.0.0-beta.1`）**：
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo VERSION=v1.0.0-beta.1 bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh -o install-sonar.sh
+  sudo VERSION=v1.1.0-beta.3 bash install-sonar.sh
   ```
 - **开发快照版（Snapshot）**：
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh | sudo CHANNEL=snapshot bash
+  curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/install-sonar.sh -o install-sonar.sh
+  sudo CHANNEL=snapshot bash install-sonar.sh
   ```
 
 #### 方式 B：Docker Compose 部署
@@ -61,8 +69,8 @@ Sonar 是一款纯粹、轻量、安全的自托管服务器监控工具，旨�
 ```yaml
 services:
   sonar:
-    # 预览版使用 :v1.0.0-beta.1；正式版发布后可使用 :latest
-    image: ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+    # 预览版使用 :v1.1.0-beta.3（具体以 Releases 页面最新版本为准）；正式版发布后可使用 :latest
+    image: ghcr.io/sonar-probe/sonar:v1.1.0-beta.3
     container_name: sonar
     restart: unless-stopped
     ports:
@@ -83,7 +91,7 @@ docker run -d \
   --restart unless-stopped \
   -p 25774:25774 \
   -v /opt/komari/data:/app/data \
-  ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+  ghcr.io/sonar-probe/sonar:v1.1.0-beta.3
 ```
 
 > 安装完成后，在浏览器中访问 `http://<服务器IP>:25774/`，按照初始引导设置管理员账号密码即可开始使用。
@@ -119,7 +127,7 @@ docker run -d \
   curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/install.sh | sudo bash -s -- \
     -e "http://<服务端IP或域名>:25774" \
     -t "<AGENT_TOKEN>" \
-    -v "v1.0.0-beta.1"
+    -v "v1.1.0-beta.2"
   ```
 
 #### Docker 容器运行
@@ -131,7 +139,7 @@ docker run -d \
   --name sonar-agent \
   --restart unless-stopped \
   --net=host \
-  ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1 \
+  ghcr.io/sonar-probe/sonar-agent:v1.1.0-beta.2 \
   -e "http://<服务端IP或域名>:25774" -t "<AGENT_TOKEN>"
 ```
 
@@ -161,14 +169,14 @@ docker run -d \
 curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migrate-server-host.sh -o migrate-server-host.sh
 
 # 2. 预检执行（Dry-Run，仅评估升级路径与备份目录，不作修改）
-sudo bash migrate-server-host.sh --tag v1.0.0-beta.1 --dry-run
+sudo bash migrate-server-host.sh --tag v1.1.0-beta.3 --dry-run
 
 # 3. 正式执行平滑迁移
-sudo bash migrate-server-host.sh --tag v1.0.0-beta.1
+sudo bash migrate-server-host.sh --tag v1.1.0-beta.3
 ```
 
 > **常用参数**：
-> - `--tag TAG`：指定目标版本（如 `v1.0.0-beta.1`；正式版发布后默认最新稳定版）。
+> - `--tag TAG`：指定目标版本（如 `v1.1.0-beta.3`，具体以 [Releases](https://github.com/sonar-probe/sonar/releases) 页面最新版本为准；正式版发布后默认最新稳定版）。
 > - `--service NAME`：systemd 服务名称（默认 `komari`）。
 > - `--data-dir PATH`：数据目录（默认 `/opt/komari/data`）。
 > - `--port PORT`：本地健康探测端口（默认 `25774`）。
@@ -185,7 +193,7 @@ curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar/main/scripts/migr
 sudo bash migrate-server-docker.sh \
   --compose-file /path/to/docker-compose.yml \
   --service sonar \
-  --target-image ghcr.io/sonar-probe/sonar:v1.0.0-beta.1
+  --target-image ghcr.io/sonar-probe/sonar:v1.1.0-beta.3
 ```
 
 > **说明**：脚本会自动归档数据卷至 `/var/backups/sonar-server-docker-migration/`，并在 Compose 目录生成轻量级 `.sonar-<SERVICE>.override.yml` 覆盖文件。原始的 `docker-compose.yml` 保持原样零污染，后续 Compose 指令将自动平滑运行 Sonar 镜像。
@@ -199,7 +207,7 @@ sudo bash migrate-server-docker.sh \
 #### 宿主机 Agent 迁移：
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-host.sh -o migrate-agent-host.sh
-sudo bash migrate-agent-host.sh --tag v1.0.0-beta.1
+sudo bash migrate-agent-host.sh --tag v1.1.0-beta.2
 ```
 
 #### Docker Agent 迁移：
@@ -207,7 +215,7 @@ sudo bash migrate-agent-host.sh --tag v1.0.0-beta.1
 curl -fsSL https://raw.githubusercontent.com/sonar-probe/sonar-agent/main/scripts/migrate-agent-docker.sh -o migrate-agent-docker.sh
 sudo bash migrate-agent-docker.sh \
   --container sonar-agent \
-  --target-image ghcr.io/sonar-probe/sonar-agent:v1.0.0-beta.1
+  --target-image ghcr.io/sonar-probe/sonar-agent:v1.1.0-beta.2
 ```
 
 ---
