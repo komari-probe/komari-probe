@@ -6,13 +6,12 @@ def generate_icons():
     src_png = os.path.join(root, "server", "docs", "images", "logo.png")
     im = Image.open(src_png).convert("RGBA")
     bbox = im.getbbox()
-    print("Source bbox:", bbox) # (399, 316, 1648, 1705)
+    print("Source bbox:", bbox)
 
-    # Content dimensions: w=1249, h=1389
     cx = (bbox[0] + bbox[2]) / 2.0
     cy = (bbox[1] + bbox[3]) / 2.0
-    # Max dimension is 1389. Add 2% padding -> 1416
-    crop_size = 1416
+    # Add a balanced ~5% breathing margin so the top of the circle is never clipped
+    crop_size = 1520
     crop_box = (
         int(cx - crop_size / 2.0),
         int(cy - crop_size / 2.0),
@@ -29,14 +28,11 @@ def generate_icons():
     print("Saved:", pwa_path)
 
     # 2. Generate multi-resolution favicon.ico
-    # For small resolutions (16, 32), we can enhance brightness/contrast slightly so they pop on dark tabs
     icon_sizes = [16, 32, 48, 64, 128, 256]
     frames = []
     for s in icon_sizes:
         frame = cropped.resize((s, s), Image.Resampling.LANCZOS)
         if s <= 32:
-            # Slightly boost brightness for visibility on dark browser tabs
-            # Convert RGBA to separate channels
             r, g, b, a = frame.split()
             rgb = Image.merge("RGB", (r, g, b))
             rgb = ImageEnhance.Brightness(rgb).enhance(1.25)
@@ -52,10 +48,9 @@ def generate_icons():
     frames[0].save(nova_ico, format="ICO", sizes=[(s, s) for s in icon_sizes], append_images=frames[1:])
     print("Saved:", nova_ico)
 
-    # 3. Generate tight favicon.svg
-    # Notice: viewBox is cropped tightly around the probe graphic (cx=1024, cy=1058, size=1320)
-    # Plus dark mode support via CSS
-    svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="364 398 1320 1320" role="img" aria-label="Sonar">
+    # 3. Generate balanced favicon.svg with ~5% breathing padding around probe
+    # viewBox="294 328 1460 1460" ensures top of circle and bottom tip have neat breathing margin
+    svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="294 328 1460 1460" role="img" aria-label="Sonar">
   <style>
     :root {
       color: #5B5BD6;
@@ -81,7 +76,7 @@ def generate_icons():
     <!-- Pulse traces with bold stroke for crisp rendering on 16x16 tab icons -->
     <path d="M 520 927 H 619 L 653 819 L 701 1014 L 730 927 H 770
              M 1278 927 H 1318 L 1347 1014 L 1395 819 L 1429 927 H 1528"
-          fill="none" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+          fill="none" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
 
     <!-- Center probe head and needle tip -->
     <path fill-rule="evenodd" stroke="none"
