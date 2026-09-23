@@ -2,9 +2,11 @@ package ping
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/pingpresets"
 	"github.com/sonar-probe/sonar/pkg/rpc"
 )
 
@@ -82,6 +84,41 @@ func AdminListTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
 	return list, nil
+}
+
+// AdminApplyBuiltinPingPresets 把管理后台"内置监测节点"选择器里勾选的
+// 省份/运营商/IP版本组合应用到选中的服务器上。省份/运营商代码由服务端
+// 用 pingpresets.Find 校验，不直接信任前端拼出来的 target 字符串。
+func AdminApplyBuiltinPingPresets(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
+	var params struct {
+		Nodes []struct {
+			ProvinceCode string `json:"province_code"`
+			CarrierCode  string `json:"carrier_code"`
+			IPVersion    int    `json:"ip_version"`
+		} `json:"nodes"`
+		Clients []string `json:"clients"`
+	}
+	if err := req.BindParams(&params); err != nil {
+		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
+	}
+	if len(params.Nodes) == 0 || len(params.Clients) == 0 {
+		return nil, rpc.MakeError(rpc.InvalidParams, "nodes and clients are required", nil)
+	}
+
+	resolved := make([]pingpresets.Node, 0, len(params.Nodes))
+	for _, n := range params.Nodes {
+		node, ok := pingpresets.Find(n.ProvinceCode, n.CarrierCode, n.IPVersion)
+		if !ok {
+			return nil, rpc.MakeError(rpc.InvalidParams, fmt.Sprintf("unknown builtin node: %s-%s-v%d", n.ProvinceCode, n.CarrierCode, n.IPVersion), nil)
+		}
+		resolved = append(resolved, node)
+	}
+
+	created, updated, err := ApplyBuiltinPingPresets(resolved, params.Clients)
+	if err != nil {
+		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
+	}
+	return map[string]any{"created": created, "updated": updated}, nil
 }
 
 func AdminOrderTasks(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {

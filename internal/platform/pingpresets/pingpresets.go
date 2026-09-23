@@ -107,3 +107,31 @@ func AllNodes() []Node {
 	all = append(all, Nodes(6)...)
 	return all
 }
+
+// Find 按省份代码、运营商代码、IP 版本查找单个内置节点，用于校验前端
+// 提交的选择是否真的在目录里，避免直接信任前端拼出来的 target 字符串。
+func Find(provinceCode, carrierCode string, ipVersion int) (Node, bool) {
+	provinceOK := false
+	for _, p := range Provinces {
+		if p.Code == provinceCode {
+			provinceOK = true
+			break
+		}
+	}
+	carrierOK := false
+	for _, c := range Carriers {
+		if c.Code == carrierCode {
+			carrierOK = true
+			break
+		}
+	}
+	if !provinceOK || !carrierOK || (ipVersion != 4 && ipVersion != 6) {
+		return Node{}, false
+	}
+	for _, n := range Nodes(ipVersion) {
+		if n.ProvinceCode == provinceCode && n.CarrierCode == carrierCode {
+			return n, true
+		}
+	}
+	return Node{}, false
+}

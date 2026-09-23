@@ -52,6 +52,7 @@ func registerPublicRoutes(r *gin.Engine) {
 	r.GET("/api/records/load", jsonRpc.Bind("public:getRecordsByUUID", jsonRpc.WithQuery("uuid", "load_type", "hours")))
 	r.GET("/api/records/ping", jsonRpc.Bind("public:getPingRecords", jsonRpc.WithQuery("uuid", "task_id", "hours")))
 	r.GET("/api/task/ping", jsonRpc.Bind("public:getPublicPingTasks"))
+	r.GET("/api/task/ping/builtin-presets", jsonRpc.Bind("public:getBuiltinPingPresets"))
 
 	// JSON-RPC 直连入口。
 	r.GET("/api/rpc2", jsonRpc.OnRPCRequest)
@@ -203,5 +204,6 @@ func registerAdminRoutes(r *gin.Engine) {
 		pingTask.POST("/delete", jsonRpc.Bind("admin:deletePingTask"))
 		pingTask.POST("/edit", jsonRpc.Bind("admin:editPingTask"))
 		pingTask.POST("/order", jsonRpc.Bind("admin:orderPingTask"))
+		pingTask.POST("/apply-builtin-presets", jsonRpc.Bind("admin:applyBuiltinPingPresets"))
 	}
 }

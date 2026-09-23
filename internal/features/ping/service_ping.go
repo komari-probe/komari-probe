@@ -9,8 +9,13 @@ import (
 	"github.com/sonar-probe/sonar/internal/platform/dbcore"
 	"github.com/sonar-probe/sonar/internal/platform/metricruntime"
 	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/pingpresets"
 	"gorm.io/gorm"
 )
+
+// builtinPresetInterval 是内置省市三网节点的固定探测间隔（秒）。
+// 持续监控走完整 TCP 握手，礼貌、低频，跟手动大包测试是两套完全独立的机制。
+const builtinPresetInterval = 60
 
 func init() {
 	nodefeature.SetPingResultRecorder(SavePingRecord)
@@ -92,6 +97,80 @@ func EditPingTask(tasks []*models.PingTask) error {
 		}
 	}
 	return ReloadPingSchedule()
+}
+
+// ApplyBuiltinPingPresets 把一批内置省市三网节点应用到指定服务器：目标
+// 地址已经存在对应 PingTask 的，就把这些服务器合并进它的 Clients（去重）；
+// 不存在的就新建一条，类型固定为 tcp、间隔固定为 60 秒。内置节点本质上
+// 就是普通 PingTask，不额外打标记，靠 target 字符串精确匹配判断"是否已存在"。
+func ApplyBuiltinPingPresets(nodes []pingpresets.Node, clientUUIDs []string) (created int, updated int, err error) {
+	if len(nodes) == 0 || len(clientUUIDs) == 0 {
+		return 0, 0, nil
+	}
+	db := dbcore.GetDBInstance()
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+		var existing []models.PingTask
+		if err := tx.Find(&existing).Error; err != nil {
+			return err
+		}
+		byTarget := make(map[string]*models.PingTask, len(existing))
+		for i := range existing {
+			byTarget[existing[i].Target] = &existing[i]
+		}
+
+		for _, node := range nodes {
+			if task, ok := byTarget[node.Target]; ok {
+				merged := mergeClientUUIDs(task.Clients, clientUUIDs)
+				if len(merged) == len(task.Clients) {
+					continue // 这些服务器已经全部在里面了，不用改
+				}
+				if err := tx.Model(&models.PingTask{}).Where("id = ?", task.ID).Update("clients", merged).Error; err != nil {
+					return err
+				}
+				updated++
+				continue
+			}
+
+			newTask := models.PingTask{
+				Clients:  normalizePingClients(models.StringArray(clientUUIDs)),
+				Name:     node.Name,
+				Type:     "tcp",
+				Target:   node.Target,
+				Interval: builtinPresetInterval,
+			}
+			if err := tx.Create(&newTask).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(&models.PingTask{}).Where("id = ?", newTask.ID).Update("weight", int(newTask.ID)).Error; err != nil {
+				return err
+			}
+			created++
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, 0, err
+	}
+	return created, updated, ReloadPingSchedule()
+}
+
+func mergeClientUUIDs(existing models.StringArray, add []string) models.StringArray {
+	set := make(map[string]bool, len(existing)+len(add))
+	merged := make(models.StringArray, 0, len(existing)+len(add))
+	for _, c := range existing {
+		if !set[c] {
+			set[c] = true
+			merged = append(merged, c)
+		}
+	}
+	for _, c := range add {
+		if !set[c] {
+			set[c] = true
+			merged = append(merged, c)
+		}
+	}
+	return merged
 }
 
 // normalizePingClients 保持 clients 字段序列化为 JSON 数组，避免空值变成 null。
