@@ -86,39 +86,40 @@ func AdminListTasks(_ context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 	return list, nil
 }
 
-// AdminApplyBuiltinPingPresets 把管理后台"内置监测节点"选择器里勾选的
-// 省份/运营商/IP版本组合应用到选中的服务器上。省份/运营商代码由服务端
-// 用 pingpresets.Find 校验，不直接信任前端拼出来的 target 字符串。
-func AdminApplyBuiltinPingPresets(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
+// AdminSyncClientPingNodes 全量同步"这台服务器要监测哪些节点"，供服务器
+// 列表页面的"设置监测节点"弹窗调用：内置节点按省份/运营商代码校验（不信任
+// 前端拼出来的 target 字符串），自建任务按 ID 传入。未出现在这次提交里的
+// 节点，会把这台服务器从对应任务里移除。
+func AdminSyncClientPingNodes(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	var params struct {
-		Nodes []struct {
+		Client   string `json:"client"`
+		Interval int    `json:"interval"`
+		Builtin  []struct {
 			ProvinceCode string `json:"province_code"`
 			CarrierCode  string `json:"carrier_code"`
-			IPVersion    int    `json:"ip_version"`
-		} `json:"nodes"`
-		Clients []string `json:"clients"`
+		} `json:"builtin"`
+		CustomTaskIDs []uint `json:"custom_task_ids"`
 	}
 	if err := req.BindParams(&params); err != nil {
 		return nil, rpc.MakeError(rpc.InvalidParams, "Invalid request data: "+err.Error(), nil)
 	}
-	if len(params.Nodes) == 0 || len(params.Clients) == 0 {
-		return nil, rpc.MakeError(rpc.InvalidParams, "nodes and clients are required", nil)
+	if params.Client == "" {
+		return nil, rpc.MakeError(rpc.InvalidParams, "client is required", nil)
 	}
 
-	resolved := make([]pingpresets.Node, 0, len(params.Nodes))
-	for _, n := range params.Nodes {
-		node, ok := pingpresets.Find(n.ProvinceCode, n.CarrierCode, n.IPVersion)
+	resolved := make([]pingpresets.Node, 0, len(params.Builtin))
+	for _, n := range params.Builtin {
+		node, ok := pingpresets.Find(n.ProvinceCode, n.CarrierCode, 4)
 		if !ok {
-			return nil, rpc.MakeError(rpc.InvalidParams, fmt.Sprintf("unknown builtin node: %s-%s-v%d", n.ProvinceCode, n.CarrierCode, n.IPVersion), nil)
+			return nil, rpc.MakeError(rpc.InvalidParams, fmt.Sprintf("unknown builtin node: %s-%s", n.ProvinceCode, n.CarrierCode), nil)
 		}
 		resolved = append(resolved, node)
 	}
 
-	created, updated, err := ApplyBuiltinPingPresets(resolved, params.Clients)
-	if err != nil {
+	if err := SyncClientPingNodes(params.Client, resolved, params.Interval, params.CustomTaskIDs); err != nil {
 		return nil, rpc.MakeError(rpc.InternalError, err.Error(), nil)
 	}
-	return map[string]any{"created": created, "updated": updated}, nil
+	return nil, nil
 }
 
 func AdminOrderTasks(_ context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {

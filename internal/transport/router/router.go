@@ -204,6 +204,6 @@ func registerAdminRoutes(r *gin.Engine) {
 		pingTask.POST("/delete", jsonRpc.Bind("admin:deletePingTask"))
 		pingTask.POST("/edit", jsonRpc.Bind("admin:editPingTask"))
 		pingTask.POST("/order", jsonRpc.Bind("admin:orderPingTask"))
-		pingTask.POST("/apply-builtin-presets", jsonRpc.Bind("admin:applyBuiltinPingPresets"))
+		pingTask.POST("/sync-client-nodes", jsonRpc.Bind("admin:syncClientPingNodes"))
 	}
 }
