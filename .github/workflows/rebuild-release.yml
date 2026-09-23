@@ -11,8 +11,12 @@ on:
         description: Server commit, branch, or tag to build.
         required: true
         type: string
-      frontend_ref:
-        description: sonar-web commit, branch, or tag to build.
+      theme_ref:
+        description: theme-nova (default theme) commit, branch, or tag to build.
+        required: true
+        type: string
+      admin_ref:
+        description: sonar-admin commit, branch, or tag to build.
         required: true
         type: string
 
@@ -36,7 +40,8 @@ jobs:
         uses: ./.github/actions/build-frontend
         with:
           artifact-name: sonar-frontend
-          ref: ${{ inputs.frontend_ref }}
+          theme-ref: ${{ inputs.theme_ref }}
+          admin-ref: ${{ inputs.admin_ref }}
 
   build-and-attach-binaries:
     needs: build-frontend

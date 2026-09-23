@@ -29,14 +29,16 @@ func resolveThemeConfigPath(dir string) string {
 func ListThemes(c *gin.Context) {
 	dataDir := "./data/theme"
 
-	// 确保主题目录存在
-	if _, err := os.Stat(dataDir); errors.Is(err, fs.ErrNotExist) {
-		respond.Success(c, []models.Theme{})
-		return
-	}
-
-	entries, err := os.ReadDir(dataDir)
-	if err != nil {
+	// 主题目录只在上传过额外主题后才会创建；不存在时视为没有额外主题，
+	// 而不是提前返回，否则连内嵌默认主题都不会列出。
+	var entries []os.DirEntry
+	if _, err := os.Stat(dataDir); err == nil {
+		entries, err = os.ReadDir(dataDir)
+		if err != nil {
+			respond.Error(c, http.StatusInternalServerError, "读取主题目录失败: "+err.Error())
+			return
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
 		respond.Error(c, http.StatusInternalServerError, "读取主题目录失败: "+err.Error())
 		return
 	}

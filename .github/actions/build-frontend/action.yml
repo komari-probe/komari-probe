@@ -1,15 +1,21 @@
 name: Build frontend theme
-description: Clone sonar-web, build the default theme, and optionally upload it as an artifact.
+description: Clone theme-nova (default theme) and sonar-admin (admin console), build both, merge them, and optionally upload the result as an artifact.
 
 inputs:
   node-version:
-    description: Node.js version used to build sonar-web.
+    description: Node.js version used to build theme-nova and sonar-admin.
     default: "23"
-  repository:
-    description: sonar-web repository URL.
-    default: https://github.com/sonar-probe/sonar-web
-  ref:
-    description: Optional sonar-web ref to build. Uses the repository default branch when empty.
+  theme-repository:
+    description: theme-nova (default theme) repository URL.
+    default: https://github.com/qingyashizi/komari-probe-theme-nova
+  theme-ref:
+    description: Optional theme-nova ref to build. Uses the repository default branch when empty.
+    default: ""
+  admin-repository:
+    description: sonar-admin repository URL.
+    default: https://github.com/sonar-probe/sonar-admin
+  admin-ref:
+    description: Optional sonar-admin ref to build. Uses the repository default branch when empty.
     default: ""
   artifact-name:
     description: Optional artifact name for the packed frontend theme.
@@ -32,32 +38,66 @@ runs:
           sudo apt-get install -y zstd
         fi
 
-    - name: Clone and build frontend
+    - name: Clone and build theme-nova (default theme)
       shell: bash
       run: |
         set -euxo pipefail
-        rm -rf sonar-web
-        if [ -n "${{ inputs.ref }}" ]; then
-          git clone --depth=1 --branch "${{ inputs.ref }}" "${{ inputs.repository }}" sonar-web
+        rm -rf theme-nova
+        if [ -n "${{ inputs.theme-ref }}" ]; then
+          git clone --depth=1 --branch "${{ inputs.theme-ref }}" "${{ inputs.theme-repository }}" theme-nova
         else
-          git clone --depth=1 "${{ inputs.repository }}" sonar-web
+          git clone --depth=1 "${{ inputs.theme-repository }}" theme-nova
         fi
-        cd sonar-web
+        cd theme-nova
         npm install
         npm run build
         cd ..
+        test -f theme-nova/dist/index.html
 
+    - name: Clone and build sonar-admin
+      shell: bash
+      run: |
+        set -euxo pipefail
+        rm -rf sonar-admin
+        if [ -n "${{ inputs.admin-ref }}" ]; then
+          git clone --depth=1 --branch "${{ inputs.admin-ref }}" "${{ inputs.admin-repository }}" sonar-admin
+        else
+          git clone --depth=1 "${{ inputs.admin-repository }}" sonar-admin
+        fi
+        cd sonar-admin
+        npm install
+        npm run build
+        cd ..
+        test -f sonar-admin/dist/index.html
+
+    - name: Merge into the embedded frontend archive
+      shell: bash
+      run: |
+        set -euxo pipefail
         mkdir -p internal/platform/frontend/defaultTheme
-        rm -rf internal/platform/frontend/defaultTheme/dist internal/platform/frontend/defaultTheme/dist.tar.zst
-        test -f sonar-web/dist/index.html
-        test -f sonar-web/dist/admin/admin.html
-        tar -cf "$RUNNER_TEMP/sonar-default-dist.tar" -C sonar-web/dist .
+        rm -rf merged-dist internal/platform/frontend/defaultTheme/dist.tar.zst
+        mkdir -p merged-dist/admin
+
+        # theme-nova is the default theme, served at the archive root.
+        cp -r theme-nova/dist/. merged-dist/
+
+        # sonar-admin is the built-in admin console. The server looks up a
+        # fixed admin/admin.html entry (server/internal/platform/frontend),
+        # so the admin project's conventional index.html is renamed on the way in.
+        cp -r sonar-admin/dist/. merged-dist/admin/
+        mv merged-dist/admin/index.html merged-dist/admin/admin.html
+
+        test -f merged-dist/index.html
+        test -f merged-dist/admin/admin.html
+
+        tar -cf "$RUNNER_TEMP/sonar-default-dist.tar" -C merged-dist .
         zstd -19 -T0 -q -f "$RUNNER_TEMP/sonar-default-dist.tar" -o internal/platform/frontend/defaultTheme/dist.tar.zst
         rm -f "$RUNNER_TEMP/sonar-default-dist.tar"
-        if [ -f sonar-web/sonar-theme.json ]; then cp -f sonar-web/sonar-theme.json internal/platform/frontend/defaultTheme/; fi
-        if [ -f sonar-web/komari-theme.json ]; then cp -f sonar-web/komari-theme.json internal/platform/frontend/defaultTheme/; fi
-        if [ -f sonar-web/preview.png ]; then cp -f sonar-web/preview.png internal/platform/frontend/defaultTheme/; fi
-        if [ -f sonar-web/perview.png ]; then cp -f sonar-web/perview.png internal/platform/frontend/defaultTheme/; fi
+        rm -rf merged-dist
+
+        if [ -f theme-nova/sonar-theme.json ]; then cp -f theme-nova/sonar-theme.json internal/platform/frontend/defaultTheme/; fi
+        if [ -f theme-nova/komari-theme.json ]; then cp -f theme-nova/komari-theme.json internal/platform/frontend/defaultTheme/; fi
+        if [ -f theme-nova/docs/preview.png ]; then cp -f theme-nova/docs/preview.png internal/platform/frontend/defaultTheme/preview.png; fi
         if [ -f internal/platform/frontend/defaultTheme/preview.png ] && [ ! -f internal/platform/frontend/defaultTheme/perview.png ]; then cp -f internal/platform/frontend/defaultTheme/preview.png internal/platform/frontend/defaultTheme/perview.png; fi
         if [ -f internal/platform/frontend/defaultTheme/perview.png ] && [ ! -f internal/platform/frontend/defaultTheme/preview.png ]; then cp -f internal/platform/frontend/defaultTheme/perview.png internal/platform/frontend/defaultTheme/preview.png; fi
 

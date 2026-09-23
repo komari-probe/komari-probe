@@ -16,7 +16,7 @@ import (
 	"github.com/sonar-probe/sonar/pkg/kv"
 )
 
-//go:embed defaultTheme/sonar-theme.json defaultTheme/komari-theme.json
+//go:embed defaultTheme/sonar-theme.json defaultTheme/komari-theme.json defaultTheme/preview.png
 var PublicFS embed.FS
 
 //go:embed defaultTheme/dist.tar.zst

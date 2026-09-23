@@ -41,7 +41,12 @@ jobs:
         uses: ./.github/actions/build-frontend
         with:
           artifact-name: sonar-frontend
-          ref: ${{ needs.resolve-release.outputs.frontend_ref }}
+          # A "-fixN" release tag reuses the base version's frontend rather than
+          # each repo's latest default branch. theme-nova and sonar-admin are
+          # assumed to share the same tag naming as the base server release;
+          # revisit if they end up versioned independently.
+          theme-ref: ${{ needs.resolve-release.outputs.frontend_ref }}
+          admin-ref: ${{ needs.resolve-release.outputs.frontend_ref }}
 
   build-and-attach-binaries:
     needs: build-frontend
