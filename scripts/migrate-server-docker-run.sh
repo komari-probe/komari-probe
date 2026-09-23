@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 # Migrate a single docker run Server container to Sonar without Compose or Coolify.
 set -u -o pipefail
-CONTAINER=""; TARGET_IMAGE=""; DATA_PATH="/app/data"; PORT=25774; BACKUP_ROOT="/var/backups/sonar-server-docker-run"; BACKUP_DIR=""; OLD_NAME=""; MOUNT_TYPE=""; MOUNT_NAME=""; MOUNT_SOURCE=""
+CONTAINER=""; TARGET_IMAGE=""; DATA_PATH="/app/data"; PORT=25774; BACKUP_ROOT="/var/backups/sonar-server-docker-run"; BACKUP_DIR=""; OLD_NAME=""; MOUNT_TYPE=""; MOUNT_NAME=""; MOUNT_SOURCE=""; DRY_RUN=0
 die(){ echo "[sonar-server-docker-run] ERROR: $*" >&2; exit 1; }; log(){ echo "[sonar-server-docker-run] $*"; }
 usage(){ cat <<'EOF'
-Usage: sudo bash migrate-server-docker-run.sh --container NAME --target-image IMAGE [--data-path /app/data] [--port 25774]
+Usage: sudo bash migrate-server-docker-run.sh --container NAME --target-image IMAGE [--data-path /app/data] [--port 25774] [--backup-root PATH] [--dry-run]
 Backs up the named container's persistent data, stops but preserves the old
 container, recreates the same runtime configuration with the new image, and
 rolls back container name/image/data when validation fails.
+
+  --dry-run                 Validate and print the plan without pulling or changing anything
 EOF
 }
-while [ $# -gt 0 ]; do case "$1" in --container) CONTAINER=$2;shift;;--target-image) TARGET_IMAGE=$2;shift;;--data-path) DATA_PATH=$2;shift;;--port) PORT=$2;shift;;--backup-root) BACKUP_ROOT=$2;shift;;-h|--help) usage;exit;;*) die "Unknown option: $1";;esac;shift;done
+while [ $# -gt 0 ]; do case "$1" in --container) CONTAINER=$2;shift;;--target-image) TARGET_IMAGE=$2;shift;;--data-path) DATA_PATH=$2;shift;;--port) PORT=$2;shift;;--backup-root) BACKUP_ROOT=$2;shift;;--dry-run) DRY_RUN=1;;-h|--help) usage;exit;;*) die "Unknown option: $1";;esac;shift;done
 [ "${EUID:-$(id -u)}" -eq 0 ] || die "Run as root."; command -v docker >/dev/null || die "docker is required"; command -v python3 >/dev/null || die "python3 is required"; command -v curl >/dev/null || die "curl is required"; command -v tar >/dev/null || die "tar is required"; command -v find >/dev/null || die "find is required"
 [ -n "$CONTAINER" ] && [ -n "$TARGET_IMAGE" ] || { usage; exit 1; }; docker inspect "$CONTAINER" >/dev/null 2>&1 || die "Container not found: $CONTAINER"
 CID=$(docker inspect -f '{{.Id}}' "$CONTAINER"); docker inspect "$CONTAINER" > /tmp/sonar-inspect.$$; trap 'rm -f /tmp/sonar-inspect.$$' EXIT
@@ -22,6 +24,11 @@ for mount in json.load(open(sys.argv[2]))[0].get("Mounts", []):
         break
 PY
 ); [ -n "$MOUNT_TYPE" ] || die "No persistent mount at $DATA_PATH"
+if [ "$DRY_RUN" -eq 1 ]; then
+    log "Plan: container=$CONTAINER; old-image=$(docker inspect --format '{{.Config.Image}}' "$CONTAINER"); target=$TARGET_IMAGE; data=$MOUNT_TYPE:$MOUNT_SOURCE; backup-root=$BACKUP_ROOT"
+    log "Dry run finished; no changes were made and the target image was not pulled."
+    exit 0
+fi
 ID=$(date -u +%Y%m%dT%H%M%SZ); BACKUP_DIR="$BACKUP_ROOT/$ID"; mkdir -p "$BACKUP_DIR"; cp /tmp/sonar-inspect.$$ "$BACKUP_DIR/container.inspect.json"
 case "$MOUNT_TYPE" in volume) docker run --rm -v "$MOUNT_NAME":/data:ro -v "$BACKUP_DIR":/backup alpine:3.21 tar -C /data -czf /backup/data.tar.gz .;;bind) tar -C "$MOUNT_SOURCE" -czf "$BACKUP_DIR/data.tar.gz" .;;*) die "Unsupported mount type: $MOUNT_TYPE";;esac
 docker pull "$TARGET_IMAGE" || die "Target image pull failed; old container is unchanged."
