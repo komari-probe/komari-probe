@@ -10,8 +10,8 @@ def generate_icons():
 
     cx = (bbox[0] + bbox[2]) / 2.0
     cy = (bbox[1] + bbox[3]) / 2.0
-    # Add a balanced ~5% breathing margin so the top of the circle is never clipped
-    crop_size = 1520
+    # Golden balance crop size: 1450 gives ~0.5px margin on 16x16 tab icon
+    crop_size = 1450
     crop_box = (
         int(cx - crop_size / 2.0),
         int(cy - crop_size / 2.0),
@@ -48,9 +48,9 @@ def generate_icons():
     frames[0].save(nova_ico, format="ICO", sizes=[(s, s) for s in icon_sizes], append_images=frames[1:])
     print("Saved:", nova_ico)
 
-    # 3. Generate balanced favicon.svg with ~5% breathing padding around probe
-    # viewBox="294 328 1460 1460" ensures top of circle and bottom tip have neat breathing margin
-    svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="294 328 1460 1460" role="img" aria-label="Sonar">
+    # 3. Generate optimal favicon.svg with viewBox="324 354 1400 1400"
+    # Preserves exactly ~0.5px sub-pixel margin so top circle is 100% complete and max-sized
+    svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="324 354 1400 1400" role="img" aria-label="Sonar">
   <style>
     :root {
       color: #5B5BD6;
