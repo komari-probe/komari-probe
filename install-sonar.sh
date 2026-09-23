@@ -900,6 +900,7 @@ install_dependencies() {
 # Get download URL based on channel
 get_download_url() {
     local arch=$1
+    local file_name="sonar-linux-${arch}"
     local target_ver="${VERSION:-${SONAR_VERSION:-${KOMARI_VERSION}:-}}"
     if [ -n "$target_ver" ]; then
         echo "https://github.com/${REPO}/releases/download/${target_ver}/${file_name}"
