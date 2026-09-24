@@ -252,6 +252,28 @@ func TestRunMigratesLegacyConfigTableToConfigItems(t *testing.T) {
 	}
 }
 
+func TestRunRebrandsDefaultLegacySitenameToSonar(t *testing.T) {
+	db := openTestDB(t, "migrations_legacy_sitename_rebrand")
+	if err := db.AutoMigrate(&legacyModelConfig{}); err != nil {
+		t.Fatalf("migrate legacy config table: %v", err)
+	}
+	if err := db.Create(&legacyModelConfig{Sitename: "Komari"}).Error; err != nil {
+		t.Fatalf("seed legacy config: %v", err)
+	}
+
+	if err := Run(Context{DB: db}); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	var sitename kv.ConfigItem
+	if err := db.First(&sitename, "key = ?", settings.SitenameKey).Error; err != nil {
+		t.Fatalf("find migrated sitename: %v", err)
+	}
+	if sitename.Value != `"Sonar"` {
+		t.Fatalf("expected default legacy sitename to be rebranded to Sonar, got: %s", sitename.Value)
+	}
+}
+
 func TestRunExpandsLegacyPingAllClientsTasks(t *testing.T) {
 	db := openTestDB(t, "migrations_ping_all_clients")
 	if err := db.AutoMigrate(&models.Client{}); err != nil {

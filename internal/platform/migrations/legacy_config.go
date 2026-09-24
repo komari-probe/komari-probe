@@ -257,7 +257,15 @@ func migrateLegacyConfigToItems(db *gorm.DB) error {
 	})
 }
 
+// legacyDefaultSitename is the stock site name shipped by upstream Komari Monitor.
+// Instances that never customized it get rebranded to Sonar's own default on migration.
+const legacyDefaultSitename = "Komari"
+
 func legacyConfigRows(oldData legacyConfig) ([]kv.ConfigItem, error) {
+	if oldData.Sitename == legacyDefaultSitename {
+		oldData.Sitename = "Sonar"
+	}
+
 	val := reflect.ValueOf(oldData)
 	typ := reflect.TypeOf(oldData)
 	newRows := make([]kv.ConfigItem, 0, val.NumField())
