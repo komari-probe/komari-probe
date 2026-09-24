@@ -274,6 +274,42 @@ func TestRunRebrandsDefaultLegacySitenameToSonar(t *testing.T) {
 	}
 }
 
+func TestRunRebrandsAlreadyMigratedDefaultKomariSitename(t *testing.T) {
+	db := openTestDB(t, "migrations_already_migrated_sitename_rebrand")
+	if err := db.AutoMigrate(&kv.ConfigItem{}); err != nil {
+		t.Fatalf("migrate config item table: %v", err)
+	}
+	if err := db.Create(&kv.ConfigItem{Key: settings.SitenameKey, Value: `"Komari"`}).Error; err != nil {
+		t.Fatalf("seed sitename config item: %v", err)
+	}
+
+	if err := Run(Context{DB: db}); err != nil {
+		t.Fatalf("run migrations: %v", err)
+	}
+
+	var sitename kv.ConfigItem
+	if err := db.First(&sitename, "key = ?", settings.SitenameKey).Error; err != nil {
+		t.Fatalf("find sitename: %v", err)
+	}
+	if sitename.Value != `"Sonar"` {
+		t.Fatalf("expected already-migrated default Komari sitename to be rebranded to Sonar, got: %s", sitename.Value)
+	}
+
+	// A second run must not clobber a name the admin deliberately reverted afterwards.
+	if err := db.Model(&kv.ConfigItem{}).Where("key = ?", settings.SitenameKey).Update("value", `"Komari"`).Error; err != nil {
+		t.Fatalf("simulate admin revert: %v", err)
+	}
+	if err := Run(Context{DB: db}); err != nil {
+		t.Fatalf("run migrations again: %v", err)
+	}
+	if err := db.First(&sitename, "key = ?", settings.SitenameKey).Error; err != nil {
+		t.Fatalf("find sitename after second run: %v", err)
+	}
+	if sitename.Value != `"Komari"` {
+		t.Fatalf("expected deliberate admin revert to survive a later migration run, got: %s", sitename.Value)
+	}
+}
+
 func TestRunExpandsLegacyPingAllClientsTasks(t *testing.T) {
 	db := openTestDB(t, "migrations_ping_all_clients")
 	if err := db.AutoMigrate(&models.Client{}); err != nil {

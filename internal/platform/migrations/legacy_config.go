@@ -10,6 +10,7 @@ import (
 	"github.com/sonar-probe/sonar/pkg/logger"
 
 	"github.com/sonar-probe/sonar/internal/platform/models"
+	"github.com/sonar-probe/sonar/internal/platform/settings"
 	"github.com/sonar-probe/sonar/pkg/kv"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -260,6 +261,47 @@ func migrateLegacyConfigToItems(db *gorm.DB) error {
 // legacyDefaultSitename is the stock site name shipped by upstream Komari Monitor.
 // Instances that never customized it get rebranded to Sonar's own default on migration.
 const legacyDefaultSitename = "Komari"
+
+// defaultSitenameRebrandMigrationKey guards migrateDefaultSitenameRebrand so it only
+// ever touches the sitename once, letting an admin freely rename the site back to
+// "Komari" later without every restart silently reverting it.
+const defaultSitenameRebrandMigrationKey = "internal_default_sitename_rebrand_done"
+
+// migrateDefaultSitenameRebrand covers instances that already finished the
+// configs -> config-items migration (see migrateLegacyConfigToItems) before this
+// rebrand existed, so they were left with the untouched upstream "Komari" default
+// baked into the new key-value store instead of Sonar's own default.
+func migrateDefaultSitenameRebrand(db *gorm.DB) error {
+	if !db.Migrator().HasTable(&kv.ConfigItem{}) {
+		return nil
+	}
+
+	var marker kv.ConfigItem
+	if err := db.Where("key = ?", defaultSitenameRebrandMigrationKey).First(&marker).Error; err == nil && marker.Value == "true" {
+		return nil
+	}
+
+	legacyDefaultValue, err := json.Marshal(legacyDefaultSitename)
+	if err != nil {
+		return fmt.Errorf("marshal legacy default sitename: %w", err)
+	}
+
+	var sitename kv.ConfigItem
+	if err := db.Where("key = ?", settings.SitenameKey).First(&sitename).Error; err == nil && sitename.Value == string(legacyDefaultValue) {
+		sonarValue, err := json.Marshal("Sonar")
+		if err != nil {
+			return fmt.Errorf("marshal rebranded sitename: %w", err)
+		}
+		if err := db.Model(&kv.ConfigItem{}).Where("key = ?", settings.SitenameKey).Update("value", string(sonarValue)).Error; err != nil {
+			return fmt.Errorf("rebrand default sitename: %w", err)
+		}
+	}
+
+	return db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "key"}},
+		DoUpdates: clause.AssignmentColumns([]string{"value"}),
+	}).Create(&kv.ConfigItem{Key: defaultSitenameRebrandMigrationKey, Value: "true"}).Error
+}
 
 func legacyConfigRows(oldData legacyConfig) ([]kv.ConfigItem, error) {
 	if oldData.Sitename == legacyDefaultSitename {

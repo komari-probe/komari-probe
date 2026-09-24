@@ -54,6 +54,9 @@ func Run(ctx Context) error {
 	if err := migrateRemovedCompatibilityConfig(db); err != nil {
 		return err
 	}
+	if err := migrateDefaultSitenameRebrand(db); err != nil {
+		return err
+	}
 	if err := markTimestampMigrationDone(db); err != nil {
 		return fmt.Errorf("mark UTC timestamp migration done: %w", err)
 	}
